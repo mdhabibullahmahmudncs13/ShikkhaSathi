@@ -40,45 +40,13 @@ Object.defineProperty(navigator, 'onLine', {
   configurable: true
 });
 
-// Mock window event listeners
-const mockEventListeners: { [key: string]: ((event: Event) => void)[] } = {};
-const originalAddEventListener = window.addEventListener;
-const originalRemoveEventListener = window.removeEventListener;
-
 beforeEach(() => {
   vi.clearAllMocks();
   mockFetch.mockClear();
   mockOnlineStatus = true;
-  
-  // Reset event listeners
-  Object.keys(mockEventListeners).forEach(key => {
-    mockEventListeners[key] = [];
-  });
-
-  // Mock addEventListener
-  window.addEventListener = vi.fn((event: string, handler: (event: Event) => void) => {
-    if (!mockEventListeners[event]) {
-      mockEventListeners[event] = [];
-    }
-    mockEventListeners[event].push(handler);
-  });
-
-  // Mock removeEventListener
-  window.removeEventListener = vi.fn((event: string, handler: (event: Event) => void) => {
-    if (mockEventListeners[event]) {
-      const index = mockEventListeners[event].indexOf(handler);
-      if (index > -1) {
-        mockEventListeners[event].splice(index, 1);
-      }
-    }
-  });
 });
 
 afterEach(() => {
-  // Restore original event listeners
-  window.addEventListener = originalAddEventListener;
-  window.removeEventListener = originalRemoveEventListener;
-  
   // Clean up sync manager
   syncManager.destroy();
 });
@@ -86,19 +54,10 @@ afterEach(() => {
 // Helper function to simulate online/offline events
 const simulateConnectivityChange = (isOnline: boolean) => {
   mockOnlineStatus = isOnline;
-  const event = new Event(isOnline ? 'online' : 'offline');
   
-  // Trigger all registered event listeners
-  const eventType = isOnline ? 'online' : 'offline';
-  if (mockEventListeners[eventType]) {
-    mockEventListeners[eventType].forEach(handler => {
-      try {
-        handler(event);
-      } catch (error) {
-        // Ignore handler errors in tests
-      }
-    });
-  }
+  // Dispatch the actual browser events
+  const event = new Event(isOnline ? 'online' : 'offline');
+  window.dispatchEvent(event);
 };
 
 describe('Offline State Indication Properties', () => {
