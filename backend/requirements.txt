@@ -16,3 +16,14 @@ pytest==7.4.3
 pytest-asyncio==0.21.1
 hypothesis==6.88.1
 slowapi==0.1.9
+# RAG System Dependencies
+langchain==0.1.0
+langchain-openai==0.0.2
+langchain-community==0.0.10
+openai==1.6.1
+pinecone-client==2.2.4
+pypdf2==3.0.1
+pytesseract==0.3.10
+pillow==10.1.0
+tiktoken==0.5.2
+langdetect==1.0.9
