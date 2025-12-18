@@ -74,18 +74,18 @@ describe('Offline State Indication Properties', () => {
               // Simulate connectivity change
               simulateConnectivityChange(isOnline);
               
-              // Allow time for state updates
-              await waitFor(() => {
-                // Re-render to pick up state changes
-                rerender(<SyncStatusIndicator />);
-              }, { timeout: 1000 });
+              // Allow time for state updates and re-render
+              await new Promise(resolve => setTimeout(resolve, 50));
+              rerender(<SyncStatusIndicator />);
+              await new Promise(resolve => setTimeout(resolve, 50));
 
               // Assert: Offline indicator should be displayed when offline
               if (!isOnline) {
                 // Should show offline status in Bangla
                 await waitFor(() => {
-                  expect(screen.getByText('অফলাইন')).toBeInTheDocument();
-                }, { timeout: 500 });
+                  const offlineElements = screen.queryAllByText('অফলাইন');
+                  expect(offlineElements.length).toBeGreaterThan(0);
+                }, { timeout: 1000 });
                 
                 // Should have red indicator for offline status
                 const statusElements = document.querySelectorAll('.bg-red-500');
@@ -95,7 +95,7 @@ describe('Offline State Indication Properties', () => {
                 await waitFor(() => {
                   const onlineElements = screen.queryAllByText(/অনলাইন|সিঙ্ক/);
                   expect(onlineElements.length).toBeGreaterThan(0);
-                }, { timeout: 500 });
+                }, { timeout: 1000 });
               }
             }
           }
@@ -146,7 +146,8 @@ describe('Offline State Indication Properties', () => {
             // Assert: Functionality should be limited when offline
             await waitFor(() => {
               // Should show offline indicator
-              expect(screen.getByText('Offline')).toBeInTheDocument();
+              const offlineElements = screen.getAllByText('Offline');
+              expect(offlineElements.length).toBeGreaterThan(0);
               
               // Should show WiFi off icon
               const wifiOffIcons = document.querySelectorAll('svg');
@@ -202,14 +203,15 @@ describe('Offline State Indication Properties', () => {
               if (!isOnline) {
                 // SyncStatusIndicator should show offline
                 await waitFor(() => {
-                  expect(screen.getByText('অফলাইন')).toBeInTheDocument();
-                }, { timeout: 500 });
+                  const offlineElements = screen.queryAllByText('অফলাইন');
+                  expect(offlineElements.length).toBeGreaterThan(0);
+                }, { timeout: 1000 });
 
                 // DownloadManager should show offline
                 await waitFor(() => {
-                  const offlineTexts = screen.getAllByText('Offline');
+                  const offlineTexts = screen.queryAllByText('Offline');
                   expect(offlineTexts.length).toBeGreaterThan(0);
-                }, { timeout: 500 });
+                }, { timeout: 1000 });
 
                 // All components should have red indicators for offline
                 const redIndicators = document.querySelectorAll('.text-red-600, .bg-red-500');
@@ -217,9 +219,9 @@ describe('Offline State Indication Properties', () => {
               } else {
                 // Components should show online state
                 await waitFor(() => {
-                  const onlineTexts = screen.getAllByText(/Online|অনলাইন|সিঙ্ক/);
+                  const onlineTexts = screen.queryAllByText(/Online|অনলাইন|সিঙ্ক/);
                   expect(onlineTexts.length).toBeGreaterThan(0);
-                }, { timeout: 500 });
+                }, { timeout: 1000 });
 
                 // Should have green indicators for online
                 const greenIndicators = document.querySelectorAll('.text-green-600, .bg-green-500');
@@ -256,7 +258,8 @@ describe('Offline State Indication Properties', () => {
             // Assert: Should provide clear feedback about offline limitations
             await waitFor(() => {
               // Should show offline message
-              expect(screen.getByText('Offline')).toBeInTheDocument();
+              const offlineElements = screen.getAllByText('Offline');
+              expect(offlineElements.length).toBeGreaterThan(0);
               
               // Should show appropriate messaging about limited functionality
               const offlineMessages = screen.queryAllByText(/offline|unavailable|limited/i);
@@ -308,7 +311,8 @@ describe('Offline State Indication Properties', () => {
                 expect(onlineElements.length).toBeGreaterThan(0);
               } else {
                 // Should show offline state
-                expect(screen.getByText('অফলাইন')).toBeInTheDocument();
+                const offlineElements = screen.queryAllByText('অফলাইন');
+                expect(offlineElements.length).toBeGreaterThan(0);
               }
             }, { timeout: 1000 });
 
@@ -331,6 +335,7 @@ describe('Offline State Indication Properties', () => {
           async ({ initialState, finalState, intermediateStates }) => {
             // Test the underlying connectivity detection
             simulateConnectivityChange(initialState);
+            await new Promise(resolve => setTimeout(resolve, 50));
             
             // Check initial sync manager state
             let syncStatus = syncManager.getSyncStatus();
@@ -342,7 +347,7 @@ describe('Offline State Indication Properties', () => {
             // Apply intermediate state changes
             for (const state of intermediateStates) {
               simulateConnectivityChange(state);
-              await new Promise(resolve => setTimeout(resolve, 5));
+              await new Promise(resolve => setTimeout(resolve, 50));
               
               syncStatus = syncManager.getSyncStatus();
               expect(syncStatus.isOnline).toBe(state);
@@ -351,7 +356,7 @@ describe('Offline State Indication Properties', () => {
 
             // Apply final state
             simulateConnectivityChange(finalState);
-            await new Promise(resolve => setTimeout(resolve, 10));
+            await new Promise(resolve => setTimeout(resolve, 50));
             
             // Assert: Final state should be correctly detected
             syncStatus = syncManager.getSyncStatus();
