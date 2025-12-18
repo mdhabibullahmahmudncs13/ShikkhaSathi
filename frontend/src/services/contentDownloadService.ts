@@ -196,12 +196,13 @@ export class ContentDownloadService {
     }));
 
     // Check if items are already in queue or downloaded
-    const existingIds = new Set([
-      ...this.downloadQueue.items.map(item => item.content.id),
-      ...(await this.getDownloadedContent()).map(item => item.id)
-    ]);
-
-    const filteredItems = newItems.filter(item => !existingIds.has(item.content.id));
+    const queueIds = new Set(this.downloadQueue.items.map(item => item.content.id));
+    const downloadedContent = await this.getDownloadedContent();
+    const downloadedIds = new Set(downloadedContent.map(item => item.id));
+    
+    const filteredItems = newItems.filter(item => 
+      !queueIds.has(item.content.id) && !downloadedIds.has(item.content.id)
+    );
     
     this.downloadQueue.items.push(...filteredItems);
     await this.saveQueue();
