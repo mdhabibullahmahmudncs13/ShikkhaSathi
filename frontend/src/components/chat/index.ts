@@ -5,3 +5,5 @@ export { default as ChatInput } from './ChatInput';
 export { default as QuickActions } from './QuickActions';
 export { default as TypingIndicator } from './TypingIndicator';
 export { default as ConnectionStatus } from './ConnectionStatus';
+export { default as VoiceRecorder } from './VoiceRecorder';
+export { default as AudioPlayer } from './AudioPlayer';

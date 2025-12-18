@@ -16,7 +16,7 @@ interface ChatContainerProps {
 
 const ChatContainer: React.FC<ChatContainerProps> = ({ 
   className = '',
-  userId = 'demo_user',
+  userId: _userId = 'demo_user',
   sessionId = `session_${Date.now()}`,
   token = 'demo_token'
 }) => {

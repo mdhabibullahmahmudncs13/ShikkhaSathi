@@ -250,7 +250,7 @@
   - Create quick action buttons for common questions
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5_
 
-- [-] 8.2 Implement WebSocket for real-time messaging
+- [x] 8.2 Implement WebSocket for real-time messaging
   - Set up WebSocket server for real-time communication
   - Create WebSocket client integration
   - Implement message queuing and delivery confirmation
@@ -258,7 +258,7 @@
   - Build connection recovery and reconnection logic
   - _Requirements: 1.1, 1.3_
 
-- [ ] 8.3 Add voice functionality to chat
+- [x] 8.3 Add voice functionality to chat
   - Integrate Whisper API for speech-to-text
   - Implement ElevenLabs TTS for audio responses
   - Create voice recording interface with visualization
@@ -266,7 +266,7 @@
   - Build voice input/output toggle functionality
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5_
 
-- [ ] 8.4 Write property test for voice processing
+- [-] 8.4 Write property test for voice processing
   - **Property 15: Voice Processing Accuracy and Completeness**
   - **Validates: Requirements 5.1, 5.2, 5.3, 5.4, 5.5**
 

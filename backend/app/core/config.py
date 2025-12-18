@@ -49,6 +49,10 @@ class Settings(BaseSettings):
     PINECONE_API_KEY: str = ""
     PINECONE_ENVIRONMENT: str = ""
     PINECONE_INDEX_NAME: str = "shikkhasathi-embeddings"
+    
+    # Voice Services
+    ELEVENLABS_API_KEY: str = ""
+    ELEVENLABS_VOICE_ID: str = "21m00Tcm4TlvDq8ikWAM"  # Default voice ID
 
     model_config = {"env_file": ".env"}
 

@@ -3,6 +3,7 @@ import asyncio
 from typing import Dict, List, Optional
 from fastapi import WebSocket, WebSocketDisconnect
 from app.services.rag.rag_service import RAGService
+from app.services.voice_service import get_voice_service
 from app.db.mongodb import get_database
 from datetime import datetime
 import logging
@@ -110,6 +111,31 @@ class ConnectionManager:
                 }
             }
             await self.send_personal_message(response_message, session_id)
+            
+            # If user sent voice message, also generate audio response
+            if is_voice and ai_response.get("response"):
+                try:
+                    # Generate audio response
+                    voice_service = get_voice_service()
+                    tts_result = await voice_service.text_to_speech(
+                        ai_response["response"], 
+                        language="bn"  # Default to Bangla, could be detected from response
+                    )
+                    
+                    if tts_result["success"] and tts_result["audio_data"]:
+                        # Send audio response notification
+                        audio_message = {
+                            "type": "audio_response",
+                            "message_id": ai_message["id"],
+                            "has_audio": True,
+                            "audio_length": len(tts_result["audio_data"]),
+                            "content_type": tts_result["content_type"]
+                        }
+                        await self.send_personal_message(audio_message, session_id)
+                        
+                except Exception as audio_error:
+                    logger.error(f"Error generating audio response: {audio_error}")
+                    # Continue without audio - don't fail the whole response
 
         except Exception as e:
             logger.error(f"Error processing message for user {user_id}: {e}")

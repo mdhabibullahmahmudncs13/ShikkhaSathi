@@ -1,6 +1,8 @@
 import json
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, HTTPException, Query
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, HTTPException, Query, UploadFile, File
+from fastapi.responses import Response
 from app.services.websocket_manager import manager
+from app.services.voice_service import get_voice_service
 from app.core.deps import get_current_user
 from app.models.user import User
 from app.db.mongodb import get_database
@@ -145,3 +147,76 @@ async def delete_chat_session(
     except Exception as e:
         logger.error(f"Error deleting chat session: {e}")
         raise HTTPException(status_code=500, detail="Failed to delete session")
+
+@router.post("/voice/transcribe")
+async def transcribe_audio(
+    audio: UploadFile = File(...),
+    current_user: User = Depends(get_current_user)
+):
+    """Transcribe audio to text using Whisper API"""
+    try:
+        # Validate file type
+        if not audio.content_type or not audio.content_type.startswith('audio/'):
+            raise HTTPException(status_code=400, detail="Invalid audio file format")
+        
+        # Read audio data
+        audio_data = await audio.read()
+        
+        if len(audio_data) == 0:
+            raise HTTPException(status_code=400, detail="Empty audio file")
+        
+        # Process voice message
+        voice_service = get_voice_service()
+        result = await voice_service.process_voice_message(audio_data)
+        
+        if result["success"]:
+            return {
+                "text": result["text"],
+                "language": result.get("detected_language", "en"),
+                "confidence": result.get("confidence", 0.0)
+            }
+        else:
+            raise HTTPException(status_code=500, detail=result.get("error", "Transcription failed"))
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error transcribing audio: {e}")
+        raise HTTPException(status_code=500, detail="Failed to transcribe audio")
+
+@router.post("/voice/synthesize")
+async def synthesize_speech(
+    text: str,
+    language: str = "bn",
+    current_user: User = Depends(get_current_user)
+):
+    """Convert text to speech using ElevenLabs API"""
+    try:
+        if not text or len(text.strip()) == 0:
+            raise HTTPException(status_code=400, detail="Text cannot be empty")
+        
+        if len(text) > 5000:  # Limit text length
+            raise HTTPException(status_code=400, detail="Text too long (max 5000 characters)")
+        
+        # Generate speech
+        voice_service = get_voice_service()
+        result = await voice_service.text_to_speech(text, language)
+        
+        if result["success"] and result["audio_data"]:
+            return Response(
+                content=result["audio_data"],
+                media_type=result["content_type"],
+                headers={
+                    "Content-Disposition": "attachment; filename=speech.mp3",
+                    "X-Text-Length": str(len(text)),
+                    "X-Language": language
+                }
+            )
+        else:
+            raise HTTPException(status_code=500, detail=result.get("error", "Speech synthesis failed"))
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error synthesizing speech: {e}")
+        raise HTTPException(status_code=500, detail="Failed to synthesize speech")
