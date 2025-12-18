@@ -362,7 +362,7 @@
   - **Property 14: Offline State Indication**
   - **Validates: Requirements 4.5**
 
-- [ ] 11. Build teacher dashboard
+- [-] 11. Build teacher dashboard
   - Create comprehensive teacher analytics interface
   - Implement student roster management
   - Build class performance overview
@@ -370,7 +370,7 @@
   - Create intervention recommendation system
   - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5_
 
-- [ ] 11.1 Create teacher dashboard layout
+- [-] 11.1 Create teacher dashboard layout
   - Build teacher-specific navigation and layout
   - Create class overview with student roster
   - Implement student selection and filtering
