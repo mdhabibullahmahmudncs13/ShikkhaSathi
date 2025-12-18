@@ -181,7 +181,12 @@ class SyncManager {
   private async syncQuizAttempts(): Promise<void> {
     const unsyncedAttempts = await offlineStorage.getUnsyncedQuizAttempts();
     
-    for (const attempt of unsyncedAttempts) {
+    // Filter out invalid attempts before syncing
+    const validAttempts = unsyncedAttempts.filter(attempt => 
+      attempt.id?.trim() && attempt.userId?.trim() && attempt.quizId?.trim()
+    );
+    
+    for (const attempt of validAttempts) {
       try {
         await this.syncQuizAttempt(attempt);
       } catch (error) {
@@ -191,6 +196,11 @@ class SyncManager {
   }
 
   private async syncQuizAttempt(attempt: OfflineQuizAttempt): Promise<void> {
+    // Validate attempt data before syncing
+    if (!attempt.id?.trim() || !attempt.userId?.trim() || !attempt.quizId?.trim()) {
+      throw new Error('Invalid quiz attempt data: missing required fields');
+    }
+
     const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
     
     try {
@@ -234,7 +244,12 @@ class SyncManager {
   private async syncProgress(): Promise<void> {
     const unsyncedProgress = await offlineStorage.getUnsyncedProgress();
     
-    for (const progress of unsyncedProgress) {
+    // Filter out invalid progress items before syncing
+    const validProgress = unsyncedProgress.filter(progress => 
+      progress.id?.trim() && progress.userId?.trim() && progress.subject?.trim() && progress.topic?.trim()
+    );
+    
+    for (const progress of validProgress) {
       try {
         await this.syncProgressItem(progress);
       } catch (error) {
@@ -244,6 +259,11 @@ class SyncManager {
   }
 
   private async syncProgressItem(progress: OfflineProgress): Promise<void> {
+    // Validate progress data before syncing
+    if (!progress.id?.trim() || !progress.userId?.trim() || !progress.subject?.trim() || !progress.topic?.trim()) {
+      throw new Error('Invalid progress data: missing required fields');
+    }
+
     const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
     
     try {
@@ -281,7 +301,12 @@ class SyncManager {
   private async syncChatMessages(): Promise<void> {
     const unsyncedMessages = await offlineStorage.getUnsyncedChatMessages();
     
-    for (const message of unsyncedMessages) {
+    // Filter out invalid messages before syncing
+    const validMessages = unsyncedMessages.filter(message => 
+      message.id?.trim() && message.userId?.trim() && message.sessionId?.trim() && message.content?.trim()
+    );
+    
+    for (const message of validMessages) {
       try {
         await this.syncChatMessage(message);
       } catch (error) {
@@ -291,6 +316,11 @@ class SyncManager {
   }
 
   private async syncChatMessage(message: OfflineChatMessage): Promise<void> {
+    // Validate message data before syncing
+    if (!message.id?.trim() || !message.userId?.trim() || !message.sessionId?.trim() || !message.content?.trim()) {
+      throw new Error('Invalid chat message data: missing required fields');
+    }
+
     const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
     
     try {

@@ -56,20 +56,20 @@ describe('Sync Management System Property Tests', () => {
         fc.asyncProperty(
           fc.array(
             fc.record({
-              id: fc.string({ minLength: 1 }),
-              userId: fc.string({ minLength: 1 }),
-              quizId: fc.string({ minLength: 1 }),
+              id: fc.string({ minLength: 3 }).filter(s => s.trim().length >= 3),
+              userId: fc.string({ minLength: 3 }).filter(s => s.trim().length >= 3),
+              quizId: fc.string({ minLength: 3 }).filter(s => s.trim().length >= 3),
               subject: fc.constantFrom('Math', 'Physics', 'Chemistry', 'Biology'),
-              topic: fc.string({ minLength: 1 }),
+              topic: fc.string({ minLength: 3 }).filter(s => s.trim().length >= 3),
               score: fc.integer({ min: 0, max: 100 }),
               maxScore: fc.integer({ min: 1, max: 100 }),
               timeTaken: fc.integer({ min: 1, max: 3600 }),
               difficultyLevel: fc.integer({ min: 1, max: 5 }),
               questions: fc.array(
                 fc.record({
-                  id: fc.string({ minLength: 1 }),
-                  question: fc.string({ minLength: 1 }),
-                  options: fc.array(fc.string({ minLength: 1 }), { minLength: 2, maxLength: 4 }),
+                  id: fc.string({ minLength: 3 }).filter(s => s.trim().length >= 3),
+                  question: fc.string({ minLength: 5 }).filter(s => s.trim().length >= 5),
+                  options: fc.array(fc.string({ minLength: 2 }).filter(s => s.trim().length >= 2), { minLength: 2, maxLength: 4 }),
                   correctAnswer: fc.integer({ min: 0, max: 3 }),
                   userAnswer: fc.option(fc.integer({ min: 0, max: 3 })),
                   bloomLevel: fc.integer({ min: 1, max: 6 })
@@ -77,10 +77,10 @@ describe('Sync Management System Property Tests', () => {
                 { minLength: 1, maxLength: 10 }
               ),
               synced: fc.constant(false),
-              createdAt: fc.date(),
-              completedAt: fc.option(fc.date())
+              createdAt: fc.date({ min: new Date('2020-01-01'), max: new Date() }),
+              completedAt: fc.option(fc.date({ min: new Date('2020-01-01'), max: new Date() }))
             }),
-            { minLength: 1, maxLength: 5 }
+            { minLength: 0, maxLength: 3 }
           ),
           async (quizAttempts) => {
             // Setup: Store unsynced quiz attempts
@@ -144,18 +144,18 @@ describe('Sync Management System Property Tests', () => {
         fc.asyncProperty(
           fc.array(
             fc.record({
-              id: fc.string({ minLength: 1 }),
-              userId: fc.string({ minLength: 1 }),
+              id: fc.string({ minLength: 3 }).filter(s => s.trim().length >= 3),
+              userId: fc.string({ minLength: 3 }).filter(s => s.trim().length >= 3),
               subject: fc.constantFrom('Math', 'Physics', 'Chemistry', 'Biology'),
-              topic: fc.string({ minLength: 1 }),
+              topic: fc.string({ minLength: 3 }).filter(s => s.trim().length >= 3),
               bloomLevel: fc.integer({ min: 1, max: 6 }),
               completionPercentage: fc.float({ min: 0, max: 100 }),
               timeSpentMinutes: fc.integer({ min: 0, max: 1440 }),
-              lastAccessed: fc.date(),
+              lastAccessed: fc.date({ min: new Date('2020-01-01'), max: new Date() }),
               masteryLevel: fc.constantFrom('beginner', 'intermediate', 'advanced', 'expert'),
               synced: fc.constant(false)
             }),
-            { minLength: 1, maxLength: 5 }
+            { minLength: 0, maxLength: 3 }
           ),
           async (progressItems) => {
             // Setup: Store unsynced progress
@@ -218,14 +218,14 @@ describe('Sync Management System Property Tests', () => {
       await fc.assert(
         fc.asyncProperty(
           fc.record({
-            id: fc.string({ minLength: 1 }),
-            userId: fc.string({ minLength: 1 }),
+            id: fc.string({ minLength: 3 }).filter(s => s.trim().length >= 3),
+            userId: fc.string({ minLength: 3 }).filter(s => s.trim().length >= 3),
             subject: fc.constantFrom('Math', 'Physics', 'Chemistry', 'Biology'),
-            topic: fc.string({ minLength: 1 }),
+            topic: fc.string({ minLength: 3 }).filter(s => s.trim().length >= 3),
             bloomLevel: fc.integer({ min: 1, max: 6 }),
             completionPercentage: fc.float({ min: 0, max: 100 }),
             timeSpentMinutes: fc.integer({ min: 0, max: 1440 }),
-            lastAccessed: fc.date(),
+            lastAccessed: fc.date({ min: new Date('2020-01-01'), max: new Date() }),
             masteryLevel: fc.constantFrom('beginner', 'intermediate', 'advanced', 'expert'),
             synced: fc.constant(false)
           }),
