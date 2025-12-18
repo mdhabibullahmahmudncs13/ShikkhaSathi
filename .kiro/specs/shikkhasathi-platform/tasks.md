@@ -123,7 +123,7 @@
   - Create question pool management system
   - _Requirements: 2.3, 2.4_
 
-- [-] 4.2 Implement adaptive difficulty system
+- [x] 4.2 Implement adaptive difficulty system
   - Create performance tracking per topic and student
   - Build difficulty adjustment algorithms (>80% increase, <50% decrease)
   - Implement target success rate maintenance (60-70%)
@@ -139,7 +139,7 @@
   - **Property 4: Bloom Level Question Generation**
   - **Validates: Requirements 2.3**
 
-- [ ] 4.5 Create quiz scoring and feedback system
+- [-] 4.5 Create quiz scoring and feedback system
   - Implement real-time quiz scoring
   - Build detailed feedback generation with explanations
   - Create performance analytics and weak area identification
