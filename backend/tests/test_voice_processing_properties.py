@@ -77,7 +77,7 @@ class TestVoiceProcessingProperties:
 
     @given(valid_bangla_text())
     @settings(max_examples=20, deadline=30000)  # Reduced examples for API calls
-    async def test_text_to_speech_completeness(self, text_input):
+    def test_text_to_speech_completeness(self, text_input):
         """
         **Feature: shikkhasathi-platform, Property 15: Voice Processing Accuracy and Completeness**
         
@@ -97,7 +97,7 @@ class TestVoiceProcessingProperties:
             mock_response.content = mock_audio_data
             mock_post.return_value = mock_response
             
-            result = await voice_service.text_to_speech(text_input, "bn")
+            result = asyncio.run(voice_service.text_to_speech(text_input, "bn"))
             
             # Property: TTS should always return structured response
             assert isinstance(result, dict)
@@ -116,7 +116,7 @@ class TestVoiceProcessingProperties:
 
     @given(valid_audio_data())
     @settings(max_examples=15, deadline=30000)  # Reduced examples for API calls
-    async def test_speech_to_text_completeness(self, audio_data):
+    def test_speech_to_text_completeness(self, audio_data):
         """
         **Feature: shikkhasathi-platform, Property 15: Voice Processing Accuracy and Completeness**
         
@@ -134,7 +134,7 @@ class TestVoiceProcessingProperties:
         # Mock the OpenAI client
         with patch.object(voice_service, 'openai_client') as mock_client:
             mock_client.audio.transcriptions.create.return_value = mock_transcript
-            result = await voice_service.speech_to_text(audio_data, "bn")
+            result = asyncio.run(voice_service.speech_to_text(audio_data, "bn"))
             
             # Property: STT should always return structured response
             assert isinstance(result, dict)
@@ -199,7 +199,7 @@ class TestVoiceProcessingProperties:
 
     @given(valid_audio_data())
     @settings(max_examples=10, deadline=30000)
-    async def test_voice_message_processing_completeness(self, audio_data):
+    def test_voice_message_processing_completeness(self, audio_data):
         """
         **Feature: shikkhasathi-platform, Property 15: Voice Processing Accuracy and Completeness**
         
@@ -217,7 +217,7 @@ class TestVoiceProcessingProperties:
         with patch.object(voice_service, 'openai_client') as mock_client:
             mock_client.audio.transcriptions.create.return_value = mock_transcript
             
-            result = await voice_service.process_voice_message(audio_data)
+            result = asyncio.run(voice_service.process_voice_message(audio_data))
             
             # Property: Voice processing should return complete result structure
             assert isinstance(result, dict)
@@ -256,12 +256,14 @@ class TestVoiceProcessingProperties:
             assert detected_language in ['bn', 'en']
 
     @pytest.mark.asyncio
-    async def test_error_handling_properties(self, voice_service):
+    async def test_error_handling_properties(self):
         """
         **Feature: shikkhasathi-platform, Property 15: Voice Processing Accuracy and Completeness**
         
         Property: Voice service should handle errors gracefully and return proper error responses
         """
+        voice_service = VoiceService()
+        
         # Test STT with invalid audio data
         result = await voice_service.speech_to_text(b"invalid_audio_data", "bn")
         
@@ -276,12 +278,14 @@ class TestVoiceProcessingProperties:
         assert result["confidence"] == 0.0
 
     @pytest.mark.asyncio
-    async def test_tts_error_handling(self, voice_service):
+    async def test_tts_error_handling(self):
         """
         **Feature: shikkhasathi-platform, Property 15: Voice Processing Accuracy and Completeness**
         
         Property: TTS should handle API failures gracefully
         """
+        voice_service = VoiceService()
+        
         with patch('requests.post') as mock_post:
             # Simulate API failure
             mock_response = Mock()

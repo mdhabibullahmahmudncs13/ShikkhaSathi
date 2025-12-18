@@ -234,7 +234,7 @@
   - **Property 9: Personalized Recommendation Generation**
   - **Validates: Requirements 3.4**
 
-- [-] 8. Build AI tutor chat interface
+- [x] 8. Build AI tutor chat interface
   - Create real-time chat interface with WebSocket
   - Implement message history persistence
   - Build voice input and output functionality
@@ -266,11 +266,11 @@
   - Build voice input/output toggle functionality
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5_
 
-- [-] 8.4 Write property test for voice processing
+- [x] 8.4 Write property test for voice processing
   - **Property 15: Voice Processing Accuracy and Completeness**
   - **Validates: Requirements 5.1, 5.2, 5.3, 5.4, 5.5**
 
-- [ ] 9. Implement quiz interface
+- [-] 9. Implement quiz interface
   - Create engaging quiz-taking interface
   - Build question navigation and flagging system
   - Implement timer and progress indicators
