@@ -326,11 +326,11 @@
   - Add quiz attempt offline persistence
   - _Requirements: 4.1, 4.2_
 
-- [-] 10.3 Write property test for offline functionality
+- [x] 10.3 Write property test for offline functionality
   - **Property 10: Offline Content Accessibility**
   - **Validates: Requirements 4.1**
 
-- [ ] 10.4 Write property test for offline quiz persistence
+- [-] 10.4 Write property test for offline quiz persistence
   - **Property 11: Offline Quiz Persistence**
   - **Validates: Requirements 4.2**
 
