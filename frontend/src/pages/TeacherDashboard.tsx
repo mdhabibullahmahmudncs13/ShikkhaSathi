@@ -3,6 +3,7 @@ import { TeacherDashboardLayout } from '../components/teacher/TeacherDashboardLa
 import { AnalyticsDashboard } from '../components/teacher/AnalyticsDashboard';
 import { StudentRoster } from '../components/teacher/StudentRoster';
 import { NotificationCenter } from '../components/teacher/NotificationCenter';
+import AssessmentManager from '../components/teacher/AssessmentManager';
 import { 
   TeacherDashboardData, 
   TeacherNotification,
@@ -13,7 +14,8 @@ import {
   BarChart3, 
   TrendingUp, 
   Clock,
-  AlertTriangle
+  AlertTriangle,
+  FileText as DocumentTextIcon
 } from 'lucide-react';
 
 // Mock data - in real app this would come from API
@@ -122,7 +124,7 @@ const mockTeacherData: TeacherDashboardData = {
 export const TeacherDashboard: React.FC = () => {
   const [teacherData, setTeacherData] = useState<TeacherDashboardData>(mockTeacherData);
   const [selectedClass, setSelectedClass] = useState<string>('');
-  const [currentView, setCurrentView] = useState<'overview' | 'roster' | 'notifications' | 'analytics'>('overview');
+  const [currentView, setCurrentView] = useState<'overview' | 'roster' | 'notifications' | 'analytics' | 'assessments'>('overview');
   const [selectedStudents, setSelectedStudents] = useState<StudentSummary[]>([]);
 
   useEffect(() => {
@@ -378,6 +380,12 @@ export const TeacherDashboard: React.FC = () => {
             className={selectedClassData?.name || teacherData.classes[0]?.name || 'Default Class'}
           />
         );
+      case 'assessments':
+        return (
+          <AssessmentManager
+            teacherId={teacherData.teacherId}
+          />
+        );
       default:
         return renderOverview();
     }
@@ -396,6 +404,7 @@ export const TeacherDashboard: React.FC = () => {
             {[
               { key: 'overview', label: 'Overview', icon: BarChart3 },
               { key: 'roster', label: 'Student Roster', icon: Users },
+              { key: 'assessments', label: 'Assessments', icon: DocumentTextIcon },
               { key: 'notifications', label: 'Notifications', icon: AlertTriangle },
               { key: 'analytics', label: 'Analytics', icon: TrendingUp }
             ].map(({ key, label, icon: Icon }) => (

@@ -1,5 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import StudentDashboard from './pages/StudentDashboard'
+import ParentDashboard from './pages/ParentDashboard'
+import TeacherDashboard from './pages/TeacherDashboard'
 import QuizPage from './pages/QuizPage'
 import { SyncStatusIndicator, SyncProgressModal, ConflictResolutionModal } from './components/sync'
 import { useSyncManager } from './hooks/useSyncManager'
@@ -41,7 +43,9 @@ function App() {
                 <h1 className="text-xl font-semibold text-gray-900">ShikkhaSathi</h1>
               </div>
               <div className="flex items-center space-x-4">
-                <a href="/" className="text-gray-700 hover:text-gray-900">Dashboard</a>
+                <a href="/" className="text-gray-700 hover:text-gray-900">Student</a>
+                <a href="/parent" className="text-gray-700 hover:text-gray-900">Parent</a>
+                <a href="/teacher" className="text-gray-700 hover:text-gray-900">Teacher</a>
                 <a href="/chat" className="text-gray-700 hover:text-gray-900">AI Tutor</a>
                 <a href="/quiz" className="text-gray-700 hover:text-gray-900">Quiz</a>
                 <a href="/login" className="text-gray-700 hover:text-gray-900">Login</a>
@@ -54,6 +58,8 @@ function App() {
         <main>
           <Routes>
             <Route path="/" element={<Dashboard />} />
+            <Route path="/parent" element={<ParentDashboard />} />
+            <Route path="/teacher" element={<TeacherDashboard />} />
             <Route path="/chat" element={<Chat />} />
             <Route path="/quiz" element={<QuizPage />} />
             <Route path="/login" element={<Login />} />

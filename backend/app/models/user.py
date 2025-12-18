@@ -37,4 +37,3 @@ class User(Base):
     quiz_attempts = relationship("QuizAttempt", back_populates="user")
     gamification = relationship("Gamification", back_populates="user", uselist=False)
     learning_paths = relationship("LearningPath", back_populates="user")
-    created_assessments = relationship("Assessment", back_populates="teacher")
