@@ -1,0 +1,127 @@
+from typing import Optional
+from datetime import datetime, timedelta
+from sqlalchemy.orm import Session
+from sqlalchemy import func
+from app.models.user import User
+from app.schemas.user import UserCreate, UserUpdate
+from app.core.security import get_password_hash, verify_password, create_access_token
+from app.db.redis_client import redis_client
+import json
+
+
+class AuthService:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def get_user_by_email(self, email: str) -> Optional[User]:
+        """Get user by email"""
+        return self.db.query(User).filter(User.email == email).first()
+
+    def get_user_by_id(self, user_id: str) -> Optional[User]:
+        """Get user by ID"""
+        return self.db.query(User).filter(User.id == user_id).first()
+
+    def create_user(self, user_create: UserCreate) -> User:
+        """Create new user"""
+        # Check if user already exists
+        existing_user = self.get_user_by_email(user_create.email)
+        if existing_user:
+            raise ValueError("User with this email already exists")
+
+        # Create user with hashed password
+        hashed_password = get_password_hash(user_create.password)
+        db_user = User(
+            email=user_create.email,
+            password_hash=hashed_password,
+            full_name=user_create.full_name,
+            grade=user_create.grade,
+            medium=user_create.medium,
+            role=user_create.role,
+            is_active=user_create.is_active
+        )
+        
+        self.db.add(db_user)
+        self.db.commit()
+        self.db.refresh(db_user)
+        return db_user
+
+    def authenticate_user(self, email: str, password: str) -> Optional[User]:
+        """Authenticate user with email and password"""
+        user = self.get_user_by_email(email)
+        if not user:
+            return None
+        if not user.is_active:
+            return None
+        if not verify_password(password, user.password_hash):
+            return None
+        
+        # Update last login
+        user.last_login = func.now()
+        self.db.commit()
+        return user
+
+    def update_user(self, user_id: str, user_update: UserUpdate) -> Optional[User]:
+        """Update user information"""
+        user = self.get_user_by_id(user_id)
+        if not user:
+            return None
+
+        update_data = user_update.dict(exclude_unset=True)
+        for field, value in update_data.items():
+            setattr(user, field, value)
+
+        self.db.commit()
+        self.db.refresh(user)
+        return user
+
+    def create_session(self, user: User) -> str:
+        """Create user session and return access token"""
+        access_token_expires = timedelta(minutes=60 * 24 * 8)  # 8 days
+        access_token = create_access_token(
+            subject=str(user.id), expires_delta=access_token_expires
+        )
+        
+        # Store session in Redis
+        session_data = {
+            "user_id": str(user.id),
+            "email": user.email,
+            "role": user.role.value,
+            "created_at": datetime.utcnow().isoformat()
+        }
+        
+        # Store with token as key, expires in 8 days
+        redis_client.setex(
+            f"session:{access_token}", 
+            60 * 60 * 24 * 8,  # 8 days in seconds
+            json.dumps(session_data)
+        )
+        
+        return access_token
+
+    def get_session(self, token: str) -> Optional[dict]:
+        """Get session data from Redis"""
+        session_data = redis_client.get(f"session:{token}")
+        if session_data:
+            return json.loads(session_data)
+        return None
+
+    def invalidate_session(self, token: str) -> bool:
+        """Invalidate user session"""
+        result = redis_client.delete(f"session:{token}")
+        return result > 0
+
+    def refresh_session(self, token: str) -> Optional[str]:
+        """Refresh user session and return new token"""
+        session_data = self.get_session(token)
+        if not session_data:
+            return None
+        
+        user = self.get_user_by_id(session_data["user_id"])
+        if not user or not user.is_active:
+            return None
+        
+        # Invalidate old session
+        self.invalidate_session(token)
+        
+        # Create new session
+        return self.create_session(user)

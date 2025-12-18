@@ -10,8 +10,9 @@ psycopg2-binary==2.9.9
 pymongo==4.6.0
 motor==3.3.2
 redis==5.0.1
-pydantic==2.5.0
+pydantic[email]==2.5.0
 pydantic-settings==2.1.0
 pytest==7.4.3
 pytest-asyncio==0.21.1
 hypothesis==6.88.1
+slowapi==0.1.9

@@ -44,14 +44,14 @@
   - Implement role-based access control (student, teacher, parent)
   - _Requirements: 3.1, 6.1, 7.1_
 
-- [-] 2.1 Create user authentication models and services
+- [x] 2.1 Create user authentication models and services
   - Implement User model with validation
   - Create authentication service with JWT handling
   - Build password hashing and verification utilities
   - Set up user session management with Redis
   - _Requirements: 3.1, 6.1, 7.1_
 
-- [ ] 2.2 Build authentication API endpoints
+- [x] 2.2 Build authentication API endpoints
   - Create registration endpoint with email validation
   - Implement login endpoint with rate limiting
   - Build password reset functionality
@@ -59,7 +59,7 @@
   - Add logout and token refresh endpoints
   - _Requirements: 3.1, 6.1, 7.1_
 
-- [ ] 2.3 Write property test for authentication security
+- [-] 2.3 Write property test for authentication security
   - **Property 2: Authentication Token Validity**
   - **Validates: Requirements 3.1, 6.1, 7.1**
 

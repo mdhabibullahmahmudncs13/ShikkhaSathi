@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import BaseModel, EmailStr, validator
+from pydantic import BaseModel, EmailStr, field_validator
 from datetime import datetime
 from app.models.user import UserRole, Medium
 
@@ -12,8 +12,9 @@ class UserBase(BaseModel):
     role: UserRole = UserRole.STUDENT
     is_active: bool = True
 
-    @validator('grade')
-    def validate_grade(cls, v, values):
+    @field_validator('grade')
+    @classmethod
+    def validate_grade(cls, v):
         if v is not None and (v < 6 or v > 12):
             raise ValueError('Grade must be between 6 and 12')
         return v
@@ -22,7 +23,8 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     password: str
 
-    @validator('password')
+    @field_validator('password')
+    @classmethod
     def validate_password(cls, v):
         if len(v) < 8:
             raise ValueError('Password must be at least 8 characters long')
@@ -36,7 +38,8 @@ class UserUpdate(BaseModel):
     medium: Optional[Medium] = None
     is_active: Optional[bool] = None
 
-    @validator('grade')
+    @field_validator('grade')
+    @classmethod
     def validate_grade(cls, v):
         if v is not None and (v < 6 or v > 12):
             raise ValueError('Grade must be between 6 and 12')
@@ -48,8 +51,7 @@ class UserInDBBase(UserBase):
     created_at: datetime
     last_login: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class User(UserInDBBase):
