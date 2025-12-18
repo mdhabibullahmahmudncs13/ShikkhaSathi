@@ -103,7 +103,7 @@ class ShikkhaSathiDB extends Dexie {
     
     this.version(1).stores({
       users: 'id, email, grade, medium, lastSync',
-      lessonContent: 'id, subject, grade, chapter, topic, downloadedAt, lastAccessed',
+      lessonContent: 'id, subject, grade, chapter, topic, downloadedAt, lastAccessed, [subject+grade]',
       quizAttempts: 'id, userId, quizId, subject, topic, synced, createdAt, completedAt',
       progress: 'id, userId, subject, topic, bloomLevel, synced, lastAccessed',
       chatMessages: 'id, userId, sessionId, synced, timestamp',
