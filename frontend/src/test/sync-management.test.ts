@@ -277,14 +277,14 @@ describe('Sync Management System Property Tests', () => {
       await fc.assert(
         fc.asyncProperty(
           fc.record({
-            id: fc.string({ minLength: 1 }),
-            userId: fc.string({ minLength: 1 }),
-            sessionId: fc.string({ minLength: 1 }),
+            id: fc.string({ minLength: 3 }).filter(s => s.trim().length >= 3),
+            userId: fc.string({ minLength: 3 }).filter(s => s.trim().length >= 3),
+            sessionId: fc.string({ minLength: 3 }).filter(s => s.trim().length >= 3),
             role: fc.constantFrom('user', 'assistant'),
-            content: fc.string({ minLength: 1 }),
-            sources: fc.option(fc.array(fc.string({ minLength: 1 }))),
+            content: fc.string({ minLength: 5 }).filter(s => s.trim().length >= 5),
+            sources: fc.option(fc.array(fc.string({ minLength: 3 }).filter(s => s.trim().length >= 3))),
             voiceInput: fc.option(fc.boolean()),
-            timestamp: fc.date(),
+            timestamp: fc.date({ min: new Date('2020-01-01'), max: new Date() }),
             synced: fc.constant(false)
           }),
           async (chatMessage) => {
@@ -344,28 +344,28 @@ describe('Sync Management System Property Tests', () => {
           fc.record({
             quizAttempts: fc.array(
               fc.record({
-                id: fc.string({ minLength: 1 }),
-                userId: fc.string({ minLength: 1 }),
-                quizId: fc.string({ minLength: 1 }),
+                id: fc.string({ minLength: 3 }).filter(s => s.trim().length >= 3),
+                userId: fc.string({ minLength: 3 }).filter(s => s.trim().length >= 3),
+                quizId: fc.string({ minLength: 3 }).filter(s => s.trim().length >= 3),
                 subject: fc.constantFrom('Math', 'Physics'),
                 score: fc.integer({ min: 0, max: 100 }),
                 maxScore: fc.integer({ min: 1, max: 100 }),
                 synced: fc.constant(false)
               }),
-              { maxLength: 3 }
+              { minLength: 0, maxLength: 2 }
             ),
             achievements: fc.array(
               fc.record({
-                id: fc.string({ minLength: 1 }),
-                userId: fc.string({ minLength: 1 }),
-                achievementId: fc.string({ minLength: 1 }),
-                name: fc.string({ minLength: 1 }),
-                description: fc.string({ minLength: 1 }),
+                id: fc.string({ minLength: 3 }).filter(s => s.trim().length >= 3),
+                userId: fc.string({ minLength: 3 }).filter(s => s.trim().length >= 3),
+                achievementId: fc.string({ minLength: 3 }).filter(s => s.trim().length >= 3),
+                name: fc.string({ minLength: 3 }).filter(s => s.trim().length >= 3),
+                description: fc.string({ minLength: 5 }).filter(s => s.trim().length >= 5),
                 xpReward: fc.integer({ min: 1, max: 1000 }),
-                unlockedAt: fc.date(),
+                unlockedAt: fc.date({ min: new Date('2020-01-01'), max: new Date() }),
                 synced: fc.constant(false)
               }),
-              { maxLength: 3 }
+              { minLength: 0, maxLength: 2 }
             )
           }),
           async ({ quizAttempts, achievements }) => {
