@@ -591,7 +591,7 @@ class SyncManager {
   private async storeConflict(conflict: SyncConflict): Promise<void> {
     try {
       const stored = localStorage.getItem('sync-conflicts');
-      const conflicts = stored ? JSON.parse(stored) : [];
+      const conflicts = stored && stored !== 'mock-token' ? JSON.parse(stored) : [];
       conflicts.push(conflict);
       localStorage.setItem('sync-conflicts', JSON.stringify(conflicts));
     } catch (error) {
@@ -602,7 +602,7 @@ class SyncManager {
   private async updateStoredConflict(conflict: SyncConflict): Promise<void> {
     try {
       const stored = localStorage.getItem('sync-conflicts');
-      if (stored) {
+      if (stored && stored !== 'mock-token') {
         const conflicts = JSON.parse(stored);
         const index = conflicts.findIndex((c: SyncConflict) => c.id === conflict.id);
         if (index > -1) {
@@ -618,7 +618,7 @@ class SyncManager {
   private async loadStoredConflicts(): Promise<void> {
     try {
       const stored = localStorage.getItem('sync-conflicts');
-      if (stored) {
+      if (stored && stored !== 'mock-token') {
         this.conflicts = JSON.parse(stored);
       }
     } catch (error) {
