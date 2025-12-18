@@ -358,7 +358,7 @@
   - **Property 13: Content Download Functionality**
   - **Validates: Requirements 4.4**
 
-- [ ] 10.9 Write property test for offline state indication
+- [-] 10.9 Write property test for offline state indication
   - **Property 14: Offline State Indication**
   - **Validates: Requirements 4.5**
 
