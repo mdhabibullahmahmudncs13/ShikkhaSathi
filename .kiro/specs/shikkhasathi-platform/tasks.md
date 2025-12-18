@@ -24,7 +24,7 @@
   - Implement basic health check endpoints
   - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5_
 
-- [-] 1.3 Configure database schemas and connections
+- [x] 1.3 Configure database schemas and connections
   - Create PostgreSQL database schemas (users, student_progress, quiz_attempts, gamification, learning_paths)
   - Set up SQLAlchemy models with proper relationships
   - Configure MongoDB collections for NCTB content and chat history
@@ -32,7 +32,7 @@
   - Create database migration scripts using Alembic
   - _Requirements: 1.1, 2.1, 3.1, 6.1, 7.1_
 
-- [ ] 1.4 Write property test for database schema integrity
+- [-] 1.4 Write property test for database schema integrity
   - **Property 1: Database Schema Consistency**
   - **Validates: Requirements 8.5**
 
