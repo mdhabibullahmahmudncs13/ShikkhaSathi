@@ -122,7 +122,13 @@ give examples relevant to the Bangladesh context. Always provide accurate and ed
         context_parts = []
         for msg in recent_messages:
             role = "User" if msg.role == "user" else "Assistant"
-            context_parts.append(f"{role}: {msg.content}")
+            # Normalize whitespace: strip and replace internal newlines/tabs with spaces
+            content = msg.content.strip()
+            if content:  # Only include non-empty messages
+                # Replace internal newlines and multiple whitespace with single spaces
+                import re
+                content = re.sub(r'\s+', ' ', content)
+                context_parts.append(f"{role}: {content}")
         
         return "\n".join(context_parts)
     

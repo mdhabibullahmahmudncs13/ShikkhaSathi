@@ -45,8 +45,16 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against its hash"""
     if BCRYPT_AVAILABLE:
         # Truncate password to 72 bytes for bcrypt compatibility
-        if len(plain_password.encode('utf-8')) > 72:
-            plain_password = plain_password.encode('utf-8')[:72].decode('utf-8', errors='ignore')
+        password_bytes = plain_password.encode('utf-8')
+        if len(password_bytes) > 72:
+            password_bytes = password_bytes[:72]
+            # Ensure we don't cut in the middle of a UTF-8 character
+            while len(password_bytes) > 0:
+                try:
+                    plain_password = password_bytes.decode('utf-8')
+                    break
+                except UnicodeDecodeError:
+                    password_bytes = password_bytes[:-1]
         return pwd_context.verify(plain_password, hashed_password)
     else:
         # Fallback verification for testing environments
@@ -64,8 +72,16 @@ def get_password_hash(password: str) -> str:
     """Generate password hash"""
     if BCRYPT_AVAILABLE:
         # Truncate password to 72 bytes for bcrypt compatibility
-        if len(password.encode('utf-8')) > 72:
-            password = password.encode('utf-8')[:72].decode('utf-8', errors='ignore')
+        password_bytes = password.encode('utf-8')
+        if len(password_bytes) > 72:
+            password_bytes = password_bytes[:72]
+            # Ensure we don't cut in the middle of a UTF-8 character
+            while len(password_bytes) > 0:
+                try:
+                    password = password_bytes.decode('utf-8')
+                    break
+                except UnicodeDecodeError:
+                    password_bytes = password_bytes[:-1]
         return pwd_context.hash(password)
     else:
         # Fallback hash for testing environments

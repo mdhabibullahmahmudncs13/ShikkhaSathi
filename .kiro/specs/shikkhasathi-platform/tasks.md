@@ -191,7 +191,7 @@
   - Create streak reminder notifications
   - _Requirements: 3.1, 3.3_
 
-- [-] 6. Checkpoint - Ensure all core systems are working
+- [x] 6. Checkpoint - Ensure all core systems are working
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 7. Develop student dashboard interface

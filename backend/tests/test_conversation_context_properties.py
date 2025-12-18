@@ -165,13 +165,17 @@ class TestConversationContextProperties:
             
             # Check that the order is preserved in the context
             for i, message in enumerate(recent_messages):
-                if message.content.strip():
+                stripped_content = message.content.strip()
+                if stripped_content:
+                    # Normalize content the same way the context extraction does
+                    import re
+                    normalized_content = re.sub(r'\s+', ' ', stripped_content)
                     role_prefix = "User:" if message.role == "user" else "Assistant:"
-                    expected_line = f"{role_prefix} {message.content}"
+                    expected_line = f"{role_prefix} {normalized_content}"
                     
-                    # The message should appear in the context
-                    assert any(message.content in line for line in context_lines), \
-                        f"Message content '{message.content}' should appear in context"
+                    # The message should appear in the context (using normalized content)
+                    assert any(normalized_content in line for line in context_lines), \
+                        f"Message content '{normalized_content}' should appear in context"
     
     @given(valid_conversation_context(), valid_user_context())
     @settings(max_examples=15, deadline=20000)
@@ -180,6 +184,9 @@ class TestConversationContextProperties:
         Test that conversation context is properly integrated into query processing
         """
         assume(len(conversation_context.messages) > 0)  # Need some conversation history
+        
+        # Reset mock call count for this test example
+        self.mock_openai_client.chat.completions.create.reset_mock()
         
         # Mock search results
         mock_search_results = [
@@ -280,8 +287,13 @@ class TestConversationContextProperties:
         if len(messages) > max_history:
             older_messages = messages[:-max_history]
             for message in older_messages:
-                assert message.content not in extracted_context, \
-                    f"Older message '{message.content}' should not be in context"
+                # Check for exact line match to avoid substring issues
+                role_prefix = "User:" if message.role == "user" else "Assistant:"
+                expected_line = f"{role_prefix} {message.content.strip()}"
+                # Split context into lines and check for exact line match
+                context_lines_exact = extracted_context.split('\n')
+                assert expected_line not in context_lines_exact, \
+                    f"Older message line '{expected_line}' should not be in context"
     
     def test_empty_conversation_handling(self):
         """
