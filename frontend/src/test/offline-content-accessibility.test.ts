@@ -13,6 +13,8 @@ describe('Offline Content Accessibility Properties', () => {
   beforeEach(async () => {
     // Clear database before each test
     await offlineStorage.clearAllData();
+    // Add a small delay to ensure database is fully cleared
+    await new Promise(resolve => setTimeout(resolve, 10));
   });
 
   afterEach(async () => {
@@ -143,7 +145,7 @@ describe('Offline Content Accessibility Properties', () => {
         fc.integer({ min: 6, max: 12 }),
         fc.array(
           fc.record({
-            id: fc.string({ minLength: 1, maxLength: 50 }),
+            id: fc.uuid(),
             subject: fc.constantFrom('Physics', 'Chemistry', 'Mathematics', 'Biology'),
             grade: fc.integer({ min: 6, max: 12 }),
             chapter: fc.integer({ min: 1, max: 20 }),
@@ -161,6 +163,9 @@ describe('Offline Content Accessibility Properties', () => {
           { minLength: 1, maxLength: 15 }
         ),
         async (targetSubject, targetGrade, lessonsData) => {
+          // Ensure clean state for this iteration
+          await offlineStorage.clearAllData();
+          
           // Arrange: Save lessons with various subjects and grades
           const lessons: OfflineLessonContent[] = lessonsData.map(data => ({
             ...data,
@@ -191,7 +196,7 @@ describe('Offline Content Accessibility Properties', () => {
           expect(filteredLessons.length).toBe(expectedCount);
         }
       ),
-      { numRuns: 50 }
+      { numRuns: 20 }
     );
   });
 

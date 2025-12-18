@@ -140,8 +140,9 @@ export class OfflineStorageService {
 
   async getLessonsBySubject(subject: string, grade: number): Promise<OfflineLessonContent[]> {
     return await db.lessonContent
-      .where('[subject+grade]')
-      .equals([subject, grade])
+      .where('subject')
+      .equals(subject)
+      .and(lesson => lesson.grade === grade)
       .toArray();
   }
 
