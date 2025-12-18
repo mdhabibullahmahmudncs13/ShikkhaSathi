@@ -310,7 +310,7 @@
   - Add offline indicators and functionality limits
   - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5_
 
-- [-] 10.1 Set up service worker and caching
+- [x] 10.1 Set up service worker and caching
   - Configure Workbox for service worker generation
   - Implement cache-first strategy for static assets
   - Build network-first with fallback for dynamic content
@@ -318,7 +318,7 @@
   - Create cache management and cleanup
   - _Requirements: 4.1, 4.5_
 
-- [ ] 10.2 Implement IndexedDB storage system
+- [-] 10.2 Implement IndexedDB storage system
   - Set up Dexie.js for IndexedDB operations
   - Create schemas for offline data storage
   - Implement user data caching
