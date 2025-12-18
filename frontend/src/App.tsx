@@ -1,12 +1,8 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import StudentDashboard from './pages/StudentDashboard'
 
 // Placeholder components for different routes
-const Dashboard = () => (
-  <div className="p-8">
-    <h1 className="text-3xl font-bold text-gray-900">Student Dashboard</h1>
-    <p className="mt-4 text-gray-600">Welcome to ShikkhaSathi - Your AI Learning Companion</p>
-  </div>
-)
+const Dashboard = () => <StudentDashboard />
 
 const Chat = () => (
   <div className="p-8">

@@ -222,7 +222,7 @@
   - **Property 7: Dashboard Data Completeness**
   - **Validates: Requirements 3.1, 3.2**
 
-- [ ] 7.4 Implement learning path recommendations
+- [x] 7.4 Implement learning path recommendations
   - Create recommendation algorithm based on performance
   - Build personalized learning path display
   - Implement next topic suggestions
@@ -230,7 +230,7 @@
   - Create learning goal setting interface
   - _Requirements: 3.4_
 
-- [ ] 7.5 Write property test for recommendations
+- [-] 7.5 Write property test for recommendations
   - **Property 9: Personalized Recommendation Generation**
   - **Validates: Requirements 3.4**
 
