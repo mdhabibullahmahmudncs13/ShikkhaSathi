@@ -330,7 +330,7 @@
   - **Property 10: Offline Content Accessibility**
   - **Validates: Requirements 4.1**
 
-- [-] 10.4 Write property test for offline quiz persistence
+- [x] 10.4 Write property test for offline quiz persistence
   - **Property 11: Offline Quiz Persistence**
   - **Validates: Requirements 4.2**
 
