@@ -13,19 +13,20 @@ interface ContentDownloadModalProps {
   onClose: () => void;
 }
 
-interface SubjectData {
-  subject: string;
-  grade: number;
-  chapters: Array<{
-    number: number;
-    title: string;
-    topics: Array<{
-      name: string;
-      size: number;
-      downloaded: boolean;
-    }>;
-  }>;
-}
+// Interface for future use when implementing chapter-based selection
+// interface SubjectData {
+//   subject: string;
+//   grade: number;
+//   chapters: Array<{
+//     number: number;
+//     title: string;
+//     topics: Array<{
+//       name: string;
+//       size: number;
+//       downloaded: boolean;
+//     }>;
+//   }>;
+// }
 
 export const ContentDownloadModal: React.FC<ContentDownloadModalProps> = ({
   isOpen,
@@ -140,7 +141,7 @@ export const ContentDownloadModal: React.FC<ContentDownloadModalProps> = ({
     setSelectedContent(new Set());
   };
 
-  const isContentDownloaded = (contentId: string): boolean => {
+  const isContentDownloaded = (_contentId: string): boolean => {
     // This would be checked against downloaded content
     // For now, we'll assume none are downloaded
     return false;

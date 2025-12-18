@@ -6,6 +6,7 @@ import StreakCalendar from '../components/dashboard/StreakCalendar';
 import WeaknessHeatmap from '../components/dashboard/WeaknessHeatmap';
 import AchievementShowcase from '../components/dashboard/AchievementShowcase';
 import LearningPathRecommendations from '../components/dashboard/LearningPathRecommendations';
+import { DownloadManager } from '../components/download';
 import { StudentProgress, Notification } from '../types/dashboard';
 
 const StudentDashboard: React.FC = () => {
@@ -258,6 +259,9 @@ const StudentDashboard: React.FC = () => {
 
         {/* Achievement Showcase */}
         <AchievementShowcase achievements={studentProgress.achievements} />
+
+        {/* Download Manager */}
+        <DownloadManager />
       </div>
     </DashboardLayout>
   );

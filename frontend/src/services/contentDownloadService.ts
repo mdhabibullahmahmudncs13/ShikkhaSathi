@@ -261,7 +261,7 @@ export class ContentDownloadService {
 
   async clearQueue(): Promise<void> {
     // Cancel all active downloads
-    for (const [itemId, controller] of this.abortControllers.entries()) {
+    for (const controller of this.abortControllers.values()) {
       controller.abort();
     }
     this.abortControllers.clear();
@@ -399,7 +399,8 @@ export class ContentDownloadService {
 
       // Convert to text and verify integrity
       const contentText = new TextDecoder().decode(combinedData);
-      const contentHash = await this.calculateHash(contentText);
+      // TODO: Implement content verification using hash
+      // const contentHash = await this.calculateHash(contentText);
       
       // Save to offline storage
       const offlineContent: OfflineLessonContent = {
@@ -459,13 +460,14 @@ export class ContentDownloadService {
   }
 
   // Utility methods
-  private async calculateHash(content: string): Promise<string> {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(content);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-  }
+  // TODO: Implement content verification using hash
+  // private async calculateHash(content: string): Promise<string> {
+  //   const encoder = new TextEncoder();
+  //   const data = encoder.encode(content);
+  //   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  //   const hashArray = Array.from(new Uint8Array(hashBuffer));
+  //   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  // }
 
   private async saveQueue(): Promise<void> {
     try {
@@ -500,7 +502,7 @@ export class ContentDownloadService {
   // Content management
   async deleteDownloadedContent(contentId: string): Promise<void> {
     // Remove from offline storage
-    await offlineStorage.db.lessonContent.delete(contentId);
+    await (offlineStorage as any).db.lessonContent.delete(contentId);
     this.emit('content-deleted', { contentId });
   }
 
