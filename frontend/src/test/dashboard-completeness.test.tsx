@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import * as fc from 'fast-check';
 import DashboardLayout from '../components/dashboard/DashboardLayout';
-import { StudentProgress, Notification } from '../types/dashboard';
+import { StudentProgress } from '../types/dashboard';
 
 /**
  * **Feature: shikkhasathi-platform, Property 7: Dashboard Data Completeness**
@@ -34,9 +34,9 @@ const simpleStudentProgressArb = fc.record({
     name: fc.string({ minLength: 5, maxLength: 20 }),
     description: fc.string({ minLength: 10, maxLength: 30 }),
     icon: fc.constantFrom('🏆', '🎯'),
-    unlockedAt: fc.option(fc.date()),
-    progress: fc.option(fc.integer({ min: 0, max: 100 })),
-    target: fc.option(fc.integer({ min: 1, max: 100 }))
+    unlockedAt: fc.option(fc.date()).map(d => d || undefined),
+    progress: fc.option(fc.integer({ min: 0, max: 100 })).map(p => p || undefined),
+    target: fc.option(fc.integer({ min: 1, max: 100 })).map(t => t || undefined)
   }), { minLength: 0, maxLength: 3 }),
   weakAreas: fc.array(fc.record({
     subject: fc.constantFrom('Mathematics', 'Physics'),
@@ -117,7 +117,7 @@ describe('Dashboard Completeness Property Tests', () => {
       }
     };
 
-    const { container } = render(
+    render(
       <DashboardLayout
         studentProgress={minimalProgress}
         notifications={[]}

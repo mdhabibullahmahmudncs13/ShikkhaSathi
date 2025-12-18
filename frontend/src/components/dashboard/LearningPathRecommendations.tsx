@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LearningPath, RecommendedTopic, StudentProgress } from '../../types/dashboard';
+import { RecommendedTopic, StudentProgress } from '../../types/dashboard';
 
 interface LearningPathRecommendationsProps {
   studentProgress: StudentProgress;

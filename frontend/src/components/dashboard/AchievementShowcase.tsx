@@ -23,23 +23,23 @@ const AchievementShowcase: React.FC<AchievementShowcaseProps> = ({
   };
 
   // Sample achievement data with categories
-  const categorizedAchievements = achievements.map(achievement => ({
-    ...achievement,
-    category: achievement.name.toLowerCase().includes('streak') ? 'streak' :
+  const categorizedAchievements = achievements.map(achievement => {
+    const category = achievement.name.toLowerCase().includes('streak') ? 'streak' :
               achievement.name.toLowerCase().includes('quiz') ? 'quiz' :
               achievement.name.toLowerCase().includes('friend') || achievement.name.toLowerCase().includes('help') ? 'social' :
               achievement.name.toLowerCase().includes('level') || achievement.name.toLowerCase().includes('xp') ? 'milestone' :
-              'learning'
-  }));
+              'learning';
+    return { ...achievement, category };
+  });
 
   const filteredAchievements = selectedCategory === 'all' 
     ? categorizedAchievements 
-    : categorizedAchievements.filter(a => a.category === selectedCategory);
+    : categorizedAchievements.filter(a => (a as any).category === selectedCategory);
 
   const unlockedAchievements = filteredAchievements.filter(a => a.unlockedAt);
   const lockedAchievements = filteredAchievements.filter(a => !a.unlockedAt);
 
-  const getAchievementIcon = (achievement: Achievement) => {
+  const getAchievementIcon = (achievement: Achievement & { category?: string }) => {
     if (achievement.icon) return achievement.icon;
     
     // Default icons based on category

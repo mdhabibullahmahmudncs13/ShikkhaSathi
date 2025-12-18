@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import DashboardLayout from '../components/dashboard/DashboardLayout';
 import CircularProgress from '../components/dashboard/CircularProgress';
 import XPProgressBar from '../components/dashboard/XPProgressBar';
@@ -10,7 +10,7 @@ import { StudentProgress, Notification } from '../types/dashboard';
 
 const StudentDashboard: React.FC = () => {
   // Mock data - in production, this would come from API
-  const [studentProgress, setStudentProgress] = useState<StudentProgress>({
+  const [studentProgress] = useState<StudentProgress>({
     userId: '123e4567-e89b-12d3-a456-426614174000',
     totalXP: 2450,
     currentLevel: 5,
