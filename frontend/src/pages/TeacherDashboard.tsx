@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { TeacherDashboardLayout } from '../components/teacher/TeacherDashboardLayout';
+import { AnalyticsDashboard } from '../components/teacher/AnalyticsDashboard';
 import { StudentRoster } from '../components/teacher/StudentRoster';
 import { NotificationCenter } from '../components/teacher/NotificationCenter';
 import { 
   TeacherDashboardData, 
-  ClassOverview, 
   TeacherNotification,
   StudentSummary 
 } from '../types/teacher';
@@ -13,7 +13,6 @@ import {
   BarChart3, 
   TrendingUp, 
   Clock,
-  Award,
   AlertTriangle
 } from 'lucide-react';
 
@@ -372,11 +371,12 @@ export const TeacherDashboard: React.FC = () => {
           />
         );
       case 'analytics':
+        const selectedClassData = teacherData.classes.find(c => c.id === selectedClass);
         return (
-          <div className="bg-white rounded-lg shadow-sm border p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Analytics Dashboard</h2>
-            <p className="text-gray-600">Analytics components will be implemented in the next subtask.</p>
-          </div>
+          <AnalyticsDashboard
+            classId={selectedClass || teacherData.classes[0]?.id || 'default'}
+            className={selectedClassData?.name || teacherData.classes[0]?.name || 'Default Class'}
+          />
         );
       default:
         return renderOverview();

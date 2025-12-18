@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   User, 
   TrendingUp, 
@@ -9,23 +9,95 @@ import {
   AlertTriangle,
   CheckCircle,
   BookOpen,
-  BarChart3,
   Calendar,
   MessageCircle,
-  Mail,
-  Phone
+  Mail
 } from 'lucide-react';
-import { StudentSummary, WeakArea, InterventionRecommendation } from '../../types/teacher';
+import { StudentSummary, InterventionRecommendation } from '../../types/teacher';
+import { useTeacherAnalytics } from '../../hooks/useTeacherAnalytics';
 
 interface StudentAnalyticsProps {
   student: StudentSummary;
   classId: string;
-  onContactStudent: (studentId: string, method: 'email' | 'message') => void;
-  onAssignIntervention: (studentId: string, intervention: InterventionRecommendation) => void;
+  onContactStudent?: (studentId: string, method: 'email' | 'message') => void;
+  onAssignIntervention?: (studentId: string, intervention: InterventionRecommendation) => void;
 }
 
-// Mock detailed analytics data - in real app this would come from API
-const mockStudentAnalytics = {
+export const StudentAnalytics: React.FC<StudentAnalyticsProps> = ({
+  student,
+  classId,
+  onContactStudent,
+  onAssignIntervention
+}) => {
+  const [selectedTimeRange, setSelectedTimeRange] = useState<'week' | 'month' | 'quarter'>('month');
+  const [showInterventions, setShowInterventions] = useState(false);
+
+  const {
+    studentAnalytics,
+    loading,
+    error,
+    loadStudentAnalytics,
+    contactStudent,
+    assignIntervention,
+    clearError
+  } = useTeacherAnalytics(classId, false);
+
+  // Load student analytics when component mounts or time range changes
+  useEffect(() => {
+    loadStudentAnalytics(student.id, selectedTimeRange);
+  }, [student.id, selectedTimeRange, loadStudentAnalytics]);
+
+  const handleContactStudent = async (method: 'email' | 'message') => {
+    try {
+      await contactStudent(student.id, method);
+      if (onContactStudent) {
+        onContactStudent(student.id, method);
+      }
+    } catch (error) {
+      console.error('Failed to contact student:', error);
+    }
+  };
+
+  const handleAssignIntervention = async (intervention: InterventionRecommendation) => {
+    try {
+      await assignIntervention(student.id, intervention);
+      if (onAssignIntervention) {
+        onAssignIntervention(student.id, intervention);
+      }
+    } catch (error) {
+      console.error('Failed to assign intervention:', error);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <span className="ml-2 text-gray-600">Loading student analytics...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+        <div className="flex items-center">
+          <AlertTriangle className="h-5 w-5 text-red-600 mr-2" />
+          <h3 className="text-red-800 font-medium">Error Loading Student Analytics</h3>
+        </div>
+        <p className="text-red-700 mt-2">{error}</p>
+        <button
+          onClick={clearError}
+          className="mt-3 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  // Use real analytics data if available, otherwise fall back to mock data
+  const analytics = studentAnalytics || {
   performanceHistory: [
     { date: '2024-12-01', score: 75, timeSpent: 45 },
     { date: '2024-12-02', score: 78, timeSpent: 52 },
@@ -53,7 +125,7 @@ const mockStudentAnalytics = {
       id: 'int-1',
       studentId: 'student-1',
       studentName: 'রাহুল আহমেদ',
-      type: 'additional_practice',
+      type: 'additional_practice' as const,
       priority: 'medium',
       description: 'Student struggles with higher-order thinking skills (Bloom levels 5-6)',
       suggestedActions: [
@@ -75,16 +147,7 @@ const mockStudentAnalytics = {
   ]
 };
 
-export const StudentAnalytics: React.FC<StudentAnalyticsProps> = ({
-  student,
-  classId,
-  onContactStudent,
-  onAssignIntervention
-}) => {
-  const [selectedTimeRange, setSelectedTimeRange] = useState<'week' | 'month' | 'quarter'>('month');
-  const [showInterventions, setShowInterventions] = useState(false);
 
-  const analytics = mockStudentAnalytics;
 
   const getRiskLevelColor = (riskLevel: string) => {
     switch (riskLevel) {
@@ -145,14 +208,14 @@ export const StudentAnalytics: React.FC<StudentAnalyticsProps> = ({
           
           <div className="flex items-center space-x-2">
             <button
-              onClick={() => onContactStudent(student.id, 'message')}
+              onClick={() => handleContactStudent('message')}
               className="flex items-center px-3 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
             >
               <MessageCircle className="h-4 w-4 mr-2" />
               Message
             </button>
             <button
-              onClick={() => onContactStudent(student.id, 'email')}
+              onClick={() => handleContactStudent('email')}
               className="flex items-center px-3 py-2 text-sm border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
             >
               <Mail className="h-4 w-4 mr-2" />
@@ -405,7 +468,7 @@ export const StudentAnalytics: React.FC<StudentAnalyticsProps> = ({
                     </div>
                   </div>
                   <button
-                    onClick={() => onAssignIntervention(student.id, intervention)}
+                    onClick={() => handleAssignIntervention(intervention)}
                     className="px-3 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
                   >
                     Assign

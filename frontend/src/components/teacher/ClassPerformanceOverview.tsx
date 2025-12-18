@@ -1,33 +1,83 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   BarChart3, 
-  TrendingUp, 
-  TrendingDown, 
   Users, 
   Clock, 
   Target,
   AlertTriangle,
-  CheckCircle,
-  Calendar,
-  Filter
+  CheckCircle
 } from 'lucide-react';
-import { ClassPerformanceMetrics, SubjectPerformance, WeaknessPattern } from '../../types/teacher';
+import { ClassPerformanceMetrics } from '../../types/teacher';
+import { useTeacherAnalytics } from '../../hooks/useTeacherAnalytics';
 
 interface ClassPerformanceOverviewProps {
   classId: string;
   className: string;
-  metrics: ClassPerformanceMetrics;
   onDrillDown: (subject: string, topic?: string) => void;
 }
 
 export const ClassPerformanceOverview: React.FC<ClassPerformanceOverviewProps> = ({
   classId,
   className,
-  metrics,
   onDrillDown
 }) => {
   const [selectedTimeRange, setSelectedTimeRange] = useState<'week' | 'month' | 'quarter'>('month');
   const [selectedSubject, setSelectedSubject] = useState<string>('all');
+  
+  const {
+    classMetrics,
+    loading,
+    error,
+    loadClassMetrics,
+    clearError
+  } = useTeacherAnalytics(classId, false);
+
+  // Load metrics when component mounts or time range changes
+  useEffect(() => {
+    loadClassMetrics(classId, selectedTimeRange);
+  }, [classId, selectedTimeRange, loadClassMetrics]);
+
+  // Handle time range change
+  const handleTimeRangeChange = (newTimeRange: 'week' | 'month' | 'quarter') => {
+    setSelectedTimeRange(newTimeRange);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <span className="ml-2 text-gray-600">Loading analytics...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+        <div className="flex items-center">
+          <AlertTriangle className="h-5 w-5 text-red-600 mr-2" />
+          <h3 className="text-red-800 font-medium">Error Loading Analytics</h3>
+        </div>
+        <p className="text-red-700 mt-2">{error}</p>
+        <button
+          onClick={clearError}
+          className="mt-3 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  if (!classMetrics) {
+    return (
+      <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
+        <p className="text-gray-600">No analytics data available for this class.</p>
+      </div>
+    );
+  }
+
+  const metrics = classMetrics;
 
   const getPerformanceColor = (score: number) => {
     if (score >= 80) return 'text-green-600 bg-green-100';
@@ -65,7 +115,7 @@ export const ClassPerformanceOverview: React.FC<ClassPerformanceOverviewProps> =
           <div className="flex items-center space-x-4">
             <select
               value={selectedTimeRange}
-              onChange={(e) => setSelectedTimeRange(e.target.value as any)}
+              onChange={(e) => handleTimeRangeChange(e.target.value as 'week' | 'month' | 'quarter')}
               className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
             >
               <option value="week">Last Week</option>
