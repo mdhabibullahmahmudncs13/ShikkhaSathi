@@ -346,7 +346,7 @@
   - **Property 12: Offline-Online Data Synchronization**
   - **Validates: Requirements 4.3**
 
-- [ ] 10.7 Create content download system
+- [x] 10.7 Create content download system
   - Build subject/topic selection interface for downloads
   - Implement progressive download with progress tracking
   - Create download queue management
@@ -354,7 +354,7 @@
   - Build download verification and integrity checks
   - _Requirements: 4.4_
 
-- [ ] 10.8 Write property test for content download
+- [x] 10.8 Write property test for content download
   - **Property 13: Content Download Functionality**
   - **Validates: Requirements 4.4**
 

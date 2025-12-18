@@ -265,48 +265,6 @@ describe('Content Download System Property Tests', () => {
       await expect(
         contentDownloadService.getAvailableContent(selection)
       ).rejects.toThrow('Failed to fetch available content: Not Found');
-          }
-        ),
-        { numRuns: 5 }
-      );
-    });
-  });
-
-  describe('Error Handling', () => {
-    it('should handle API errors gracefully', async () => {
-      const selection: ContentSelection = {
-        subject: 'Mathematics',
-        grade: 8,
-        language: 'bangla'
-      };
-
-      // Mock API error
-      mockFetch.mockRejectedValue(new Error('Network error'));
-
-      // Should throw error but not crash
-      await expect(
-        contentDownloadService.getAvailableContent(selection)
-      ).rejects.toThrow('Network error');
-    });
-
-    it('should handle invalid API responses', async () => {
-      const selection: ContentSelection = {
-        subject: 'Mathematics',
-        grade: 8,
-        language: 'bangla'
-      };
-
-      // Mock invalid response
-      mockFetch.mockResolvedValue({
-        ok: false,
-        status: 404,
-        statusText: 'Not Found'
-      });
-
-      // Should throw appropriate error
-      await expect(
-        contentDownloadService.getAvailableContent(selection)
-      ).rejects.toThrow('Failed to fetch available content: Not Found');
     });
   });
 });
