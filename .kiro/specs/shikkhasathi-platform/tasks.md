@@ -370,7 +370,7 @@
   - Create intervention recommendation system
   - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5_
 
-- [-] 11.1 Create teacher dashboard layout
+- [x] 11.1 Create teacher dashboard layout
   - Build teacher-specific navigation and layout
   - Create class overview with student roster
   - Implement student selection and filtering
@@ -378,7 +378,7 @@
   - Build notification center for teacher alerts
   - _Requirements: 6.1, 6.5_
 
-- [ ] 11.2 Implement analytics and performance tracking
+- [-] 11.2 Implement analytics and performance tracking
   - Create class performance overview charts
   - Build individual student analytics displays
   - Implement weakness pattern identification algorithms
