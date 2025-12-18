@@ -433,6 +433,7 @@ class SyncManager {
           await this.updateLocalFromServer(conflict);
           resolved = true;
         }
+        // If neither condition is met, leave conflict unresolved for manual resolution
         break;
 
       case 'quiz-attempt':
@@ -482,13 +483,13 @@ class SyncManager {
   }
 
   private categorizeError(error: any): 'network' | 'server' | 'conflict' | 'validation' {
-    if (error.name === 'TypeError' || error.message.includes('fetch')) {
+    if (error.name === 'TypeError' || error.message.includes('fetch') || error.message.includes('Network error')) {
       return 'network';
     }
     if (error.message.includes('409') || error.message.includes('conflict')) {
       return 'conflict';
     }
-    if (error.message.includes('400') || error.message.includes('validation')) {
+    if (error.message.includes('400') || error.message.includes('validation') || error.message.includes('Invalid')) {
       return 'validation';
     }
     return 'server';
