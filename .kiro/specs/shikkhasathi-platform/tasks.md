@@ -310,7 +310,7 @@
   - Add offline indicators and functionality limits
   - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5_
 
-- [ ] 10.1 Set up service worker and caching
+- [-] 10.1 Set up service worker and caching
   - Configure Workbox for service worker generation
   - Implement cache-first strategy for static assets
   - Build network-first with fallback for dynamic content
