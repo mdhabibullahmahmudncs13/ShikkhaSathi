@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import StudentDashboard from './pages/StudentDashboard'
+import QuizPage from './pages/QuizPage'
 
 // Placeholder components for different routes
 const Dashboard = () => <StudentDashboard />
@@ -8,13 +9,6 @@ const Chat = () => (
   <div className="p-8">
     <h1 className="text-3xl font-bold text-gray-900">AI Tutor Chat</h1>
     <p className="mt-4 text-gray-600">Chat with your AI tutor here</p>
-  </div>
-)
-
-const Quiz = () => (
-  <div className="p-8">
-    <h1 className="text-3xl font-bold text-gray-900">Adaptive Quiz</h1>
-    <p className="mt-4 text-gray-600">Take adaptive quizzes here</p>
   </div>
 )
 
@@ -49,7 +43,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/chat" element={<Chat />} />
-            <Route path="/quiz" element={<Quiz />} />
+            <Route path="/quiz" element={<QuizPage />} />
             <Route path="/login" element={<Login />} />
           </Routes>
         </main>
