@@ -318,3 +318,30 @@ async def get_bloom_level_analysis(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get Bloom level analysis: {str(e)}"
         )
+
+
+@router.get("/detailed-engagement-analysis")
+async def get_detailed_engagement_analysis(
+    class_id: Optional[str] = Query(None, description="Class ID to filter by"),
+    time_range: str = Query("month", regex="^(week|month|quarter)$", description="Time range for analysis"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_teacher)
+) -> Any:
+    """
+    Get detailed engagement analysis with advanced metrics
+    
+    **Validates: Requirements 6.1, 6.2, 6.3**
+    """
+    try:
+        analytics_service = TeacherAnalyticsService(db)
+        analysis = analytics_service.get_detailed_engagement_analysis(
+            teacher_id=str(current_user.id),
+            class_id=class_id,
+            time_range=time_range
+        )
+        return analysis
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get detailed engagement analysis: {str(e)}"
+        )

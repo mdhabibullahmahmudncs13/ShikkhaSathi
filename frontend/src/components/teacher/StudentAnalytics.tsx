@@ -161,8 +161,8 @@ export const StudentAnalytics: React.FC<StudentAnalyticsProps> = ({
   const getPerformanceTrend = () => {
     const recent = analytics.performanceHistory.slice(-3);
     const earlier = analytics.performanceHistory.slice(-6, -3);
-    const recentAvg = recent.reduce((sum, item) => sum + item.score, 0) / recent.length;
-    const earlierAvg = earlier.reduce((sum, item) => sum + item.score, 0) / earlier.length;
+    const recentAvg = recent.reduce((sum: number, item: any) => sum + item.score, 0) / recent.length;
+    const earlierAvg = earlier.reduce((sum: number, item: any) => sum + item.score, 0) / earlier.length;
     
     if (recentAvg > earlierAvg + 2) return { trend: 'up', color: 'text-green-600' };
     if (recentAvg < earlierAvg - 2) return { trend: 'down', color: 'text-red-600' };
@@ -298,7 +298,7 @@ export const StudentAnalytics: React.FC<StudentAnalyticsProps> = ({
         </div>
         
         <div className="h-64 flex items-end space-x-2">
-          {analytics.performanceHistory.map((item, index) => (
+          {analytics.performanceHistory.map((item: any, index: number) => (
             <div key={index} className="flex-1 flex flex-col items-center">
               <div
                 className="w-full bg-blue-500 rounded-t"
@@ -317,7 +317,7 @@ export const StudentAnalytics: React.FC<StudentAnalyticsProps> = ({
       <div className="bg-white rounded-lg shadow-sm border p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Subject Performance</h3>
         <div className="space-y-4">
-          {analytics.subjectBreakdown.map((subject) => (
+          {analytics.subjectBreakdown.map((subject: any) => (
             <div key={subject.subject} className="border rounded-lg p-4">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center">
@@ -376,6 +376,8 @@ export const StudentAnalytics: React.FC<StudentAnalyticsProps> = ({
               level6: 'Create'
             };
             
+            const numericPercentage = Number(percentage);
+            
             return (
               <div key={level} className="flex items-center">
                 <div className="w-20 text-sm text-gray-600">
@@ -387,13 +389,13 @@ export const StudentAnalytics: React.FC<StudentAnalyticsProps> = ({
                 <div className="flex-1 mx-4">
                   <div className="w-full bg-gray-200 rounded-full h-3">
                     <div
-                      className={`h-3 rounded-full ${getBloomLevelColor(percentage)}`}
-                      style={{ width: `${percentage}%` }}
+                      className={`h-3 rounded-full ${getBloomLevelColor(numericPercentage)}`}
+                      style={{ width: `${numericPercentage}%` }}
                     />
                   </div>
                 </div>
                 <div className="w-12 text-sm font-medium text-gray-900">
-                  {percentage}%
+                  {numericPercentage}%
                 </div>
               </div>
             );
@@ -449,7 +451,7 @@ export const StudentAnalytics: React.FC<StudentAnalyticsProps> = ({
         
         {showInterventions && (
           <div className="space-y-4">
-            {analytics.interventionRecommendations.map((intervention) => (
+            {analytics.interventionRecommendations.map((intervention: any) => (
               <div key={intervention.id} className="border rounded-lg p-4">
                 <div className="flex items-start justify-between mb-3">
                   <div>
@@ -478,7 +480,7 @@ export const StudentAnalytics: React.FC<StudentAnalyticsProps> = ({
                 <div className="mb-3">
                   <p className="text-sm font-medium text-gray-700 mb-2">Suggested Actions:</p>
                   <ul className="text-sm text-gray-600 space-y-1">
-                    {intervention.suggestedActions.map((action, index) => (
+                    {intervention.suggestedActions.map((action: string, index: number) => (
                       <li key={index} className="flex items-start">
                         <span className="text-blue-500 mr-2">•</span>
                         {action}
@@ -491,7 +493,7 @@ export const StudentAnalytics: React.FC<StudentAnalyticsProps> = ({
                   <div>
                     <p className="text-sm font-medium text-gray-700 mb-2">Recommended Resources:</p>
                     <div className="space-y-2">
-                      {intervention.resources.map((resource, index) => (
+                      {intervention.resources.map((resource: any, index: number) => (
                         <div key={index} className="flex items-center p-2 bg-gray-50 rounded">
                           <BookOpen className="h-4 w-4 text-gray-600 mr-2" />
                           <div className="flex-1">

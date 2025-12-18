@@ -412,13 +412,23 @@ class TeacherAnalyticsService:
         start_date: datetime,
         end_date: datetime
     ) -> Dict[str, Any]:
-        """Calculate time-based analytics"""
+        """Calculate comprehensive time-based analytics"""
         
         # Average study time
         total_time = sum(progress.time_spent_minutes for progress in progress_data)
         avg_study_time = total_time / len(progress_data) if progress_data else 0
         
-        # Weekly trends (mock data for now)
+        # Calculate peak activity hours from quiz attempts
+        peak_hours = defaultdict(int)
+        for attempt in quiz_attempts:
+            hour = attempt.completed_at.hour
+            peak_hours[hour] += 1
+        
+        # Get top 5 peak hours
+        sorted_hours = sorted(peak_hours.items(), key=lambda x: x[1], reverse=True)
+        peak_activity_hours = [hour for hour, count in sorted_hours[:5]]
+        
+        # Weekly trends with real data
         weekly_trends = []
         current_date = start_date
         while current_date < end_date:
@@ -429,38 +439,74 @@ class TeacherAnalyticsService:
             weekly_trends.append({
                 "week": f"Week of {current_date.strftime('%m/%d')}",
                 "totalTime": sum(p.time_spent_minutes for p in week_progress),
-                "averageScore": statistics.mean([(a.score / a.max_score) * 100 for a in week_attempts]) if week_attempts else 0,
-                "activeStudents": len(set(a.user_id for a in week_attempts) | set(p.user_id for p in week_progress))
+                "averageScore": round(statistics.mean([(a.score / a.max_score) * 100 for a in week_attempts]), 1) if week_attempts else 0,
+                "activeStudents": len(set(a.user_id for a in week_attempts) | set(p.user_id for p in week_progress)),
+                "completedQuizzes": len(week_attempts),
+                "engagementRate": len(set(a.user_id for a in week_attempts) | set(p.user_id for p in week_progress))
             })
             current_date = week_end
         
-        # Monthly comparison (mock data)
+        # Calculate previous month data for comparison
+        prev_start_date = start_date - timedelta(days=30)
+        prev_end_date = start_date
+        
+        prev_quiz_attempts = self.db.query(QuizAttempt).filter(
+            and_(
+                QuizAttempt.completed_at >= prev_start_date,
+                QuizAttempt.completed_at < prev_end_date
+            )
+        ).all()
+        
+        prev_progress_data = self.db.query(StudentProgress).filter(
+            and_(
+                StudentProgress.last_accessed >= prev_start_date,
+                StudentProgress.last_accessed < prev_end_date
+            )
+        ).all()
+        
+        # Current month data
         current_month_data = {
             "totalTime": total_time,
-            "averageScore": statistics.mean([(a.score / a.max_score) * 100 for a in quiz_attempts]) if quiz_attempts else 0,
+            "averageScore": round(statistics.mean([(a.score / a.max_score) * 100 for a in quiz_attempts]), 1) if quiz_attempts else 0,
             "completedQuizzes": len(quiz_attempts),
             "activeStudents": len(set(a.user_id for a in quiz_attempts) | set(p.user_id for p in progress_data))
         }
         
+        # Previous month data
+        prev_total_time = sum(p.time_spent_minutes for p in prev_progress_data)
         previous_month_data = {
-            "totalTime": int(total_time * 0.9),  # Mock 10% less
-            "averageScore": current_month_data["averageScore"] - 2,  # Mock 2% less
-            "completedQuizzes": int(len(quiz_attempts) * 0.85),  # Mock 15% less
-            "activeStudents": int(current_month_data["activeStudents"] * 0.95)  # Mock 5% less
+            "totalTime": prev_total_time,
+            "averageScore": round(statistics.mean([(a.score / a.max_score) * 100 for a in prev_quiz_attempts]), 1) if prev_quiz_attempts else 0,
+            "completedQuizzes": len(prev_quiz_attempts),
+            "activeStudents": len(set(a.user_id for a in prev_quiz_attempts) | set(p.user_id for p in prev_progress_data))
         }
         
-        growth_rate = ((current_month_data["totalTime"] - previous_month_data["totalTime"]) / 
+        # Calculate growth rates
+        time_growth = ((current_month_data["totalTime"] - previous_month_data["totalTime"]) / 
                       previous_month_data["totalTime"] * 100) if previous_month_data["totalTime"] > 0 else 0
+        
+        score_growth = current_month_data["averageScore"] - previous_month_data["averageScore"]
+        
+        quiz_growth = ((current_month_data["completedQuizzes"] - previous_month_data["completedQuizzes"]) / 
+                      previous_month_data["completedQuizzes"] * 100) if previous_month_data["completedQuizzes"] > 0 else 0
+        
+        student_growth = ((current_month_data["activeStudents"] - previous_month_data["activeStudents"]) / 
+                         previous_month_data["activeStudents"] * 100) if previous_month_data["activeStudents"] > 0 else 0
         
         return {
             "averageStudyTime": round(avg_study_time, 1),
-            "peakActivityHours": [14, 15, 16, 19, 20],  # Mock peak hours
+            "peakActivityHours": peak_activity_hours,
             "weeklyTrends": weekly_trends,
             "monthlyComparison": {
                 "currentMonth": current_month_data,
                 "previousMonth": previous_month_data,
-                "growthRate": round(growth_rate, 1)
-            }
+                "growthRate": round(time_growth, 1),
+                "scoreGrowth": round(score_growth, 1),
+                "quizGrowth": round(quiz_growth, 1),
+                "studentGrowth": round(student_growth, 1)
+            },
+            "studyTimeDistribution": self._calculate_study_time_distribution(progress_data),
+            "performanceCorrelation": self._calculate_time_performance_correlation(progress_data, quiz_attempts)
         }
     
     def _generate_activity_heatmap(
@@ -846,5 +892,435 @@ class TeacherAnalyticsService:
             recommendations.append(
                 f"Share successful strategies from {best_class['className']} with other classes"
             )
+        
+        return recommendations
+    
+    def _calculate_study_time_distribution(self, progress_data: List[StudentProgress]) -> Dict[str, int]:
+        """Calculate distribution of study time across different ranges"""
+        distribution = {
+            "0-30min": 0,
+            "30-60min": 0,
+            "60-120min": 0,
+            "120min+": 0
+        }
+        
+        for progress in progress_data:
+            time_spent = progress.time_spent_minutes
+            if time_spent <= 30:
+                distribution["0-30min"] += 1
+            elif time_spent <= 60:
+                distribution["30-60min"] += 1
+            elif time_spent <= 120:
+                distribution["60-120min"] += 1
+            else:
+                distribution["120min+"] += 1
+        
+        return distribution
+    
+    def _calculate_time_performance_correlation(
+        self, 
+        progress_data: List[StudentProgress], 
+        quiz_attempts: List[QuizAttempt]
+    ) -> Dict[str, float]:
+        """Calculate correlation between time spent and performance"""
+        
+        # Group by user to calculate correlation
+        user_data = defaultdict(lambda: {"time": 0, "scores": []})
+        
+        for progress in progress_data:
+            user_data[progress.user_id]["time"] += progress.time_spent_minutes
+        
+        for attempt in quiz_attempts:
+            score_percentage = (attempt.score / attempt.max_score) * 100
+            user_data[attempt.user_id]["scores"].append(score_percentage)
+        
+        # Calculate average scores per user
+        time_values = []
+        score_values = []
+        
+        for user_id, data in user_data.items():
+            if data["scores"] and data["time"] > 0:
+                time_values.append(data["time"])
+                score_values.append(statistics.mean(data["scores"]))
+        
+        # Simple correlation calculation
+        if len(time_values) < 2:
+            return {"correlation": 0.0, "strength": "insufficient_data"}
+        
+        # Calculate Pearson correlation coefficient
+        n = len(time_values)
+        sum_time = sum(time_values)
+        sum_score = sum(score_values)
+        sum_time_sq = sum(t * t for t in time_values)
+        sum_score_sq = sum(s * s for s in score_values)
+        sum_time_score = sum(t * s for t, s in zip(time_values, score_values))
+        
+        numerator = n * sum_time_score - sum_time * sum_score
+        denominator = ((n * sum_time_sq - sum_time * sum_time) * (n * sum_score_sq - sum_score * sum_score)) ** 0.5
+        
+        correlation = numerator / denominator if denominator != 0 else 0
+        
+        # Determine correlation strength
+        abs_corr = abs(correlation)
+        if abs_corr >= 0.7:
+            strength = "strong"
+        elif abs_corr >= 0.4:
+            strength = "moderate"
+        elif abs_corr >= 0.2:
+            strength = "weak"
+        else:
+            strength = "negligible"
+        
+        return {
+            "correlation": round(correlation, 3),
+            "strength": strength,
+            "sample_size": n
+        }
+    
+    def get_detailed_engagement_analysis(
+        self, 
+        teacher_id: str, 
+        class_id: Optional[str] = None,
+        time_range: str = "month"
+    ) -> Dict[str, Any]:
+        """Get detailed engagement analysis with advanced metrics"""
+        
+        # Get base metrics
+        base_metrics = self.get_class_performance_metrics(teacher_id, class_id, time_range)
+        
+        # Calculate date range
+        end_date = datetime.utcnow()
+        if time_range == "week":
+            start_date = end_date - timedelta(days=7)
+        elif time_range == "month":
+            start_date = end_date - timedelta(days=30)
+        elif time_range == "quarter":
+            start_date = end_date - timedelta(days=90)
+        else:
+            start_date = end_date - timedelta(days=30)
+        
+        # Get students in the class
+        students = self.db.query(User).filter(User.role == UserRole.STUDENT).all()
+        student_ids = [str(student.id) for student in students]
+        
+        if not student_ids:
+            return {"engagement_analysis": {}, "retention_metrics": {}, "activity_patterns": {}}
+        
+        # Get detailed activity data
+        quiz_attempts = self.db.query(QuizAttempt).filter(
+            and_(
+                QuizAttempt.user_id.in_(student_ids),
+                QuizAttempt.completed_at >= start_date,
+                QuizAttempt.completed_at <= end_date
+            )
+        ).all()
+        
+        progress_data = self.db.query(StudentProgress).filter(
+            and_(
+                StudentProgress.user_id.in_(student_ids),
+                StudentProgress.last_accessed >= start_date
+            )
+        ).all()
+        
+        # Calculate engagement metrics
+        engagement_analysis = self._calculate_detailed_engagement_metrics(
+            students, quiz_attempts, progress_data, start_date, end_date
+        )
+        
+        # Calculate retention metrics
+        retention_metrics = self._calculate_retention_metrics(
+            students, quiz_attempts, progress_data, start_date, end_date
+        )
+        
+        # Calculate activity patterns
+        activity_patterns = self._calculate_activity_patterns(
+            quiz_attempts, progress_data, start_date, end_date
+        )
+        
+        return {
+            "engagement_analysis": engagement_analysis,
+            "retention_metrics": retention_metrics,
+            "activity_patterns": activity_patterns,
+            "recommendations": self._generate_engagement_recommendations(
+                engagement_analysis, retention_metrics, activity_patterns
+            )
+        }
+    
+    def _calculate_detailed_engagement_metrics(
+        self,
+        students: List[User],
+        quiz_attempts: List[QuizAttempt],
+        progress_data: List[StudentProgress],
+        start_date: datetime,
+        end_date: datetime
+    ) -> Dict[str, Any]:
+        """Calculate detailed engagement metrics"""
+        
+        total_students = len(students)
+        if total_students == 0:
+            return {}
+        
+        # Daily active users over time
+        daily_activity = defaultdict(set)
+        for attempt in quiz_attempts:
+            date_key = attempt.completed_at.date()
+            daily_activity[date_key].add(attempt.user_id)
+        
+        for progress in progress_data:
+            date_key = progress.last_accessed.date()
+            daily_activity[date_key].add(progress.user_id)
+        
+        # Calculate engagement levels
+        user_activity_counts = defaultdict(int)
+        for attempt in quiz_attempts:
+            user_activity_counts[attempt.user_id] += 1
+        for progress in progress_data:
+            user_activity_counts[progress.user_id] += 1
+        
+        # Categorize users by engagement level
+        highly_engaged = sum(1 for count in user_activity_counts.values() if count >= 10)
+        moderately_engaged = sum(1 for count in user_activity_counts.values() if 5 <= count < 10)
+        low_engaged = sum(1 for count in user_activity_counts.values() if 1 <= count < 5)
+        inactive = total_students - len(user_activity_counts)
+        
+        # Calculate session metrics
+        session_durations = []
+        for attempt in quiz_attempts:
+            if attempt.time_taken_seconds:
+                session_durations.append(attempt.time_taken_seconds / 60)  # Convert to minutes
+        
+        avg_session_duration = statistics.mean(session_durations) if session_durations else 0
+        median_session_duration = statistics.median(session_durations) if session_durations else 0
+        
+        return {
+            "total_students": total_students,
+            "active_students": len(user_activity_counts),
+            "engagement_distribution": {
+                "highly_engaged": highly_engaged,
+                "moderately_engaged": moderately_engaged,
+                "low_engaged": low_engaged,
+                "inactive": inactive
+            },
+            "engagement_percentages": {
+                "highly_engaged": round((highly_engaged / total_students) * 100, 1),
+                "moderately_engaged": round((moderately_engaged / total_students) * 100, 1),
+                "low_engaged": round((low_engaged / total_students) * 100, 1),
+                "inactive": round((inactive / total_students) * 100, 1)
+            },
+            "session_metrics": {
+                "average_duration": round(avg_session_duration, 1),
+                "median_duration": round(median_session_duration, 1),
+                "total_sessions": len(session_durations)
+            },
+            "daily_active_users": {
+                str(date): len(users) for date, users in daily_activity.items()
+            }
+        }
+    
+    def _calculate_retention_metrics(
+        self,
+        students: List[User],
+        quiz_attempts: List[QuizAttempt],
+        progress_data: List[StudentProgress],
+        start_date: datetime,
+        end_date: datetime
+    ) -> Dict[str, Any]:
+        """Calculate student retention metrics"""
+        
+        # Calculate weekly retention
+        weeks = []
+        current_date = start_date
+        while current_date < end_date:
+            week_end = min(current_date + timedelta(days=7), end_date)
+            weeks.append((current_date, week_end))
+            current_date = week_end
+        
+        weekly_retention = []
+        for i, (week_start, week_end) in enumerate(weeks):
+            week_active_users = set()
+            
+            # Get active users for this week
+            for attempt in quiz_attempts:
+                if week_start <= attempt.completed_at < week_end:
+                    week_active_users.add(attempt.user_id)
+            
+            for progress in progress_data:
+                if week_start <= progress.last_accessed < week_end:
+                    week_active_users.add(progress.user_id)
+            
+            # Calculate retention from first week
+            if i == 0:
+                first_week_users = week_active_users
+                retention_rate = 100.0
+            else:
+                if first_week_users:
+                    retained_users = week_active_users.intersection(first_week_users)
+                    retention_rate = (len(retained_users) / len(first_week_users)) * 100
+                else:
+                    retention_rate = 0.0
+            
+            weekly_retention.append({
+                "week": i + 1,
+                "active_users": len(week_active_users),
+                "retention_rate": round(retention_rate, 1)
+            })
+        
+        # Calculate churn risk
+        recent_week = datetime.utcnow() - timedelta(days=7)
+        recent_active = set()
+        
+        for attempt in quiz_attempts:
+            if attempt.completed_at >= recent_week:
+                recent_active.add(attempt.user_id)
+        
+        for progress in progress_data:
+            if progress.last_accessed >= recent_week:
+                recent_active.add(progress.user_id)
+        
+        all_active = set()
+        for attempt in quiz_attempts:
+            all_active.add(attempt.user_id)
+        for progress in progress_data:
+            all_active.add(progress.user_id)
+        
+        at_risk_users = all_active - recent_active
+        churn_risk = (len(at_risk_users) / len(all_active)) * 100 if all_active else 0
+        
+        return {
+            "weekly_retention": weekly_retention,
+            "churn_risk": round(churn_risk, 1),
+            "at_risk_count": len(at_risk_users),
+            "total_active_users": len(all_active)
+        }
+    
+    def _calculate_activity_patterns(
+        self,
+        quiz_attempts: List[QuizAttempt],
+        progress_data: List[StudentProgress],
+        start_date: datetime,
+        end_date: datetime
+    ) -> Dict[str, Any]:
+        """Calculate activity patterns and trends"""
+        
+        # Hourly activity distribution
+        hourly_activity = defaultdict(int)
+        for attempt in quiz_attempts:
+            hour = attempt.completed_at.hour
+            hourly_activity[hour] += 1
+        
+        for progress in progress_data:
+            hour = progress.last_accessed.hour
+            hourly_activity[hour] += 1
+        
+        # Daily activity distribution
+        daily_activity = defaultdict(int)
+        for attempt in quiz_attempts:
+            day = attempt.completed_at.weekday()  # 0 = Monday, 6 = Sunday
+            daily_activity[day] += 1
+        
+        for progress in progress_data:
+            day = progress.last_accessed.weekday()
+            daily_activity[day] += 1
+        
+        # Convert to readable format
+        day_names = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        daily_distribution = {day_names[day]: count for day, count in daily_activity.items()}
+        
+        # Activity intensity over time
+        date_activity = defaultdict(int)
+        for attempt in quiz_attempts:
+            date_key = attempt.completed_at.date()
+            date_activity[date_key] += 1
+        
+        for progress in progress_data:
+            date_key = progress.last_accessed.date()
+            date_activity[date_key] += 1
+        
+        # Calculate trend
+        dates = sorted(date_activity.keys())
+        if len(dates) >= 7:
+            recent_avg = statistics.mean([date_activity[date] for date in dates[-7:]])
+            earlier_avg = statistics.mean([date_activity[date] for date in dates[-14:-7]]) if len(dates) >= 14 else recent_avg
+            trend = "increasing" if recent_avg > earlier_avg else "decreasing" if recent_avg < earlier_avg else "stable"
+        else:
+            trend = "insufficient_data"
+        
+        return {
+            "hourly_distribution": dict(hourly_activity),
+            "daily_distribution": daily_distribution,
+            "peak_hours": sorted(hourly_activity.items(), key=lambda x: x[1], reverse=True)[:3],
+            "peak_days": sorted(daily_distribution.items(), key=lambda x: x[1], reverse=True)[:3],
+            "activity_trend": trend,
+            "total_activities": len(quiz_attempts) + len(progress_data)
+        }
+    
+    def _generate_engagement_recommendations(
+        self,
+        engagement_analysis: Dict[str, Any],
+        retention_metrics: Dict[str, Any],
+        activity_patterns: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
+        """Generate recommendations based on engagement analysis"""
+        
+        recommendations = []
+        
+        # Check for low engagement
+        if engagement_analysis.get("engagement_percentages", {}).get("inactive", 0) > 30:
+            recommendations.append({
+                "type": "engagement",
+                "priority": "high",
+                "title": "High Inactive Student Rate",
+                "description": f"{engagement_analysis['engagement_percentages']['inactive']}% of students are inactive",
+                "actions": [
+                    "Implement re-engagement campaigns",
+                    "Send personalized reminders",
+                    "Offer incentives for participation"
+                ]
+            })
+        
+        # Check for retention issues
+        if retention_metrics.get("churn_risk", 0) > 25:
+            recommendations.append({
+                "type": "retention",
+                "priority": "high",
+                "title": "High Churn Risk",
+                "description": f"{retention_metrics['churn_risk']}% of students are at risk of churning",
+                "actions": [
+                    "Identify at-risk students for intervention",
+                    "Improve onboarding experience",
+                    "Provide additional support resources"
+                ]
+            })
+        
+        # Check for session duration issues
+        avg_duration = engagement_analysis.get("session_metrics", {}).get("average_duration", 0)
+        if avg_duration < 15:  # Less than 15 minutes average
+            recommendations.append({
+                "type": "engagement",
+                "priority": "medium",
+                "title": "Short Session Duration",
+                "description": f"Average session duration is only {avg_duration} minutes",
+                "actions": [
+                    "Create more engaging content",
+                    "Implement progress checkpoints",
+                    "Add interactive elements"
+                ]
+            })
+        
+        # Check for activity pattern insights
+        peak_hours = activity_patterns.get("peak_hours", [])
+        if peak_hours:
+            top_hour = peak_hours[0][0]
+            recommendations.append({
+                "type": "optimization",
+                "priority": "low",
+                "title": "Optimize for Peak Hours",
+                "description": f"Peak activity occurs at {top_hour}:00",
+                "actions": [
+                    f"Schedule live sessions around {top_hour}:00",
+                    "Send notifications during peak hours",
+                    "Release new content during high-activity periods"
+                ]
+            })
         
         return recommendations

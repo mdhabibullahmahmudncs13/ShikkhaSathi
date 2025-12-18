@@ -205,6 +205,80 @@ export class TeacherAnalyticsService {
   }
 
   /**
+   * Get detailed engagement analysis with advanced metrics
+   */
+  async getDetailedEngagementAnalysis(
+    classId?: string,
+    timeRange: 'week' | 'month' | 'quarter' = 'month'
+  ): Promise<any> {
+    const params = new URLSearchParams({ time_range: timeRange });
+    if (classId) {
+      params.append('class_id', classId);
+    }
+
+    const response = await this.fetchWithAuth(
+      `${API_BASE_URL}/detailed-engagement-analysis?${params.toString()}`
+    );
+    
+    return response.json();
+  }
+
+  /**
+   * Get time and performance correlation analysis
+   */
+  async getTimePerformanceCorrelation(
+    classId?: string,
+    timeRange: 'week' | 'month' | 'quarter' = 'month'
+  ): Promise<any> {
+    const metrics = await this.getClassPerformanceMetrics(classId, timeRange);
+    return metrics.timeAnalytics?.performanceCorrelation || {};
+  }
+
+  /**
+   * Get study time distribution analysis
+   */
+  async getStudyTimeDistribution(
+    classId?: string,
+    timeRange: 'week' | 'month' | 'quarter' = 'month'
+  ): Promise<any> {
+    const metrics = await this.getClassPerformanceMetrics(classId, timeRange);
+    return metrics.timeAnalytics?.studyTimeDistribution || {};
+  }
+
+  /**
+   * Get retention and churn analysis
+   */
+  async getRetentionAnalysis(
+    classId?: string,
+    timeRange: 'week' | 'month' | 'quarter' = 'month'
+  ): Promise<any> {
+    const analysis = await this.getDetailedEngagementAnalysis(classId, timeRange);
+    return analysis.retention_metrics || {};
+  }
+
+  /**
+   * Get activity patterns and trends
+   */
+  async getActivityPatterns(
+    classId?: string,
+    timeRange: 'week' | 'month' | 'quarter' = 'month'
+  ): Promise<any> {
+    const analysis = await this.getDetailedEngagementAnalysis(classId, timeRange);
+    return analysis.activity_patterns || {};
+  }
+
+  /**
+   * Mock method to simulate contacting a student
+   */
+  async contactStudent(studentId: string, method: 'email' | 'message'): Promise<void> {
+    // In a real application, this would send an email or message
+    console.log(`Contacting student ${studentId} via ${method}`);
+    
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  }
+
+  /**
    * Mock method to simulate assigning an intervention
    */
   async assignIntervention(

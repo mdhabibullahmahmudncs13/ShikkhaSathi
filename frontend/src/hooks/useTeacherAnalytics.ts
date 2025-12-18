@@ -19,6 +19,9 @@ interface UseTeacherAnalyticsState {
   weaknessPatterns: WeaknessPattern[];
   engagementMetrics: any | null;
   performanceTrends: any | null;
+  engagementAnalysis: any | null;
+  retentionMetrics: any | null;
+  activityPatterns: any | null;
   loading: boolean;
   error: string | null;
 }
@@ -30,6 +33,9 @@ interface UseTeacherAnalyticsActions {
   loadWeaknessPatterns: (classId?: string, timeRange?: 'week' | 'month' | 'quarter') => Promise<void>;
   loadEngagementMetrics: (classId?: string, timeRange?: 'week' | 'month' | 'quarter') => Promise<void>;
   loadPerformanceTrends: (classId?: string, subject?: string) => Promise<void>;
+  loadDetailedEngagementAnalysis: (classId?: string, timeRange?: 'week' | 'month' | 'quarter') => Promise<void>;
+  loadRetentionAnalysis: (classId?: string, timeRange?: 'week' | 'month' | 'quarter') => Promise<void>;
+  loadActivityPatterns: (classId?: string, timeRange?: 'week' | 'month' | 'quarter') => Promise<void>;
   contactStudent: (studentId: string, method: 'email' | 'message') => Promise<void>;
   assignIntervention: (studentId: string, intervention: InterventionRecommendation) => Promise<void>;
   clearError: () => void;
@@ -47,6 +53,9 @@ export function useTeacherAnalytics(
     weaknessPatterns: [],
     engagementMetrics: null,
     performanceTrends: null,
+    engagementAnalysis: null,
+    retentionMetrics: null,
+    activityPatterns: null,
     loading: false,
     error: null,
   });
@@ -218,6 +227,66 @@ export function useTeacherAnalytics(
     }
   }, [setLoading, clearError, setError]);
 
+  const loadDetailedEngagementAnalysis = useCallback(async (
+    classId?: string,
+    timeRange: 'week' | 'month' | 'quarter' = 'month'
+  ) => {
+    try {
+      setLoading(true);
+      clearError();
+      
+      const analysis = await teacherAnalyticsService.getDetailedEngagementAnalysis(classId, timeRange);
+      
+      setState(prev => ({
+        ...prev,
+        engagementAnalysis: analysis,
+        loading: false
+      }));
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to load engagement analysis');
+    }
+  }, [setLoading, clearError, setError]);
+
+  const loadRetentionAnalysis = useCallback(async (
+    classId?: string,
+    timeRange: 'week' | 'month' | 'quarter' = 'month'
+  ) => {
+    try {
+      setLoading(true);
+      clearError();
+      
+      const retention = await teacherAnalyticsService.getRetentionAnalysis(classId, timeRange);
+      
+      setState(prev => ({
+        ...prev,
+        retentionMetrics: retention,
+        loading: false
+      }));
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to load retention analysis');
+    }
+  }, [setLoading, clearError, setError]);
+
+  const loadActivityPatterns = useCallback(async (
+    classId?: string,
+    timeRange: 'week' | 'month' | 'quarter' = 'month'
+  ) => {
+    try {
+      setLoading(true);
+      clearError();
+      
+      const patterns = await teacherAnalyticsService.getActivityPatterns(classId, timeRange);
+      
+      setState(prev => ({
+        ...prev,
+        activityPatterns: patterns,
+        loading: false
+      }));
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to load activity patterns');
+    }
+  }, [setLoading, clearError, setError]);
+
   const refresh = useCallback(async () => {
     if (currentClassId || autoLoad) {
       await Promise.all([
@@ -257,6 +326,9 @@ export function useTeacherAnalytics(
     loadWeaknessPatterns,
     loadEngagementMetrics,
     loadPerformanceTrends,
+    loadDetailedEngagementAnalysis,
+    loadRetentionAnalysis,
+    loadActivityPatterns,
     contactStudent,
     assignIntervention,
     clearError,
