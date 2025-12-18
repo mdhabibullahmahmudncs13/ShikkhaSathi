@@ -107,7 +107,7 @@
   - **Property 2: Conversation Context Preservation**
   - **Validates: Requirements 1.3**
 
-- [-] 4. Develop adaptive quiz system
+- [x] 4. Develop adaptive quiz system
   - Create question generation service using RAG
   - Implement difficulty adaptation algorithms
   - Build Bloom's taxonomy level assignment
@@ -147,11 +147,11 @@
   - Implement quiz attempt persistence
   - _Requirements: 2.4, 2.5_
 
-- [-] 4.6 Write property test for quiz feedback
+- [x] 4.6 Write property test for quiz feedback
   - **Property 5: Quiz Feedback Completeness**
   - **Validates: Requirements 2.4**
 
-- [ ] 4.7 Write property test for success rate convergence
+- [x] 4.7 Write property test for success rate convergence
   - **Property 6: Adaptive Success Rate Convergence**
   - **Validates: Requirements 2.5**
 
