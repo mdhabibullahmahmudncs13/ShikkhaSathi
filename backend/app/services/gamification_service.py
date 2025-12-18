@@ -110,7 +110,22 @@ class GamificationService:
         
         # Update last activity date for streak tracking
         today = date.today()
-        gamification.last_activity_date = today
+        
+        # Update streak if this is a new day of activity
+        if gamification.last_activity_date != today:
+            from app.services.streak_service import StreakService
+            streak_service = StreakService(self.db)
+            streak_result = streak_service.update_streak(user_id, today)
+            
+            # Award bonus XP for streak milestones
+            if streak_result["new_record"] and streak_result["current_streak"] in [7, 14, 30, 60, 100]:
+                milestone_bonus = XPActivity.STREAK_MILESTONE * (streak_result["current_streak"] // 7)
+                gamification.total_xp += milestone_bonus
+                result["streak_milestone_bonus"] = milestone_bonus
+            
+            result["streak_info"] = streak_result
+        else:
+            gamification.last_activity_date = today
         
         self.db.commit()
         
