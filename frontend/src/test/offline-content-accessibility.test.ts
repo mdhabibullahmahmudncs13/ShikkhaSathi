@@ -144,8 +144,6 @@ describe('Offline Content Accessibility Properties', () => {
         fc.array(
           fc.record({
             id: fc.string({ minLength: 1, maxLength: 50 }),
-            subject: fc.constantFrom('Physics', 'Chemistry', 'Mathematics', 'Biology'),
-            grade: fc.integer({ min: 6, max: 12 }),
             chapter: fc.integer({ min: 1, max: 20 }),
             topic: fc.string({ minLength: 1, maxLength: 100 }),
             title: fc.string({ minLength: 1, maxLength: 200 }),
@@ -156,19 +154,29 @@ describe('Offline Content Accessibility Properties', () => {
               textbookName: fc.option(fc.string({ minLength: 1, maxLength: 100 }))
             }),
             downloadedAt: fc.date(),
-            lastAccessed: fc.option(fc.date())
+            lastAccessed: fc.option(fc.date()),
+            // Generate some lessons that match and some that don't
+            matchesFilter: fc.boolean()
           }),
           { minLength: 1, maxLength: 15 }
         ),
         async (targetSubject, targetGrade, lessonsData) => {
-          // Arrange: Save lessons with various subjects and grades
+          // Arrange: Create lessons, some matching the filter and some not
           const lessons: OfflineLessonContent[] = lessonsData.map(data => ({
-            ...data,
+            id: data.id,
+            subject: data.matchesFilter ? targetSubject : fc.sample(fc.constantFrom('Physics', 'Chemistry', 'Mathematics', 'Biology').filter(s => s !== targetSubject), 1)[0],
+            grade: data.matchesFilter ? targetGrade : fc.sample(fc.integer({ min: 6, max: 12 }).filter(g => g !== targetGrade), 1)[0],
+            chapter: data.chapter,
+            topic: data.topic,
+            title: data.title,
+            content: data.content,
             metadata: {
               language: data.metadata.language as 'bangla' | 'english',
               pageNumber: data.metadata.pageNumber || undefined,
               textbookName: data.metadata.textbookName || undefined
-            }
+            },
+            downloadedAt: data.downloadedAt,
+            lastAccessed: data.lastAccessed || undefined
           }));
 
           for (const lesson of lessons) {
