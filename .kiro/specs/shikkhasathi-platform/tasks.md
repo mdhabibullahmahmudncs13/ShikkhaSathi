@@ -131,15 +131,15 @@
   - Create difficulty calibration system
   - _Requirements: 2.1, 2.2, 2.5_
 
-- [ ] 4.3 Write property test for difficulty adaptation
+- [x] 4.3 Write property test for difficulty adaptation
   - **Property 3: Adaptive Difficulty Adjustment**
   - **Validates: Requirements 2.1, 2.2**
 
-- [ ] 4.4 Write property test for Bloom level assignment
+- [x] 4.4 Write property test for Bloom level assignment
   - **Property 4: Bloom Level Question Generation**
   - **Validates: Requirements 2.3**
 
-- [-] 4.5 Create quiz scoring and feedback system
+- [x] 4.5 Create quiz scoring and feedback system
   - Implement real-time quiz scoring
   - Build detailed feedback generation with explanations
   - Create performance analytics and weak area identification
@@ -147,7 +147,7 @@
   - Implement quiz attempt persistence
   - _Requirements: 2.4, 2.5_
 
-- [ ] 4.6 Write property test for quiz feedback
+- [-] 4.6 Write property test for quiz feedback
   - **Property 5: Quiz Feedback Completeness**
   - **Validates: Requirements 2.4**
 

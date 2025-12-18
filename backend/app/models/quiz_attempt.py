@@ -17,6 +17,9 @@ class QuizAttempt(Base):
     time_taken_seconds = Column(Integer, nullable=False)
     difficulty_level = Column(Integer, nullable=False)
     bloom_level = Column(Integer, nullable=False)
+    subject = Column(String(50), nullable=False)
+    topic = Column(String(100), nullable=False)
+    grade = Column(Integer, nullable=False)
     completed_at = Column(DateTime(timezone=True), server_default=func.now())
     answers = Column(JSON, nullable=False)  # Store answers as JSON
     
