@@ -318,7 +318,7 @@
   - Create cache management and cleanup
   - _Requirements: 4.1, 4.5_
 
-- [-] 10.2 Implement IndexedDB storage system
+- [x] 10.2 Implement IndexedDB storage system
   - Set up Dexie.js for IndexedDB operations
   - Create schemas for offline data storage
   - Implement user data caching
@@ -326,7 +326,7 @@
   - Add quiz attempt offline persistence
   - _Requirements: 4.1, 4.2_
 
-- [ ] 10.3 Write property test for offline functionality
+- [-] 10.3 Write property test for offline functionality
   - **Property 10: Offline Content Accessibility**
   - **Validates: Requirements 4.1**
 
