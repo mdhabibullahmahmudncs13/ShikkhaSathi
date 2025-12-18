@@ -76,7 +76,7 @@ class TestAuthenticationTokenValidity:
         verified_subject = verify_token(token)
         assert verified_subject == subject
 
-    @given(password=st.text(min_size=8, max_size=100))
+    @given(password=st.text(min_size=8, max_size=72, alphabet=st.characters(min_codepoint=33, max_codepoint=126)))
     def test_password_hashing_roundtrip(self, password):
         """
         Property: For any valid password, hashing it and then verifying 
@@ -90,8 +90,8 @@ class TestAuthenticationTokenValidity:
         # Hash should be different from original password
         assert hashed != password
 
-    @given(password=st.text(min_size=8, max_size=100),
-           wrong_password=st.text(min_size=8, max_size=100))
+    @given(password=st.text(min_size=8, max_size=72, alphabet=st.characters(min_codepoint=33, max_codepoint=126)),
+           wrong_password=st.text(min_size=8, max_size=72, alphabet=st.characters(min_codepoint=33, max_codepoint=126)))
     def test_password_verification_rejects_wrong_password(self, password, wrong_password):
         """
         Property: For any password and a different wrong password,

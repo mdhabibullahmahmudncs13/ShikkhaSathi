@@ -36,7 +36,7 @@
   - **Property 1: Database Schema Consistency**
   - **Validates: Requirements 8.5**
 
-- [-] 2. Implement authentication and user management system
+- [x] 2. Implement authentication and user management system
   - Create user registration and login endpoints
   - Implement JWT token generation and validation
   - Set up password hashing with bcrypt
@@ -59,7 +59,7 @@
   - Add logout and token refresh endpoints
   - _Requirements: 3.1, 6.1, 7.1_
 
-- [-] 2.3 Write property test for authentication security
+- [x] 2.3 Write property test for authentication security
   - **Property 2: Authentication Token Validity**
   - **Validates: Requirements 3.1, 6.1, 7.1**
 

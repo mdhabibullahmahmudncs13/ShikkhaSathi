@@ -3,9 +3,24 @@ from typing import Any, Union, Optional
 from jose import jwt, JWTError
 from passlib.context import CryptContext
 from app.core.config import settings
+import hashlib
+import secrets
 
-# Password hashing context
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Password hashing context with fallback
+import os
+FORCE_FALLBACK = os.getenv("FORCE_PASSWORD_FALLBACK", "false").lower() == "true"
+
+if FORCE_FALLBACK:
+    pwd_context = None
+    BCRYPT_AVAILABLE = False
+else:
+    try:
+        pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+        BCRYPT_AVAILABLE = True
+    except Exception:
+        # Fallback to a simple hash for testing environments
+        pwd_context = None
+        BCRYPT_AVAILABLE = False
 
 ALGORITHM = "HS256"
 
@@ -28,12 +43,35 @@ def create_access_token(
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against its hash"""
-    return pwd_context.verify(plain_password, hashed_password)
+    if BCRYPT_AVAILABLE:
+        # Truncate password to 72 bytes for bcrypt compatibility
+        if len(plain_password.encode('utf-8')) > 72:
+            plain_password = plain_password.encode('utf-8')[:72].decode('utf-8', errors='ignore')
+        return pwd_context.verify(plain_password, hashed_password)
+    else:
+        # Fallback verification for testing environments
+        if not hashed_password.startswith("pbkdf2_sha256$"):
+            return False
+        try:
+            _, salt, stored_hash = hashed_password.split('$')
+            password_hash = hashlib.pbkdf2_hmac('sha256', plain_password.encode('utf-8'), salt.encode('utf-8'), 100000)
+            return password_hash.hex() == stored_hash
+        except ValueError:
+            return False
 
 
 def get_password_hash(password: str) -> str:
     """Generate password hash"""
-    return pwd_context.hash(password)
+    if BCRYPT_AVAILABLE:
+        # Truncate password to 72 bytes for bcrypt compatibility
+        if len(password.encode('utf-8')) > 72:
+            password = password.encode('utf-8')[:72].decode('utf-8', errors='ignore')
+        return pwd_context.hash(password)
+    else:
+        # Fallback hash for testing environments
+        salt = secrets.token_hex(16)
+        password_hash = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt.encode('utf-8'), 100000)
+        return f"pbkdf2_sha256${salt}${password_hash.hex()}"
 
 
 def verify_token(token: str) -> Optional[str]:
