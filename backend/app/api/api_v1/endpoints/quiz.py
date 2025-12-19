@@ -71,90 +71,104 @@ def generate_quiz(
         )
 
 @router.post("/submit")
-async def submit_quiz(
-    submission: QuizSubmissionRequest,
+def submit_quiz(
+    submission: QuizSubmitRequest,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-    services = Depends(get_quiz_services)
+    quiz_service: QuizService = Depends(get_quiz_service)
 ):
-    """Submit quiz and get results with feedback"""
+    """
+    Submit quiz answers and get results
+    
+    - **quiz_id**: Quiz identifier
+    - **answers**: Map of question_id to answer (A/B/C/D)
+    - **time_taken_seconds**: Total time taken
+    """
     try:
-        # This would typically retrieve the original questions from cache/database
-        # For now, we'll return a placeholder response
+        logger.info(f"Submitting quiz {submission.quiz_id} for user {current_user.id}")
         
-        scoring_service = services["scoring_service"]
-        adaptive_engine = services["adaptive_engine"]
+        result = quiz_service.submit_quiz(
+            quiz_id=submission.quiz_id,
+            user_id=current_user.id,
+            answers=submission.answers,
+            time_taken_seconds=submission.time_taken_seconds
+        )
         
-        # Convert responses
-        responses = [
-            QuestionResponse(
-                question_id=r.question_id,
-                student_answer=r.student_answer,
-                time_taken_seconds=r.time_taken_seconds,
-                is_flagged=r.is_flagged
-            )
-            for r in submission.responses
-        ]
+        return result
         
-        # Note: In a real implementation, we would retrieve the original questions
-        # from cache or database using the quiz_id
-        # For now, return a placeholder response
-        
-        return {
-            "message": "Quiz submission received",
-            "quiz_id": submission.quiz_id,
-            "responses_count": len(responses),
-            "status": "processed"
-        }
-        
+    except ValueError as e:
+        logger.warning(f"Quiz submission failed: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
     except Exception as e:
+        logger.error(f"Quiz submission error: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to submit quiz: {str(e)}"
         )
 
-@router.get("/history")
-async def get_quiz_history(
+@router.get("/results/{attempt_id}")
+def get_quiz_results(
+    attempt_id: UUID,
+    current_user: User = Depends(get_current_user),
+    quiz_service: QuizService = Depends(get_quiz_service)
+):
+    """
+    Get detailed quiz results
+    
+    - **attempt_id**: Quiz attempt identifier
+    """
+    try:
+        logger.info(f"Getting quiz results {attempt_id} for user {current_user.id}")
+        
+        results = quiz_service.get_quiz_results(
+            attempt_id=attempt_id,
+            user_id=current_user.id
+        )
+        
+        return results
+        
+    except ValueError as e:
+        logger.warning(f"Get results failed: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+    except Exception as e:
+        logger.error(f"Get results error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get quiz results: {str(e)}"
+        )
+
+
+@router.get("/history", response_model=List[QuizHistory])
+def get_quiz_history(
     subject: Optional[str] = None,
     limit: int = 20,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    quiz_service: QuizService = Depends(get_quiz_service)
 ):
-    """Get quiz history for the current user"""
+    """
+    Get quiz attempt history
+    
+    - **subject**: Optional subject filter
+    - **limit**: Maximum number of attempts to return (default: 20)
+    """
     try:
-        from app.models.quiz_attempt import QuizAttempt
+        logger.info(f"Getting quiz history for user {current_user.id}")
         
-        query = db.query(QuizAttempt).filter(
-            QuizAttempt.user_id == current_user.id
+        history = quiz_service.get_quiz_history(
+            user_id=current_user.id,
+            subject=subject,
+            limit=limit
         )
         
-        if subject:
-            query = query.filter(QuizAttempt.subject == subject)
-        
-        attempts = query.order_by(
-            QuizAttempt.completed_at.desc()
-        ).limit(limit).all()
-        
-        history = [
-            QuizHistoryResponse(
-                quiz_id=str(attempt.quiz_id),
-                subject=attempt.subject,
-                topic=attempt.topic,
-                score=attempt.score,
-                max_score=attempt.max_score,
-                percentage=(attempt.score / attempt.max_score * 100) if attempt.max_score > 0 else 0,
-                completed_at=attempt.completed_at,
-                difficulty_level=attempt.difficulty_level
-            )
-            for attempt in attempts
-        ]
-        
-        return {
-            "history": history,
-            "total_count": len(history)
-        }
+        return history
         
     except Exception as e:
+        logger.error(f"Get history error: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get quiz history: {str(e)}"
