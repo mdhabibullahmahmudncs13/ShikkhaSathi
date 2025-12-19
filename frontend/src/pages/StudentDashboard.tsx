@@ -1,13 +1,17 @@
 import React, { useState } from 'react';
 import DashboardLayout from '../components/dashboard/DashboardLayout';
-import CircularProgress from '../components/dashboard/CircularProgress';
-import XPProgressBar from '../components/dashboard/XPProgressBar';
-import StreakCalendar from '../components/dashboard/StreakCalendar';
-import WeaknessHeatmap from '../components/dashboard/WeaknessHeatmap';
-import AchievementShowcase from '../components/dashboard/AchievementShowcase';
-import LearningPathRecommendations from '../components/dashboard/LearningPathRecommendations';
-import { DownloadManager } from '../components/download';
 import { StudentProgress, Notification } from '../types/dashboard';
+import { 
+  BookOpen, 
+  Target, 
+  TrendingUp, 
+  Award, 
+  Clock, 
+  Zap,
+  ChevronRight,
+  Play,
+  Download
+} from 'lucide-react';
 
 const StudentDashboard: React.FC = () => {
   // Mock data - in production, this would come from API
