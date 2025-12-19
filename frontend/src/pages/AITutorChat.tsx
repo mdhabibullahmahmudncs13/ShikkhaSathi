@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChatContainer } from '../components/chat/ChatContainer';
+import ChatContainer from '../components/chat/ChatContainer';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { useChatMessage } from '../hooks/useAPI';
 import ErrorBoundary from '../components/common/ErrorBoundary';

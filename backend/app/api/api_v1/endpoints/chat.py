@@ -5,7 +5,7 @@ from app.services.websocket_manager import manager
 from app.services.voice_service import get_voice_service
 from app.core.deps import get_current_user
 from app.models.user import User
-from app.db.mongodb import get_database
+from app.db.mongodb import get_mongodb
 from typing import Optional
 import logging
 
@@ -68,7 +68,7 @@ async def get_chat_history(
 ):
     """Get chat history for a specific session"""
     try:
-        db = await get_database()
+        db = get_mongodb()
         chat_collection = db.chat_history
         
         session_doc = await chat_collection.find_one(
@@ -96,7 +96,7 @@ async def get_chat_history(
 async def get_user_sessions(current_user: User = Depends(get_current_user)):
     """Get all chat sessions for the current user"""
     try:
-        db = await get_database()
+        db = get_mongodb()
         chat_collection = db.chat_history
         
         sessions = await chat_collection.find(
@@ -129,7 +129,7 @@ async def delete_chat_session(
 ):
     """Delete a specific chat session"""
     try:
-        db = await get_database()
+        db = get_mongodb()
         chat_collection = db.chat_history
         
         result = await chat_collection.delete_one({

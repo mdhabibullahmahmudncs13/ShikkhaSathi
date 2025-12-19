@@ -268,17 +268,6 @@ export class TeacherAnalyticsService {
   }
 
   /**
-   * Mock method to simulate contacting a student
-   */
-  async contactStudent(studentId: string, method: 'email' | 'message'): Promise<void> {
-    // In a real application, this would send an email or message
-    console.log(`Contacting student ${studentId} via ${method}`);
-    
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-  }
-
-  /**
    * Mock method to simulate assigning an intervention
    */
   async assignIntervention(

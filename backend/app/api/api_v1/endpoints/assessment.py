@@ -29,7 +29,7 @@ class AssessmentCreateRequest(BaseModel):
     topics: List[str] = Field(..., min_items=1)
     question_count: int = Field(..., ge=5, le=50)
     time_limit: int = Field(..., ge=10, le=300)  # minutes
-    difficulty: str = Field("medium", regex="^(easy|medium|hard|adaptive)$")
+    difficulty: str = Field("medium", pattern="^(easy|medium|hard|adaptive)$")
     scheduled_date: Optional[datetime] = None
     due_date: Optional[datetime] = None
     assigned_classes: List[str] = Field(..., min_items=1)

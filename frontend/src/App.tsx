@@ -13,7 +13,12 @@ import { SystemStatusIndicator } from './components/common/SystemMonitor'
 import { useAuth } from './hooks/useAPI'
 
 // Placeholder components for different routes
-const Dashboard = () => <StudentDashboard />
+const Dashboard = () => (
+  <div className="p-8">
+    <h1 className="text-3xl font-bold text-gray-900">ShikkhaSathi Dashboard</h1>
+    <p className="mt-4 text-gray-600">Welcome to the learning platform!</p>
+  </div>
+)
 
 const Login = () => (
   <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -59,16 +64,17 @@ const Login = () => (
 )
 
 function App() {
-  const {
-    showSyncProgress,
-    showConflictResolution,
-    setShowSyncProgress,
-    setShowConflictResolution,
-    conflicts,
-    errors
-  } = useSyncManager();
-
-  const { isAuthenticated, user } = useAuth();
+  // Temporarily disable hooks to debug
+  const showSyncProgress = false;
+  const showConflictResolution = false;
+  const setShowSyncProgress = () => {};
+  const setShowConflictResolution = () => {};
+  const conflicts: any[] = [];
+  const errors: any[] = [];
+  
+  // Mock auth for now
+  const isAuthenticated = false;
+  const user = null;
   
   // Type guard for user object
   const typedUser = user as { full_name?: string; role?: string } | null;
@@ -108,8 +114,8 @@ function App() {
                       {typedUser?.role === 'teacher' && (
                         <a href="/teacher" className="text-gray-700 hover:text-gray-900">টিচার ড্যাশবোর্ড</a>
                       )}
-                      <SyncStatusIndicator />
-                      <SystemStatusIndicator />
+                      {/* <SyncStatusIndicator /> */}
+                      {/* <SystemStatusIndicator /> */}
                     </>
                   ) : (
                     <a href="/login" className="text-gray-700 hover:text-gray-900">লগইন</a>
