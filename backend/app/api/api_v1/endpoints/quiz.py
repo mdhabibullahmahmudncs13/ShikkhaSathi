@@ -23,82 +23,48 @@ def get_quiz_service(db: Session = Depends(get_db)) -> QuizService:
     return QuizService(db)
 
 @router.post("/generate")
-async def generate_quiz(
-    request: QuizGenerationRequest,
+def generate_quiz(
+    request: QuizGenerateRequest,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-    services = Depends(get_quiz_services)
+    quiz_service: QuizService = Depends(get_quiz_service)
 ):
-    """Generate adaptive quiz questions"""
+    """
+    Generate a quiz from the question bank
+    
+    - **subject**: Subject name (e.g., Mathematics, Physics)
+    - **topic**: Optional topic filter
+    - **grade**: Grade level (6-12)
+    - **difficulty_level**: Optional difficulty (1-5)
+    - **bloom_level**: Optional Bloom's taxonomy level (1-6)
+    - **question_count**: Number of questions (5-50)
+    - **time_limit_minutes**: Optional time limit
+    - **language**: 'english' or 'bangla'
+    """
     try:
-        # Calculate difficulty if not provided
-        difficulty_level = request.difficulty_level
-        if difficulty_level is None:
-            adaptive_engine = services["adaptive_engine"]
-            difficulty_adjustment = adaptive_engine.calculate_next_difficulty(
-                user_id=str(current_user.id),
-                subject=request.subject,
-                topic=request.topic,
-                grade=request.grade
-            )
-            difficulty_level = difficulty_adjustment.new_difficulty
+        logger.info(f"Generating quiz for user {current_user.id}: {request.subject}/{request.topic}")
         
-        # Convert string enums
-        question_type = QuestionType(request.question_type)
-        bloom_level = BloomLevel(request.bloom_level)
-        
-        # Create generation request
-        gen_request = QuestionGenerationRequest(
+        quiz_data = quiz_service.generate_quiz(
+            user_id=current_user.id,
             subject=request.subject,
             topic=request.topic,
             grade=request.grade,
-            question_type=question_type,
-            bloom_level=bloom_level,
-            difficulty_level=difficulty_level,
-            count=request.count,
+            difficulty_level=request.difficulty_level,
+            bloom_level=request.bloom_level,
+            question_count=request.question_count,
+            time_limit_minutes=request.time_limit_minutes,
             language=request.language
         )
         
-        # Generate questions
-        question_generator = services["question_generator"]
-        questions = await question_generator.generate_questions(gen_request)
+        return quiz_data
         
-        if not questions:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="No questions could be generated for the specified criteria"
-            )
-        
-        # Convert to API response format
-        quiz_id = str(uuid.uuid4())
-        
-        return {
-            "quiz_id": quiz_id,
-            "questions": [
-                {
-                    "id": q.id,
-                    "question_text": q.question_text,
-                    "question_type": q.question_type.value,
-                    "bloom_level": q.bloom_level.value,
-                    "difficulty_level": q.difficulty_level,
-                    "options": q.options,
-                    "subject": q.subject,
-                    "topic": q.topic,
-                    "grade": q.grade
-                }
-                for q in questions
-            ],
-            "metadata": {
-                "subject": request.subject,
-                "topic": request.topic,
-                "grade": request.grade,
-                "difficulty_level": difficulty_level,
-                "bloom_level": request.bloom_level,
-                "total_questions": len(questions)
-            }
-        }
-        
+    except ValueError as e:
+        logger.warning(f"Quiz generation failed: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
     except Exception as e:
+        logger.error(f"Quiz generation error: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to generate quiz: {str(e)}"
