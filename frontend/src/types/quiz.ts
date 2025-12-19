@@ -1,93 +1,91 @@
-// Quiz type definitions
+// Quiz Types
+
 export interface Question {
   id: string;
   question_text: string;
-  question_type: 'multiple_choice' | 'true_false' | 'short_answer';
-  bloom_level: number;
-  difficulty_level: number;
-  options?: string[];
-  subject: string;
-  topic: string;
-  grade: number;
-}
-
-export interface QuestionResponse {
-  question_id: string;
-  student_answer: string;
-  time_taken_seconds: number;
-  is_flagged: boolean;
-}
-
-export interface QuizMetadata {
+  question_text_bangla?: string;
+  option_a: string;
+  option_b: string;
+  option_c: string;
+  option_d: string;
+  option_a_bangla?: string;
+  option_b_bangla?: string;
+  option_c_bangla?: string;
+  option_d_bangla?: string;
+  correct_answer: 'A' | 'B' | 'C' | 'D';
+  explanation: string;
+  explanation_bangla?: string;
   subject: string;
   topic: string;
   grade: number;
   difficulty_level: number;
   bloom_level: number;
-  total_questions: number;
 }
 
 export interface Quiz {
   quiz_id: string;
+  subject: string;
+  topic?: string;
+  grade: number;
+  difficulty_level: number;
+  bloom_level: number;
+  question_count: number;
+  time_limit_minutes?: number;
   questions: Question[];
-  metadata: QuizMetadata;
+  language: 'english' | 'bangla';
 }
 
-export interface QuizState {
-  currentQuestionIndex: number;
-  responses: QuestionResponse[];
-  flaggedQuestions: Set<string>;
-  startTime: Date;
-  questionStartTime: Date;
-  isSubmitted: boolean;
-  timeRemaining: number; // in seconds
+export interface QuizSubmission {
+  quiz_id: string;
+  answers: Record<string, string>; // question_id -> answer (A/B/C/D)
+  time_taken_seconds: number;
 }
 
-export interface QuestionFeedback {
+export interface QuestionResult {
   question_id: string;
-  is_correct: boolean;
-  score: number;
-  max_score: number;
-  explanation: string;
+  question_text: string;
+  selected_answer: string;
   correct_answer: string;
-  student_answer: string;
-  detailed_feedback: string;
-  learning_resources: string[];
+  is_correct: boolean;
+  explanation: string;
+  time_taken_seconds?: number;
 }
 
 export interface QuizResult {
+  attempt_id: string;
   quiz_id: string;
-  user_id: string;
-  total_score: number;
+  score: number;
   max_score: number;
   percentage: number;
+  xp_earned: number;
   time_taken_seconds: number;
+  question_results: QuestionResult[];
+  subject: string;
+  topic?: string;
   difficulty_level: number;
-  bloom_level: number;
-  subject: string;
-  topic: string;
-  grade: number;
-  question_feedbacks: QuestionFeedback[];
-  overall_feedback: string;
-  weak_areas: string[];
-  strong_areas: string[];
-  recommendations: string[];
-  next_difficulty: number;
-  completed_at: Date;
+  completed_at: string;
 }
 
-export interface QuizGenerationRequest {
-  subject: string;
-  topic: string;
-  grade: number;
-  question_type: string;
-  bloom_level: number;
-  difficulty_level?: number;
-  count: number;
-  language: string;
-}
-
-export interface QuizSubmissionRequest {
+export interface QuizHistory {
+  attempt_id: string;
   quiz_id: string;
-  responses: QuestionResponse[];
+  subject: string;
+  topic?: string;
+  score: number;
+  max_score: number;
+  percentage: number;
+  xp_earned: number;
+  time_taken_seconds: number;
+  completed_at: string;
+}
+
+export interface Subject {
+  subject: string;
+  grades: Record<number, number>;
+  total_questions: number;
+}
+
+export interface Topic {
+  topic: string;
+  question_count: number;
 }

@@ -22,7 +22,7 @@ class QuestionBase(BaseModel):
     option_c_bangla: Optional[str] = None
     option_d_bangla: Optional[str] = None
     
-    correct_answer: str = Field(..., regex="^[ABCD]$")
+    correct_answer: str = Field(..., pattern="^[ABCD]$")
     
     explanation: str = Field(..., min_length=10, max_length=2000)
     explanation_bangla: Optional[str] = None
@@ -60,7 +60,7 @@ class QuestionUpdate(BaseModel):
     option_c_bangla: Optional[str] = None
     option_d_bangla: Optional[str] = None
     
-    correct_answer: Optional[str] = Field(None, regex="^[ABCD]$")
+    correct_answer: Optional[str] = Field(None, pattern="^[ABCD]$")
     
     explanation: Optional[str] = Field(None, min_length=10, max_length=2000)
     explanation_bangla: Optional[str] = None
@@ -128,7 +128,7 @@ class QuizGenerateRequest(BaseModel):
     bloom_level: Optional[int] = Field(None, ge=1, le=6)
     question_count: int = Field(10, ge=5, le=50)
     time_limit_minutes: Optional[int] = Field(None, ge=5, le=180)
-    language: str = Field('english', regex="^(english|bangla)$")
+    language: str = Field('english', pattern="^(english|bangla)$")
     
     @validator('difficulty_level', 'bloom_level', pre=True, always=True)
     def set_defaults(cls, v):

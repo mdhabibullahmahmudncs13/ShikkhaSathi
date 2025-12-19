@@ -181,25 +181,44 @@ export const dashboardAPI = {
 };
 
 export const quizAPI = {
-  getQuizzes: (subject?: string, difficulty?: number) =>
+  // Get available subjects with question counts
+  getSubjects: (grade?: number) =>
     withCache(
       quizCache,
-      cacheKeys.quizList(subject, difficulty),
-      () => api.get('/quiz/list', { params: { subject, difficulty } }),
-      5 * 60 * 1000 // 5 minutes cache
-    ),
-    
-  getQuiz: (quizId: string) =>
-    withCache(
-      quizCache,
-      cacheKeys.quiz(quizId),
-      () => api.get(`/quiz/${quizId}`),
+      cacheKeys.quizList('subjects', grade),
+      () => api.get('/quiz/subjects', { params: { grade } }),
       10 * 60 * 1000 // 10 minutes cache
     ),
   
-  submitQuiz: (quizId: string, answers: any[]) =>
-    api.post(`/quiz/${quizId}/submit`, { answers }),
-    
+  // Get available topics for a subject
+  getTopics: (subject: string, grade?: number) =>
+    withCache(
+      quizCache,
+      cacheKeys.quizList(subject, grade),
+      () => api.get(`/quiz/topics/${subject}`, { params: { grade } }),
+      10 * 60 * 1000 // 10 minutes cache
+    ),
+  
+  // Generate a new quiz
+  generateQuiz: (params: {
+    subject: string;
+    topic?: string;
+    grade: number;
+    difficulty_level?: number;
+    bloom_level?: number;
+    question_count: number;
+    time_limit_minutes?: number;
+    language?: 'english' | 'bangla';
+  }) => api.post('/quiz/generate', params),
+  
+  // Submit quiz answers
+  submitQuiz: (submission: {
+    quiz_id: string;
+    answers: Record<string, string>;
+    time_taken_seconds: number;
+  }) => api.post('/quiz/submit', submission),
+  
+  // Get quiz results
   getQuizResults: (attemptId: string) =>
     withCache(
       quizCache,
@@ -207,14 +226,10 @@ export const quizAPI = {
       () => api.get(`/quiz/results/${attemptId}`),
       30 * 60 * 1000 // 30 minutes cache
     ),
-    
-  generateQuiz: (params: {
-    subject: string;
-    topic: string;
-    difficulty_level: number;
-    bloom_level: number;
-    question_count: number;
-  }) => api.post('/quiz/generate', params),
+  
+  // Get quiz history
+  getQuizHistory: (subject?: string, limit: number = 20) =>
+    api.get('/quiz/history', { params: { subject, limit } }),
 };
 
 export const chatAPI = {
