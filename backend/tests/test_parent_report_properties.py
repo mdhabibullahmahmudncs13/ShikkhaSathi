@@ -23,14 +23,19 @@ from app.services.parent_notification_service import ParentNotificationService
 @st.composite
 def generate_week_start_date(draw):
     """Generate a valid week start date"""
-    # Generate a date within the last 12 weeks
+    # Generate a date within the last 12 weeks, ensuring it's a Monday
     base_date = datetime.now() - timedelta(weeks=12)
-    days_offset = draw(st.integers(min_value=0, max_value=84))  # 12 weeks * 7 days
-    week_start = base_date + timedelta(days=days_offset)
     
-    # Ensure it's a Monday (start of week)
-    days_to_monday = week_start.weekday()
-    week_start = week_start - timedelta(days=days_to_monday)
+    # Ensure base_date is a Monday
+    days_to_monday = base_date.weekday()
+    base_monday = base_date - timedelta(days=days_to_monday)
+    
+    # Generate week offset (0-11 weeks from base Monday)
+    week_offset = draw(st.integers(min_value=0, max_value=11))
+    week_start = base_monday + timedelta(weeks=week_offset)
+    
+    # Normalize to remove microseconds for proper uniqueness
+    week_start = week_start.replace(hour=0, minute=0, second=0, microsecond=0)
     
     return week_start
 
@@ -122,38 +127,42 @@ def create_mock_notification_service_with_data(child_data, progress_records, qui
     mock_db = Mock()
     service = ParentNotificationService(mock_db)
     
-    # Mock the database queries
-    def mock_query_filter(*args, **kwargs):
+    # Create a mock query chain that returns the correct data
+    def create_mock_query_chain(return_data, is_single=False):
         mock_query = Mock()
-        mock_query.first.return_value = Mock(
-            id=child_data['child_id'],
-            full_name=child_data['child_name'],
-            grade=child_data['grade']
-        )
+        mock_filter = Mock()
+        mock_query.filter.return_value = mock_filter
+        mock_filter.filter.return_value = mock_filter  # For chained filters
+        
+        if is_single:
+            mock_filter.first.return_value = return_data
+        else:
+            mock_filter.all.return_value = return_data
+        
         return mock_query
     
-    def mock_progress_query(*args, **kwargs):
-        mock_query = Mock()
-        mock_query.all.return_value = progress_records
-        return mock_query
+    # Mock user query
+    user_mock = Mock()
+    user_mock.id = child_data['child_id']
+    user_mock.full_name = child_data['child_name']
+    user_mock.grade = child_data['grade']
     
-    def mock_quiz_query(*args, **kwargs):
-        mock_query = Mock()
-        mock_query.all.return_value = quiz_attempts
-        return mock_query
+    # Set up the mock database queries based on model type
+    def mock_query(model):
+        model_name = getattr(model, '__name__', str(model))
+        
+        if 'User' in str(model):
+            return create_mock_query_chain(user_mock, is_single=True)
+        elif 'StudentProgress' in str(model):
+            return create_mock_query_chain(progress_records, is_single=False)
+        elif 'QuizAttempt' in str(model):
+            return create_mock_query_chain(quiz_attempts, is_single=False)
+        elif 'Gamification' in str(model):
+            return create_mock_query_chain(gamification_data, is_single=True)
+        else:
+            return create_mock_query_chain([], is_single=False)
     
-    def mock_gamification_query(*args, **kwargs):
-        mock_query = Mock()
-        mock_query.first.return_value = gamification_data
-        return mock_query
-    
-    # Set up the mock database queries
-    mock_db.query.side_effect = lambda model: {
-        'User': mock_query_filter(),
-        'StudentProgress': mock_progress_query(),
-        'QuizAttempt': mock_quiz_query(),
-        'Gamification': mock_gamification_query()
-    }.get(model.__name__, Mock())
+    mock_db.query.side_effect = mock_query
     
     return service
 
