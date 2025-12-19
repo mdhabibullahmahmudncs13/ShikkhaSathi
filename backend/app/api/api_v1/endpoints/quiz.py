@@ -1,67 +1,26 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List, Optional
-from pydantic import BaseModel
-import uuid
-from datetime import datetime
+from typing import List, Optional, Dict
+from uuid import UUID
+import logging
 
 from app.core.deps import get_current_user, get_db
 from app.models.user import User
-from app.services.quiz.question_generator import (
-    QuestionGenerator, QuestionGenerationRequest, Question, QuestionType, BloomLevel
+from app.services.quiz.quiz_service import QuizService
+from app.schemas.question import (
+    QuizGenerateRequest,
+    QuizSubmitRequest,
+    QuizResult,
+    QuizHistory,
+    QuizRecommendation
 )
-from app.services.quiz.adaptive_engine import AdaptiveDifficultyEngine
-from app.services.quiz.scoring_service import ScoringService, QuestionResponse, QuizResult
-from app.services.rag.rag_service import RAGService
-from app.core.config import settings
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
-# Pydantic models for API
-class QuizGenerationRequest(BaseModel):
-    subject: str
-    topic: str
-    grade: int
-    question_type: str  # "multiple_choice", "true_false", "short_answer"
-    bloom_level: int  # 1-6
-    difficulty_level: Optional[int] = None  # Will be calculated if not provided
-    count: int = 5
-    language: str = "bangla"
-
-class QuestionResponseModel(BaseModel):
-    question_id: str
-    student_answer: str
-    time_taken_seconds: int
-    is_flagged: bool = False
-
-class QuizSubmissionRequest(BaseModel):
-    quiz_id: str
-    responses: List[QuestionResponseModel]
-
-class QuizHistoryResponse(BaseModel):
-    quiz_id: str
-    subject: str
-    topic: str
-    score: int
-    max_score: int
-    percentage: float
-    completed_at: datetime
-    difficulty_level: int
-
-# Initialize services (would typically be dependency injected)
-async def get_quiz_services(db: Session = Depends(get_db)):
-    """Get quiz-related services"""
-    # This would typically be configured through dependency injection
-    rag_service = RAGService(config=None)  # Would be properly configured
-    question_generator = QuestionGenerator(rag_service, settings.OPENAI_API_KEY)
-    adaptive_engine = AdaptiveDifficultyEngine(db)
-    scoring_service = ScoringService(rag_service, settings.OPENAI_API_KEY, db)
-    
-    return {
-        "question_generator": question_generator,
-        "adaptive_engine": adaptive_engine,
-        "scoring_service": scoring_service
-    }
+def get_quiz_service(db: Session = Depends(get_db)) -> QuizService:
+    """Get quiz service instance"""
+    return QuizService(db)
 
 @router.post("/generate")
 async def generate_quiz(

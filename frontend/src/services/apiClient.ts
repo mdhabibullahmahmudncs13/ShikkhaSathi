@@ -234,12 +234,15 @@ export const chatAPI = {
 };
 
 export const gamificationAPI = {
-  getGamificationData: () => {
-    const userId = localStorage.getItem('user_id') || 'anonymous';
+  getGamificationData: async () => {
+    // First get current user to get their ID
+    const currentUser = await api.get('/users/me');
+    const userId = currentUser.id;
+    
     return withCache(
       apiCache,
       cacheKeys.gamificationData(userId),
-      () => api.get('/gamification/status'),
+      () => api.get(`/gamification/profile/${userId}`),
       3 * 60 * 1000 // 3 minutes cache
     );
   },
@@ -247,11 +250,25 @@ export const gamificationAPI = {
     withCache(
       apiCache,
       cacheKeys.leaderboard(type, timeframe),
-      () => api.get('/gamification/leaderboard', { params: { type, timeframe } }),
+      () => api.get('/gamification/leaderboard/xp', { params: { leaderboard_type: type, time_frame: timeframe } }),
       5 * 60 * 1000 // 5 minutes cache
     ),
-  getAchievements: () => api.get('/gamification/achievements'),
-  useStreakFreeze: () => api.post('/gamification/streak-freeze'),
+  getAchievements: async () => {
+    const currentUser = await api.get('/users/me');
+    return api.get('/gamification/achievements', { params: { user_id: currentUser.id } });
+  },
+  useStreakFreeze: async () => {
+    const currentUser = await api.get('/users/me');
+    return api.post('/gamification/streak/freeze', null, { params: { user_id: currentUser.id } });
+  },
+  awardXP: (userId: string, activityType: string, amount?: number, metadata?: any) =>
+    api.post('/gamification/award-xp', null, { 
+      params: { user_id: userId, activity_type: activityType, amount, metadata } 
+    }),
+  getStreakInfo: async () => {
+    const currentUser = await api.get('/users/me');
+    return api.get('/gamification/streak', { params: { user_id: currentUser.id } });
+  },
 };
 
 export const teacherAPI = {

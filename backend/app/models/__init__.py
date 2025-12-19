@@ -3,6 +3,7 @@ from .student_progress import StudentProgress, MasteryLevel
 from .quiz_attempt import QuizAttempt
 from .gamification import Gamification
 from .learning_path import LearningPath
+from .question import Question, Quiz
 
 __all__ = [
     "User",
@@ -12,5 +13,7 @@ __all__ = [
     "MasteryLevel",
     "QuizAttempt",
     "Gamification",
-    "LearningPath"
+    "LearningPath",
+    "Question",
+    "Quiz"
 ]
