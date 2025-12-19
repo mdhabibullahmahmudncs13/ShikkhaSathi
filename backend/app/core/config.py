@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8  # 8 days
     
     # CORS origins
-    BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = [
+    BACKEND_CORS_ORIGINS: List[str] = [
         "http://localhost:3000",  # React dev server
         "http://localhost:5173",  # Vite dev server
         "http://localhost:8080",  # Alternative frontend port
@@ -17,11 +17,13 @@ class Settings(BaseSettings):
 
     @field_validator("BACKEND_CORS_ORIGINS", mode="before")
     @classmethod
-    def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
+    def assemble_cors_origins(cls, v: Union[str, List[str]]) -> List[str]:
         if isinstance(v, str) and not v.startswith("["):
-            return [i.strip() for i in v.split(",")]
-        elif isinstance(v, (list, str)):
-            return v
+            return [i.strip().rstrip('/') for i in v.split(",")]
+        elif isinstance(v, list):
+            return [str(origin).rstrip('/') for origin in v]
+        elif isinstance(v, str):
+            return [v.rstrip('/')]
         raise ValueError(v)
 
     # Database URLs

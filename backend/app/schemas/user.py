@@ -1,6 +1,7 @@
-from typing import Optional
+from typing import Optional, Union
 from pydantic import BaseModel, EmailStr, field_validator
 from datetime import datetime
+from uuid import UUID
 from app.models.user import UserRole, Medium
 
 
@@ -50,6 +51,13 @@ class UserInDBBase(UserBase):
     id: str
     created_at: datetime
     last_login: Optional[datetime] = None
+
+    @field_validator('id', mode='before')
+    @classmethod
+    def convert_uuid_to_str(cls, v):
+        if isinstance(v, UUID):
+            return str(v)
+        return v
 
     model_config = {"from_attributes": True}
 

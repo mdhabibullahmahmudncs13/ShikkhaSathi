@@ -9,6 +9,14 @@ from app.models.user import User as UserModel, UserRole
 router = APIRouter()
 
 
+@router.get("/me", response_model=User)
+async def get_current_user_info(
+    current_user: UserModel = Depends(get_current_user)
+) -> Any:
+    """Get current authenticated user information"""
+    return current_user
+
+
 @router.get("/students", response_model=List[User])
 async def get_students(
     db: Session = Depends(get_db),

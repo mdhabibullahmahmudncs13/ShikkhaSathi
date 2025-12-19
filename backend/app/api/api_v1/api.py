@@ -3,6 +3,17 @@ from app.api.api_v1.endpoints import auth, users, chat, quiz, progress, gamifica
 from app.api.api_v1 import docs
 
 api_router = APIRouter()
+
+# Health check endpoint
+@api_router.get("/health", tags=["health"])
+async def health_check():
+    """API health check endpoint"""
+    return {
+        "status": "healthy",
+        "service": "ShikkhaSathi API",
+        "version": "1.0.0"
+    }
+
 api_router.include_router(auth.router, prefix="/auth", tags=["authentication"])
 api_router.include_router(users.router, prefix="/users", tags=["users"])
 api_router.include_router(chat.router, prefix="/chat", tags=["chat"])
