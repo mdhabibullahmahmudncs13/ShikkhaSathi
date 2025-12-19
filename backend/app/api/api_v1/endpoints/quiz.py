@@ -174,52 +174,101 @@ def get_quiz_history(
             detail=f"Failed to get quiz history: {str(e)}"
         )
 
-@router.get("/analytics")
-async def get_quiz_analytics(
-    subject: Optional[str] = None,
-    days_back: int = 30,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-    services = Depends(get_quiz_services)
+@router.get("/subjects")
+def get_available_subjects(
+    grade: Optional[int] = None,
+    quiz_service: QuizService = Depends(get_quiz_service)
 ):
-    """Get quiz performance analytics"""
+    """
+    Get list of available subjects with question counts
+    
+    - **grade**: Optional grade filter (6-12)
+    """
     try:
-        scoring_service = services["scoring_service"]
-        analytics = scoring_service.get_quiz_analytics(
-            user_id=str(current_user.id),
-            subject=subject,
-            days_back=days_back
-        )
+        from app.models.question import Question
+        from sqlalchemy import func
         
-        return analytics
+        query = quiz_service.db.query(
+            Question.subject,
+            Question.grade,
+            func.count(Question.id).label('question_count')
+        ).filter(Question.is_active == True)
+        
+        if grade:
+            query = query.filter(Question.grade == grade)
+        
+        results = query.group_by(Question.subject, Question.grade).all()
+        
+        subjects = {}
+        for subject, grade_level, count in results:
+            if subject not in subjects:
+                subjects[subject] = {
+                    'subject': subject,
+                    'grades': {},
+                    'total_questions': 0
+                }
+            subjects[subject]['grades'][grade_level] = count
+            subjects[subject]['total_questions'] += count
+        
+        return {
+            'subjects': list(subjects.values()),
+            'total_subjects': len(subjects)
+        }
         
     except Exception as e:
+        logger.error(f"Get subjects error: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get analytics: {str(e)}"
+            detail=f"Failed to get available subjects: {str(e)}"
         )
 
-@router.get("/performance/{subject}/{topic}")
-async def get_topic_performance(
+
+@router.get("/topics/{subject}")
+def get_available_topics(
     subject: str,
-    topic: str,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-    services = Depends(get_quiz_services)
+    grade: Optional[int] = None,
+    quiz_service: QuizService = Depends(get_quiz_service)
 ):
-    """Get performance analytics for a specific topic"""
+    """
+    Get list of available topics for a subject
+    
+    - **subject**: Subject name
+    - **grade**: Optional grade filter (6-12)
+    """
     try:
-        adaptive_engine = services["adaptive_engine"]
+        from app.models.question import Question
+        from sqlalchemy import func
         
-        performance = adaptive_engine.get_performance_analytics(
-            user_id=str(current_user.id),
-            subject=subject
+        query = quiz_service.db.query(
+            Question.topic,
+            func.count(Question.id).label('question_count')
+        ).filter(
+            Question.subject == subject,
+            Question.is_active == True
         )
         
-        return performance
+        if grade:
+            query = query.filter(Question.grade == grade)
+        
+        results = query.group_by(Question.topic).all()
+        
+        topics = [
+            {
+                'topic': topic,
+                'question_count': count
+            }
+            for topic, count in results
+        ]
+        
+        return {
+            'subject': subject,
+            'topics': topics,
+            'total_topics': len(topics)
+        }
         
     except Exception as e:
+        logger.error(f"Get topics error: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get topic performance: {str(e)}"
+            detail=f"Failed to get available topics: {str(e)}"
         )
