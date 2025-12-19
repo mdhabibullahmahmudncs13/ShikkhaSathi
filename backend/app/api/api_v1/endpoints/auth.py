@@ -15,8 +15,7 @@ router = APIRouter()
 
 # Rate limiting setup
 limiter = Limiter(key_func=get_remote_address)
-router.state.limiter = limiter
-router.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+# Note: Rate limiter state and exception handlers are set up at the app level in main.py
 
 
 @router.post("/register", response_model=User, status_code=status.HTTP_201_CREATED)

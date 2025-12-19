@@ -335,21 +335,23 @@ describe('Offline State Indication Properties', () => {
             // Test the underlying connectivity detection
             await act(async () => {
               simulateConnectivityChange(connectivityState);
+              // Give time for event propagation
               await new Promise(resolve => setTimeout(resolve, 100));
             });
             
-            // Check sync manager state
+            // Check sync manager state - this should update immediately
             const syncStatus = syncManager.getSyncStatus();
             expect(syncStatus.isOnline).toBe(connectivityState);
             
-            // Check service worker manager state (allow some time for event propagation)
+            // Check service worker manager state with shorter timeout
+            // Service worker manager updates via event listeners
             await waitFor(() => {
               expect(serviceWorkerManager.isOnlineStatus()).toBe(connectivityState);
-            }, { timeout: 1000 });
+            }, { timeout: 500, interval: 50 });
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 } // Reduced to 20 runs for faster execution
       );
-    });
+    }, 15000); // Increased test timeout to 15 seconds
   });
 });

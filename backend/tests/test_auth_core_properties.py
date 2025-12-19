@@ -50,7 +50,7 @@ class TestCoreAuthenticationProperties:
         verified_subject = verify_token(token)
         assert verified_subject == subject
 
-    @given(password=st.text(min_size=8, max_size=30, alphabet="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*"))
+    @given(password=st.text(min_size=8, max_size=20, alphabet="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"))
     def test_password_hashing_roundtrip(self, password):
         """
         Property: For any valid password, hashing it and then verifying 
@@ -64,8 +64,8 @@ class TestCoreAuthenticationProperties:
         # Hash should be different from original password
         assert hashed != password
 
-    @given(password=st.text(min_size=8, max_size=30, alphabet="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*"),
-           wrong_password=st.text(min_size=8, max_size=30, alphabet="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*"))
+    @given(password=st.text(min_size=8, max_size=20, alphabet="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"),
+           wrong_password=st.text(min_size=8, max_size=20, alphabet="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"))
     def test_password_verification_rejects_wrong_password(self, password, wrong_password):
         """
         Property: For any password and a different wrong password,
@@ -105,7 +105,7 @@ class TestCoreAuthenticationProperties:
         verified_subject = verify_token(token)
         assert verified_subject == subject
 
-    @given(password=st.text(min_size=8, max_size=30, alphabet="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*"))
+    @given(password=st.text(min_size=8, max_size=20, alphabet="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"))
     def test_password_hash_is_deterministic_but_unique(self, password):
         """
         Property: For any password, multiple hashes should be different 

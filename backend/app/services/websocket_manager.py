@@ -4,7 +4,7 @@ from typing import Dict, List, Optional
 from fastapi import WebSocket, WebSocketDisconnect
 from app.services.rag.rag_service import RAGService
 from app.services.voice_service import get_voice_service
-from app.db.mongodb import get_database
+from app.db.mongodb import get_mongodb
 from datetime import datetime
 import logging
 
@@ -153,7 +153,7 @@ class ConnectionManager:
     async def save_message_to_db(self, user_id: str, session_id: str, message: dict):
         """Save message to MongoDB"""
         try:
-            db = await get_database()
+            db = get_mongodb()
             chat_collection = db.chat_history
             
             # Convert datetime to ISO string for MongoDB
@@ -177,7 +177,7 @@ class ConnectionManager:
     async def get_chat_history(self, user_id: str, session_id: str, limit: int = 10) -> List[dict]:
         """Get recent chat history for context"""
         try:
-            db = await get_database()
+            db = get_mongodb()
             chat_collection = db.chat_history
             
             session_doc = await chat_collection.find_one(

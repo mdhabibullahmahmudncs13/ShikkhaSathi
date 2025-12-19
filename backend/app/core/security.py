@@ -36,7 +36,13 @@ def create_access_token(
             minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
         )
     
-    to_encode = {"exp": expire, "sub": str(subject)}
+    # Include microseconds to ensure token uniqueness
+    issued_at = datetime.utcnow()
+    to_encode = {
+        "exp": expire, 
+        "sub": str(subject),
+        "iat": issued_at.timestamp()  # Include issued at time with microseconds
+    }
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
