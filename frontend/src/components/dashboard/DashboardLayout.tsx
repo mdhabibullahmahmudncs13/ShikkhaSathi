@@ -1,6 +1,51 @@
 import React, { useState } from 'react';
 import { Notification, StudentProgress } from '../../types/dashboard';
 
+// User Menu Component
+const UserMenu: React.FC = () => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div className="relative">
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+      >
+        <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-medium">
+          S
+        </div>
+        <span className="hidden sm:block text-sm font-medium text-gray-700">Student</span>
+        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      
+      {/* Dropdown Menu */}
+      {isOpen && (
+        <>
+          {/* Backdrop to close menu */}
+          <div 
+            className="fixed inset-0 z-40" 
+            onClick={() => setIsOpen(false)}
+          />
+          <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50">
+            <a href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
+              👤 Profile Settings
+            </a>
+            <a href="/settings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
+              ⚙️ Account Settings
+            </a>
+            <div className="border-t border-gray-200 my-2"></div>
+            <a href="/" className="block px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors">
+              🚪 Sign Out
+            </a>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
 interface DashboardLayoutProps {
   children: React.ReactNode;
   studentProgress: StudentProgress;
@@ -43,11 +88,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
-        <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
-          <h1 className="text-xl font-bold text-gray-900">ShikkhaSathi</h1>
+        <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 flex-shrink-0">
+          <h1 className="text-xl font-bold text-gray-900 truncate">ShikkhaSathi</h1>
           <button
             onClick={() => setSidebarOpen(false)}
-            className="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-600"
+            className="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-600 flex-shrink-0"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -55,7 +100,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           </button>
         </div>
 
-        <nav className="mt-6 px-3">
+        <nav className="mt-6 px-3 overflow-y-auto overflow-x-hidden" style={{ maxHeight: 'calc(100vh - 4rem)' }}>
           {/* Quick Actions */}
           <div className="mb-8">
             <h3 className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Quick Actions</h3>
@@ -84,24 +129,37 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                 const completionPercentage = progress?.completionPercentage || 0;
                 
                 return (
-                  <button
+                  <div
                     key={subject.name}
-                    className="w-full flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100 hover:text-gray-900 group"
+                    className="w-full px-3 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100 hover:text-gray-900 cursor-pointer"
                   >
-                    <span className="mr-3 text-lg">{subject.icon}</span>
-                    <div className="flex-1 text-left">
-                      <div className="flex items-center justify-between">
-                        <span>{subject.name}</span>
-                        <span className="text-xs text-gray-500">{Math.round(completionPercentage)}%</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-1 mt-1">
+                    <div className="flex items-start gap-2">
+                      <span className="text-lg flex-shrink-0 mt-0.5">{subject.icon}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2 mb-1.5">
+                          <span className="text-sm font-medium truncate flex-1">{subject.name}</span>
+                          <span className="text-xs text-gray-500 flex-shrink-0 tabular-nums">{Math.round(completionPercentage)}%</span>
+                        </div>
+                        {/* Progress bar with strict width constraints */}
                         <div 
-                          className={`h-1 rounded-full ${subject.color}`}
-                          style={{ width: `${completionPercentage}%` }}
-                        />
+                          className="relative h-1.5 bg-gray-200 rounded-full"
+                          style={{ 
+                            width: '100%',
+                            maxWidth: '100%',
+                            overflow: 'hidden'
+                          }}
+                        >
+                          <div 
+                            className={`absolute top-0 left-0 h-full rounded-full transition-all duration-300 ease-out ${subject.color}`}
+                            style={{ 
+                              width: `${Math.min(Math.max(completionPercentage, 0), 100)}%`,
+                              maxWidth: '100%'
+                            }}
+                          />
+                        </div>
                       </div>
                     </div>
-                  </button>
+                  </div>
                 );
               })}
             </div>
@@ -110,15 +168,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       </div>
 
       {/* Main content */}
-      <div className="lg:pl-64">
+      <div className="lg:pl-64 w-full">
         {/* Header */}
         <header className="bg-white shadow-sm border-b border-gray-200">
           <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
             <div className="flex items-center">
-              <button
-                onClick={() => setSidebarOpen(true)}
-                className="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-600"
-              >
+              <button className="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-600">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
@@ -128,7 +183,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                 <p className="text-sm text-gray-500">Welcome back! Ready to learn?</p>
               </div>
             </div>
-
             <div className="flex items-center space-x-4">
               {/* XP and Level Display */}
               <div className="hidden sm:flex items-center space-x-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-full">
@@ -188,18 +242,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               </div>
 
               {/* User menu */}
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-medium">
-                  S
-                </div>
-                <span className="hidden sm:block text-sm font-medium text-gray-700">Student</span>
-              </div>
+              <UserMenu />
             </div>
           </div>
         </header>
 
         {/* Main content area */}
-        <main className="p-4 sm:p-6 lg:p-8">
+        <main className="p-4 sm:p-6 lg:p-8 w-full max-w-7xl mx-auto">
           {children}
         </main>
       </div>

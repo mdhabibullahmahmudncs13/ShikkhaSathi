@@ -6,6 +6,7 @@ import ParentDashboard from './pages/ParentDashboard'
 import TeacherDashboard from './pages/TeacherDashboard'
 import QuizPage from './pages/QuizPage'
 import AITutorChat from './pages/AITutorChat'
+import UserProfile from './pages/UserProfile'
 import { SyncStatusIndicator, SyncProgressModal, ConflictResolutionModal } from './components/sync'
 import { useSyncManager } from './hooks/useSyncManager'
 import ErrorBoundary from './components/common/ErrorBoundary'
@@ -14,155 +15,6 @@ import { ErrorNotificationManager } from './components/common/ErrorNotification'
 import { SystemStatusIndicator } from './components/common/SystemMonitor'
 import { useAuth } from './hooks/useAPI'
 import React from 'react'
-
-// Placeholder components for different routes
-const Dashboard = () => (
-  <div className="min-h-screen bg-neutral-100">
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Welcome Section */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-neutral-900">Welcome back! 👋</h1>
-        <p className="mt-2 text-neutral-600">শেখার যাত্রা চালিয়ে যান</p>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {/* XP Card */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-neutral-200">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-primary/10 rounded-lg">
-              <svg className="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-            </div>
-            <span className="text-sm font-medium text-neutral-500">Total XP</span>
-          </div>
-          <div className="text-3xl font-bold text-neutral-900">2,450</div>
-          <div className="mt-2 text-sm text-neutral-600">Level 5 • 550 to next level</div>
-        </div>
-
-        {/* Streak Card */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-neutral-200">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-orange-100 rounded-lg">
-              <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
-              </svg>
-            </div>
-            <span className="text-sm font-medium text-neutral-500">Current Streak</span>
-          </div>
-          <div className="text-3xl font-bold text-neutral-900">7 days</div>
-          <div className="mt-2 text-sm text-neutral-600">Longest: 15 days 🔥</div>
-        </div>
-
-        {/* Completed Card */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-neutral-200">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-green-100 rounded-lg">
-              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <span className="text-sm font-medium text-neutral-500">Completed</span>
-          </div>
-          <div className="text-3xl font-bold text-neutral-900">24</div>
-          <div className="mt-2 text-sm text-neutral-600">Quizzes this week</div>
-        </div>
-
-        {/* Achievements Card */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-neutral-200">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-purple-100 rounded-lg">
-              <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-              </svg>
-            </div>
-            <span className="text-sm font-medium text-neutral-500">Achievements</span>
-          </div>
-          <div className="text-3xl font-bold text-neutral-900">12</div>
-          <div className="mt-2 text-sm text-neutral-600">3 new this month 🎉</div>
-        </div>
-      </div>
-
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Continue Learning */}
-        <div className="lg:col-span-2 bg-white rounded-xl p-6 shadow-sm border border-neutral-200">
-          <h2 className="text-xl font-bold text-neutral-900 mb-4">Continue Learning</h2>
-          <div className="space-y-4">
-            {/* Subject Progress */}
-            {['Mathematics', 'Physics', 'Chemistry'].map((subject, idx) => (
-              <div key={subject} className="p-4 bg-neutral-50 rounded-lg hover:bg-neutral-100 transition-colors cursor-pointer">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-semibold text-neutral-900">{subject}</h3>
-                  <span className="text-sm font-medium text-neutral-600">{75 - idx * 10}%</span>
-                </div>
-                <div className="w-full bg-neutral-200 rounded-full h-2.5">
-                  <div 
-                    className="bg-primary h-2.5 rounded-full transition-all shadow-sm" 
-                    style={{ width: `${75 - idx * 10}%` }}
-                  ></div>
-                </div>
-                <p className="mt-2 text-sm text-neutral-600">Chapter {idx + 3} • {5 - idx} lessons remaining</p>
-              </div>
-            ))}
-          </div>
-          <button className="mt-6 w-full py-3 px-4 bg-primary hover:bg-primary-600 text-neutral-900 font-bold rounded-xl transition-all shadow-neon hover:shadow-lg transform hover:-translate-y-0.5">
-            Start Learning
-          </button>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="space-y-6">
-          {/* AI Tutor */}
-          <div className="bg-gradient-to-br from-primary/20 to-primary/10 rounded-2xl p-6 border-2 border-primary/40">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 bg-primary rounded-lg shadow-sm">
-                <svg className="w-5 h-5 text-neutral-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                </svg>
-              </div>
-              <h3 className="font-bold text-neutral-900">AI Tutor</h3>
-            </div>
-            <p className="text-sm text-neutral-700 mb-4">Get instant help with your questions</p>
-            <button className="w-full py-2 px-4 bg-white hover:bg-primary/10 text-neutral-900 font-semibold rounded-lg transition-all border-2 border-primary/50 hover:border-primary">
-              Ask a Question
-            </button>
-          </div>
-
-          {/* Practice Quiz */}
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-neutral-200">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-              </div>
-              <h3 className="font-bold text-neutral-900">Practice Quiz</h3>
-            </div>
-            <p className="text-sm text-neutral-600 mb-4">Test your knowledge</p>
-            <button className="w-full py-2 px-4 bg-neutral-900 hover:bg-neutral-800 text-white font-medium rounded-lg transition-all">
-              Start Quiz
-            </button>
-          </div>
-
-          {/* Achievements Preview */}
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-neutral-200">
-            <h3 className="font-bold text-neutral-900 mb-4">Recent Achievements</h3>
-            <div className="space-y-3">
-              {['🏆 Week Warrior', '⚡ Speed Learner', '🎯 Perfect Score'].map((achievement) => (
-                <div key={achievement} className="flex items-center gap-3 p-2 bg-neutral-50 rounded-lg">
-                  <span className="text-2xl">{achievement.split(' ')[0]}</span>
-                  <span className="text-sm font-medium text-neutral-700">{achievement.split(' ').slice(1).join(' ')}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-)
 
 const Login = () => {
   const navigate = useNavigate();
@@ -211,7 +63,7 @@ const Login = () => {
       } else if (user.role === 'parent') {
         navigate('/parent');
       } else {
-        navigate('/dashboard');
+        navigate('/student');
       }
     } catch (err: any) {
       console.error('Login error:', err);
@@ -562,11 +414,13 @@ function App() {
                 <Route path="/" element={<Landing />} />
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/login" element={<Login />} />
-                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/student" element={<StudentDashboard />} />
                 <Route path="/parent" element={<ParentDashboard />} />
                 <Route path="/teacher" element={<TeacherDashboard />} />
                 <Route path="/chat" element={<AITutorChat />} />
                 <Route path="/quiz" element={<QuizPage />} />
+                <Route path="/profile" element={<UserProfile />} />
+                <Route path="/settings" element={<UserProfile />} />
               </Routes>
             </ErrorBoundary>
           </main>

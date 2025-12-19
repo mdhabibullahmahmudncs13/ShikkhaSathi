@@ -4,8 +4,9 @@ from app.api.api_v1 import docs
 
 api_router = APIRouter()
 
-# Health check endpoint
+# Health check endpoint (supports both GET and HEAD)
 @api_router.get("/health", tags=["health"])
+@api_router.head("/health", tags=["health"])
 async def health_check():
     """API health check endpoint"""
     return {

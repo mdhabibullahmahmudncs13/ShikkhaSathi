@@ -189,15 +189,32 @@ export const ParentDashboardLayout: React.FC<ParentDashboardLayoutProps> = ({
                 )}
               </div>
 
-              {/* Settings */}
-              <button className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
-                <Settings className="h-6 w-6" />
-              </button>
-
-              {/* Logout */}
-              <button className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
-                <LogOut className="h-6 w-6" />
-              </button>
+              {/* User Menu */}
+              <div className="relative group">
+                <button className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 transition-colors">
+                  <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white font-medium">
+                    P
+                  </div>
+                  <span className="hidden sm:block text-sm font-medium text-gray-700">Parent</span>
+                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                
+                {/* Dropdown Menu */}
+                <div className="hidden group-hover:block absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50">
+                  <a href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
+                    👤 Profile Settings
+                  </a>
+                  <a href="/settings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
+                    ⚙️ Account Settings
+                  </a>
+                  <div className="border-t border-gray-200 my-2"></div>
+                  <a href="/" className="block px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors">
+                    🚪 Sign Out
+                  </a>
+                </div>
+              </div>
             </div>
           </div>
         </div>
