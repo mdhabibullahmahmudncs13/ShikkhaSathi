@@ -53,6 +53,9 @@ class Settings(BaseSettings):
     # Voice Services
     ELEVENLABS_API_KEY: str = ""
     ELEVENLABS_VOICE_ID: str = "21m00Tcm4TlvDq8ikWAM"  # Default voice ID
+    
+    # Password Hashing Fallback (for development/testing)
+    FORCE_PASSWORD_FALLBACK: bool = False
 
     model_config = {"env_file": ".env"}
 

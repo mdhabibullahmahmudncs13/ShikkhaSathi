@@ -1,4 +1,6 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom'
+import Landing from './pages/Landing'
+import Signup from './pages/Signup'
 import StudentDashboard from './pages/StudentDashboard'
 import ParentDashboard from './pages/ParentDashboard'
 import TeacherDashboard from './pages/TeacherDashboard'
@@ -95,9 +97,9 @@ const Dashboard = () => (
                   <h3 className="font-semibold text-neutral-900">{subject}</h3>
                   <span className="text-sm font-medium text-neutral-600">{75 - idx * 10}%</span>
                 </div>
-                <div className="w-full bg-neutral-200 rounded-full h-2">
+                <div className="w-full bg-neutral-200 rounded-full h-2.5">
                   <div 
-                    className="bg-primary h-2 rounded-full transition-all" 
+                    className="bg-primary h-2.5 rounded-full transition-all shadow-sm" 
                     style={{ width: `${75 - idx * 10}%` }}
                   ></div>
                 </div>
@@ -105,7 +107,7 @@ const Dashboard = () => (
               </div>
             ))}
           </div>
-          <button className="mt-6 w-full py-3 px-4 bg-primary hover:bg-primary-400 text-neutral-900 font-semibold rounded-lg transition-all shadow-sm hover:shadow-md">
+          <button className="mt-6 w-full py-3 px-4 bg-primary hover:bg-primary-600 text-neutral-900 font-bold rounded-xl transition-all shadow-neon hover:shadow-lg transform hover:-translate-y-0.5">
             Start Learning
           </button>
         </div>
@@ -113,9 +115,9 @@ const Dashboard = () => (
         {/* Quick Actions */}
         <div className="space-y-6">
           {/* AI Tutor */}
-          <div className="bg-gradient-to-br from-primary/20 to-primary/5 rounded-xl p-6 border border-primary/20">
+          <div className="bg-gradient-to-br from-primary/20 to-primary/10 rounded-2xl p-6 border-2 border-primary/40">
             <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 bg-primary rounded-lg">
+              <div className="p-2 bg-primary rounded-lg shadow-sm">
                 <svg className="w-5 h-5 text-neutral-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                 </svg>
@@ -123,7 +125,7 @@ const Dashboard = () => (
               <h3 className="font-bold text-neutral-900">AI Tutor</h3>
             </div>
             <p className="text-sm text-neutral-700 mb-4">Get instant help with your questions</p>
-            <button className="w-full py-2 px-4 bg-white hover:bg-neutral-50 text-neutral-900 font-medium rounded-lg transition-all border border-neutral-200">
+            <button className="w-full py-2 px-4 bg-white hover:bg-primary/10 text-neutral-900 font-semibold rounded-lg transition-all border-2 border-primary/50 hover:border-primary">
               Ask a Question
             </button>
           </div>
@@ -163,7 +165,61 @@ const Dashboard = () => (
 )
 
 const Login = () => {
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const [formData, setFormData] = React.useState({
+    email: '',
+    password: ''
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+    setError(''); // Clear error when user types
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      // Import authAPI dynamically to avoid circular dependencies
+      const { authAPI } = await import('./services/apiClient');
+      
+      // Call login API
+      const response = await authAPI.login(formData.email, formData.password);
+      
+      // Store tokens and user info
+      localStorage.setItem('access_token', response.access_token);
+      if (response.refresh_token) {
+        localStorage.setItem('refresh_token', response.refresh_token);
+      }
+      
+      // Get user info
+      const user = await authAPI.getCurrentUser();
+      localStorage.setItem('user_id', user.id);
+      localStorage.setItem('user_role', user.role);
+      
+      // Redirect based on role
+      if (user.role === 'teacher') {
+        navigate('/teacher');
+      } else if (user.role === 'parent') {
+        navigate('/parent');
+      } else {
+        navigate('/dashboard');
+      }
+    } catch (err: any) {
+      console.error('Login error:', err);
+      setError(err.message || 'Invalid email or password. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
   
   return (
     <div className="min-h-screen flex items-center justify-center bg-neutral-100 py-12 px-4 sm:px-6 lg:px-8">
@@ -189,7 +245,14 @@ const Login = () => {
         </div>
 
         {/* Login Form */}
-        <form className="mt-8 space-y-6">
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          {/* Error Message */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+              {error}
+            </div>
+          )}
+          
           {/* Email Input */}
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-neutral-700 mb-2">
@@ -201,7 +264,10 @@ const Login = () => {
               type="email"
               autoComplete="email"
               required
-              className="appearance-none relative block w-full px-4 py-3 border border-neutral-300 placeholder-neutral-400 text-neutral-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+              value={formData.email}
+              onChange={handleChange}
+              disabled={loading}
+              className="appearance-none relative block w-full px-4 py-3 border border-neutral-300 placeholder-neutral-400 text-neutral-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all disabled:bg-neutral-100 disabled:cursor-not-allowed"
               placeholder="your@email.com"
             />
           </div>
@@ -218,7 +284,10 @@ const Login = () => {
                 type={showPassword ? "text" : "password"}
                 autoComplete="current-password"
                 required
-                className="appearance-none relative block w-full px-4 py-3 pr-12 border border-neutral-300 placeholder-neutral-400 text-neutral-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                value={formData.password}
+                onChange={handleChange}
+                disabled={loading}
+                className="appearance-none relative block w-full px-4 py-3 pr-12 border border-neutral-300 placeholder-neutral-400 text-neutral-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all disabled:bg-neutral-100 disabled:cursor-not-allowed"
                 placeholder="Enter your password"
               />
               <button
@@ -264,9 +333,20 @@ const Login = () => {
           <div>
             <button
               type="submit"
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-base font-semibold rounded-lg text-neutral-900 bg-primary hover:bg-primary-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all shadow-sm hover:shadow-md"
+              disabled={loading}
+              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-base font-bold rounded-xl text-neutral-900 bg-primary hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all shadow-neon hover:shadow-lg transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
-              Sign in
+              {loading ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-neutral-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Signing in...
+                </>
+              ) : (
+                'Sign in'
+              )}
             </button>
           </div>
 
@@ -300,7 +380,7 @@ const Login = () => {
           <div className="text-center">
             <p className="text-sm text-neutral-600">
               নতুন ব্যবহারকারী?{' '}
-              <a href="#" className="font-medium text-neutral-900 hover:text-primary">
+              <a href="/signup" className="font-medium text-neutral-900 hover:text-primary">
                 একটি অ্যাকাউন্ট তৈরি করুন
               </a>
             </p>
@@ -335,63 +415,141 @@ function App() {
           <GlobalLoadingBar />
           
           {/* Navigation */}
-          <nav className="bg-white border-b border-neutral-200">
+          <nav className="bg-white border-b border-neutral-200 sticky top-0 z-50 shadow-sm">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="flex justify-between h-16">
+                {/* Logo and Brand */}
                 <div className="flex items-center gap-8">
-                  <h1 className="text-xl font-bold text-neutral-900">ShikkhaSathi</h1>
+                  <a href="/" className="flex items-center gap-2 group">
+                    <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-sm group-hover:shadow-neon transition-all">
+                      <svg className="w-5 h-5 text-neutral-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                      </svg>
+                    </div>
+                    <span className="text-xl font-bold text-neutral-900 font-bengali">শিক্ষাসাথী</span>
+                  </a>
+                  
+                  {/* Public Navigation */}
+                  {!isAuthenticated && (
+                    <div className="hidden md:flex items-center space-x-1">
+                      <a href="/#features" className="px-3 py-2 text-sm font-medium text-neutral-700 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors">
+                        Features
+                      </a>
+                      <a href="/#about" className="px-3 py-2 text-sm font-medium text-neutral-700 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors">
+                        About
+                      </a>
+                      <a href="/#pricing" className="px-3 py-2 text-sm font-medium text-neutral-700 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors">
+                        Pricing
+                      </a>
+                      <a href="/#contact" className="px-3 py-2 text-sm font-medium text-neutral-700 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors">
+                        Contact
+                      </a>
+                    </div>
+                  )}
+                  
+                  {/* Authenticated Navigation */}
                   {isAuthenticated && (
                     <div className="hidden md:flex items-center space-x-1">
-                      <a href="/" className="px-3 py-2 text-sm font-medium text-neutral-700 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors">
+                      <a href="/dashboard" className="px-3 py-2 text-sm font-medium text-neutral-700 hover:text-neutral-900 hover:bg-primary/10 rounded-lg transition-colors">
                         Dashboard
                       </a>
                       {typedUser?.role === 'student' && (
                         <>
-                          <a href="/chat" className="px-3 py-2 text-sm font-medium text-neutral-700 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors">
+                          <a href="/chat" className="px-3 py-2 text-sm font-medium text-neutral-700 hover:text-neutral-900 hover:bg-primary/10 rounded-lg transition-colors">
                             AI Tutor
                           </a>
-                          <a href="/quiz" className="px-3 py-2 text-sm font-medium text-neutral-700 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors">
+                          <a href="/quiz" className="px-3 py-2 text-sm font-medium text-neutral-700 hover:text-neutral-900 hover:bg-primary/10 rounded-lg transition-colors">
                             Quiz
+                          </a>
+                          <a href="/progress" className="px-3 py-2 text-sm font-medium text-neutral-700 hover:text-neutral-900 hover:bg-primary/10 rounded-lg transition-colors">
+                            Progress
                           </a>
                         </>
                       )}
                       {typedUser?.role === 'parent' && (
-                        <a href="/parent" className="px-3 py-2 text-sm font-medium text-neutral-700 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors">
+                        <a href="/parent" className="px-3 py-2 text-sm font-medium text-neutral-700 hover:text-neutral-900 hover:bg-primary/10 rounded-lg transition-colors">
                           Parent Portal
                         </a>
                       )}
                       {typedUser?.role === 'teacher' && (
-                        <a href="/teacher" className="px-3 py-2 text-sm font-medium text-neutral-700 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors">
-                          Teacher Dashboard
-                        </a>
+                        <>
+                          <a href="/teacher" className="px-3 py-2 text-sm font-medium text-neutral-700 hover:text-neutral-900 hover:bg-primary/10 rounded-lg transition-colors">
+                            Dashboard
+                          </a>
+                          <a href="/teacher/assessments" className="px-3 py-2 text-sm font-medium text-neutral-700 hover:text-neutral-900 hover:bg-primary/10 rounded-lg transition-colors">
+                            Assessments
+                          </a>
+                          <a href="/teacher/students" className="px-3 py-2 text-sm font-medium text-neutral-700 hover:text-neutral-900 hover:bg-primary/10 rounded-lg transition-colors">
+                            Students
+                          </a>
+                        </>
                       )}
                     </div>
                   )}
                 </div>
+                
+                {/* Right Side Actions */}
                 <div className="flex items-center gap-3">
                   {isAuthenticated ? (
                     <>
-                      {typedUser && (
-                        <span className="hidden sm:block text-sm text-neutral-600">
-                          {typedUser.full_name}
-                        </span>
-                      )}
-                      <button className="p-2 text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors">
+                      {/* Notifications */}
+                      <button className="relative p-2 text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                         </svg>
+                        <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full"></span>
                       </button>
-                      <button className="p-2 text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                      </button>
+                      
+                      {/* User Menu */}
+                      <div className="relative group">
+                        <button className="flex items-center gap-2 p-2 text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors">
+                          <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                            <span className="text-sm font-bold text-neutral-900">
+                              {typedUser?.full_name?.charAt(0) || 'U'}
+                            </span>
+                          </div>
+                          {typedUser && (
+                            <span className="hidden sm:block text-sm font-medium text-neutral-900">
+                              {typedUser.full_name}
+                            </span>
+                          )}
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
+                        
+                        {/* Dropdown Menu */}
+                        <div className="hidden group-hover:block absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-soft border border-neutral-200 py-2">
+                          <a href="/profile" className="block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100 transition-colors">
+                            Profile Settings
+                          </a>
+                          <a href="/settings" className="block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100 transition-colors">
+                            Account Settings
+                          </a>
+                          <div className="border-t border-neutral-200 my-2"></div>
+                          <button className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors">
+                            Sign Out
+                          </button>
+                        </div>
+                      </div>
                     </>
                   ) : (
-                    <a href="/login" className="px-4 py-2 text-sm font-medium text-neutral-900 bg-primary hover:bg-primary-400 rounded-lg transition-all">
-                      Sign In
-                    </a>
+                    <>
+                      <a href="/login" className="hidden sm:block px-4 py-2 text-sm font-medium text-neutral-700 hover:text-neutral-900 transition-colors">
+                        Log In
+                      </a>
+                      <a href="/signup" className="px-4 py-2 text-sm font-bold text-neutral-900 bg-primary hover:bg-primary-600 rounded-lg transition-all shadow-sm hover:shadow-neon">
+                        Get Started
+                      </a>
+                    </>
                   )}
+                  
+                  {/* Mobile Menu Button */}
+                  <button className="md:hidden p-2 text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                  </button>
                 </div>
               </div>
             </div>
@@ -401,12 +559,14 @@ function App() {
           <main>
             <ErrorBoundary>
               <Routes>
-                <Route path="/" element={<Dashboard />} />
+                <Route path="/" element={<Landing />} />
+                <Route path="/signup" element={<Signup />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/parent" element={<ParentDashboard />} />
                 <Route path="/teacher" element={<TeacherDashboard />} />
                 <Route path="/chat" element={<AITutorChat />} />
                 <Route path="/quiz" element={<QuizPage />} />
-                <Route path="/login" element={<Login />} />
               </Routes>
             </ErrorBoundary>
           </main>
