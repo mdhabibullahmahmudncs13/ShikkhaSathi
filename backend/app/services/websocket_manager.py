@@ -2,9 +2,10 @@ import json
 import asyncio
 from typing import Dict, List, Optional
 from fastapi import WebSocket, WebSocketDisconnect
-from app.services.rag.rag_service import RAGService
+from app.services.rag.rag_service import RAGService, RAGServiceConfig
 from app.services.voice_service import get_voice_service
 from app.db.mongodb import get_mongodb
+from app.core.config import settings
 from datetime import datetime
 import logging
 
@@ -14,7 +15,24 @@ class ConnectionManager:
     def __init__(self):
         self.active_connections: Dict[str, WebSocket] = {}
         self.user_sessions: Dict[str, str] = {}  # user_id -> session_id
-        self.rag_service = RAGService()
+        self._rag_service = None  # Lazy initialization
+    
+    def get_rag_service(self):
+        """Lazy initialization of RAG service"""
+        if self._rag_service is None:
+            try:
+                rag_config = RAGServiceConfig(
+                    openai_api_key=settings.OPENAI_API_KEY,
+                    pinecone_api_key=settings.PINECONE_API_KEY,
+                    pinecone_environment=settings.PINECONE_ENVIRONMENT,
+                    index_name=settings.PINECONE_INDEX_NAME
+                )
+                self._rag_service = RAGService(rag_config)
+            except Exception as e:
+                logger.error(f"Failed to initialize RAG service: {e}")
+                # Return None if initialization fails (e.g., missing API keys)
+                return None
+        return self._rag_service
 
     async def connect(self, websocket: WebSocket, user_id: str, session_id: str):
         await websocket.accept()
@@ -81,11 +99,19 @@ class ConnectionManager:
             chat_history = await self.get_chat_history(user_id, session_id, limit=3)
             
             # Generate AI response using RAG service
-            ai_response = await self.rag_service.process_query(
-                query=user_message,
-                user_id=user_id,
-                chat_history=chat_history
-            )
+            rag_service = self.get_rag_service()
+            if rag_service:
+                ai_response = await rag_service.process_query(
+                    query=user_message,
+                    user_id=user_id,
+                    chat_history=chat_history
+                )
+            else:
+                # Fallback response if RAG service is not available
+                ai_response = {
+                    "response": "I apologize, but the AI service is currently unavailable. Please check your API configuration.",
+                    "sources": []
+                }
 
             # Create AI message
             ai_message = {
