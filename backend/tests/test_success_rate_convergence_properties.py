@@ -319,7 +319,7 @@ class TestSuccessRateConvergenceProperties:
             max_size=10
         )
     )
-    @settings(max_examples=20)
+    @settings(max_examples=20, suppress_health_check=[HealthCheck.data_too_large])
     def test_oscillation_dampening(self, oscillating_performances):
         """
         **Property 6: Adaptive Success Rate Convergence**

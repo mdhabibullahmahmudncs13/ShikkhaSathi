@@ -23,7 +23,8 @@ import uuid
 def valid_user_data(draw):
     """Generate valid user creation data"""
     email = draw(st.emails())
-    password = draw(st.text(min_size=8, max_size=50, alphabet=st.characters(min_codepoint=33, max_codepoint=126)))
+    # Limit password to 30 characters to ensure it stays under bcrypt's 72-byte limit
+    password = draw(st.text(min_size=8, max_size=30, alphabet="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*"))
     full_name = draw(st.text(min_size=1, max_size=100, alphabet=st.characters(whitelist_categories=('Lu', 'Ll', 'Nd', 'Zs'))))
     grade = draw(st.one_of(st.none(), st.integers(min_value=6, max_value=12)))
     medium = draw(st.one_of(st.none(), st.sampled_from(Medium)))
@@ -157,7 +158,7 @@ class TestAuthenticationTokenValidity:
             db.close()
 
     @given(user_data=valid_user_data(),
-           wrong_password=st.text(min_size=8, max_size=100))
+           wrong_password=st.text(min_size=8, max_size=30, alphabet="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*"))
     def test_authentication_fails_with_wrong_password(self, user_data, wrong_password):
         """
         Property: For any user and a different wrong password,

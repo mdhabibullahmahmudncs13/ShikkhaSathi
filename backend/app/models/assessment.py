@@ -44,7 +44,7 @@ class Assessment(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relationships
-    teacher = relationship("User", back_populates="created_assessments")
+    teacher = relationship("User")
     questions = relationship("AssessmentQuestion", back_populates="assessment", cascade="all, delete-orphan")
     rubric = relationship("AssessmentRubric", back_populates="assessment", uselist=False, cascade="all, delete-orphan")
     attempts = relationship("AssessmentAttempt", back_populates="assessment")

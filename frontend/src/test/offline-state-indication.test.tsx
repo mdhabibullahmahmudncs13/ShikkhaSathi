@@ -130,7 +130,7 @@ describe('Offline State Indication Properties', () => {
 
             // Verify online functionality is available
             const subjectSelects = screen.getAllByDisplayValue('Select Subject') as HTMLSelectElement[];
-            const gradeSelects = screen.getAllByDisplayValue('Select Grade') as HTMLSelectElement[];
+            const gradeSelects = screen.getAllByDisplayValue('Grade 6') as HTMLSelectElement[];
             const languageSelects = screen.getAllByDisplayValue('Bangla') as HTMLSelectElement[];
             
             expect(subjectSelects[0].disabled).toBe(false);
@@ -158,7 +158,7 @@ describe('Offline State Indication Properties', () => {
 
             // Form controls should be disabled when offline
             const offlineSubjectSelects = screen.getAllByDisplayValue('Select Subject') as HTMLSelectElement[];
-            const offlineGradeSelects = screen.getAllByDisplayValue('Select Grade') as HTMLSelectElement[];
+            const offlineGradeSelects = screen.getAllByDisplayValue('Grade 6') as HTMLSelectElement[];
             const offlineLanguageSelects = screen.getAllByDisplayValue('Bangla') as HTMLSelectElement[];
             
             expect(offlineSubjectSelects[0].disabled).toBe(true);
@@ -342,8 +342,10 @@ describe('Offline State Indication Properties', () => {
             const syncStatus = syncManager.getSyncStatus();
             expect(syncStatus.isOnline).toBe(connectivityState);
             
-            // Check service worker manager state
-            expect(serviceWorkerManager.isOnlineStatus()).toBe(connectivityState);
+            // Check service worker manager state (allow some time for event propagation)
+            await waitFor(() => {
+              expect(serviceWorkerManager.isOnlineStatus()).toBe(connectivityState);
+            }, { timeout: 1000 });
           }
         ),
         { numRuns: 100 }

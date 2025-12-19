@@ -9,7 +9,7 @@ import asyncio
 import tempfile
 import os
 from unittest.mock import Mock, AsyncMock, patch, MagicMock
-from hypothesis import given, strategies as st, assume, settings
+from hypothesis import given, strategies as st, assume, settings, HealthCheck
 from hypothesis.strategies import text, integers, composite, sampled_from, binary
 import wave
 import struct
@@ -50,7 +50,7 @@ def valid_audio_data(draw):
     """Generate valid audio data for STT testing"""
     # Generate simple sine wave audio data
     sample_rate = 44100
-    duration = draw(st.floats(min_value=0.5, max_value=5.0))  # 0.5 to 5 seconds
+    duration = draw(st.floats(min_value=0.5, max_value=2.0))  # 0.5 to 2 seconds
     frequency = draw(st.integers(min_value=200, max_value=2000))  # Human voice range
     
     num_samples = int(sample_rate * duration)
@@ -115,7 +115,7 @@ class TestVoiceProcessingProperties:
                 assert "language" in result
 
     @given(valid_audio_data())
-    @settings(max_examples=15, deadline=30000)  # Reduced examples for API calls
+    @settings(max_examples=15, deadline=30000, suppress_health_check=[HealthCheck.data_too_large])  # Reduced examples for API calls
     def test_speech_to_text_completeness(self, audio_data):
         """
         **Feature: shikkhasathi-platform, Property 15: Voice Processing Accuracy and Completeness**

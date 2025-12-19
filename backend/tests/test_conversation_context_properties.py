@@ -24,11 +24,11 @@ def valid_conversation_message(draw):
     
     return ConversationMessage(
         role=draw(sampled_from(roles)),
-        content=draw(text(min_size=5, max_size=200)),
+        content=draw(text(min_size=5, max_size=200, alphabet=st.characters(blacklist_categories=('Cc',), min_codepoint=32, max_codepoint=126))),
         timestamp=datetime.now() - timedelta(minutes=draw(integers(min_value=0, max_value=60))),
         sources=draw(st.one_of(
             st.none(),
-            lists(text(min_size=5, max_size=20), min_size=0, max_size=3)
+            lists(text(min_size=5, max_size=20, alphabet=st.characters(blacklist_categories=('Cc',), min_codepoint=32, max_codepoint=126)), min_size=0, max_size=3)
         ))
     )
 
@@ -70,7 +70,7 @@ def conversation_sequence(draw):
     
     for i in range(num_messages):
         role = "user" if i % 2 == 0 else "assistant"
-        content = f"Message {i+1}: " + draw(text(min_size=10, max_size=100))
+        content = f"Message {i+1}: " + draw(text(min_size=10, max_size=100, alphabet=st.characters(blacklist_categories=('Cc',), min_codepoint=32, max_codepoint=126)))
         timestamp = base_time + timedelta(minutes=i * 5)
         
         message = ConversationMessage(
@@ -135,7 +135,7 @@ class TestConversationContextProperties:
             if len(expected_messages) > 0:
                 most_recent_content = expected_messages[-1].content
                 if len(most_recent_content.strip()) > 0:
-                    assert most_recent_content in extracted_context or extracted_context == "", \
+                    assert most_recent_content.strip() in extracted_context or extracted_context == "", \
                         "Most recent message content should be included in context"
         else:
             # Property 3: Empty message list should produce empty context
@@ -366,5 +366,5 @@ class TestConversationContextProperties:
             
             if non_empty_messages:
                 # At least one message content should appear in context
-                assert any(msg.content in extracted_context for msg in non_empty_messages), \
+                assert any(msg.content.strip() in extracted_context for msg in non_empty_messages), \
                     "Context should contain at least one message content"

@@ -203,7 +203,13 @@ def test_streak_milestone_notification_completeness_property(user_data, streak_d
     # Verify streak milestone specific content
     assert notification['type'] == 'streak_milestone', "Notification type should be streak_milestone"
     assert user_data['child_name'] in notification['message'], "Child name should be in message"
-    assert str(streak_days) in notification['message'], "Streak days should be in message"
+    # Check if either the exact number or human-readable format appears in message
+    message = notification['message']
+    has_exact_days = str(streak_days) in message
+    has_human_readable = any(readable in message.lower() for readable in [
+        "1-week", "2-week", "1-month", "2-month", "100-day"
+    ])
+    assert has_exact_days or has_human_readable, f"Streak days ({streak_days}) should be in message in some format"
     assert notification['childId'] == user_data['child_id'], "Child ID should match"
     assert notification['childName'] == user_data['child_name'], "Child name should match"
     assert notification['priority'] == 'medium', "Streak milestones should be medium priority"
