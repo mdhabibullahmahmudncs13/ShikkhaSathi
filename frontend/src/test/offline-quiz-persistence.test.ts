@@ -53,8 +53,8 @@ describe('Offline Quiz Persistence Properties', () => {
           const retrieved = await offlineStorage.getQuizAttempt(quizAttempt.id);
           
           expect(retrieved).toBeDefined();
-          expect(retrieved.id).toBe(quizAttempt.id);
-          expect(retrieved.userId).toBe(quizAttempt.userId);
+          expect(retrieved!.id).toBe(quizAttempt.id);
+          expect(retrieved!.userId).toBe(quizAttempt.userId);
         }
       ),
       { numRuns: 50 }
@@ -161,7 +161,7 @@ describe('Offline Quiz Persistence Properties', () => {
           await offlineStorage.markQuizAttemptSynced(quizAttempt.id);
 
           const retrieved = await offlineStorage.getQuizAttempt(quizAttempt.id);
-          expect(retrieved.synced).toBe(true);
+          expect(retrieved!.synced).toBe(true);
         }
       ),
       { numRuns: 50 }
