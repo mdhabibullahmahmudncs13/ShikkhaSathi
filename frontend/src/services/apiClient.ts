@@ -291,11 +291,118 @@ export const teacherAPI = {
   getStudentAnalytics: (studentId: string) =>
     api.get(`/teacher/student/${studentId}/analytics`),
   getClassPerformance: () => api.get('/teacher/class-performance'),
+  
+  // Analytics endpoints
+  getClassPerformanceMetrics: (classId?: string, timeRange?: string) =>
+    api.get('/teacher/analytics/performance', { 
+      params: { class_id: classId, time_range: timeRange } 
+    }),
+  getWeaknessPatterns: (classId?: string, timeRange?: string) =>
+    api.get('/teacher/analytics/weakness-patterns', { 
+      params: { class_id: classId, time_range: timeRange } 
+    }),
+  getInterventionRecommendations: (classId?: string) =>
+    api.get('/teacher/analytics/interventions', { 
+      params: { class_id: classId } 
+    }),
+  updateInterventionRecommendation: (recommendationId: string, data: any) =>
+    api.patch(`/teacher/analytics/interventions/${recommendationId}`, data),
+  exportClassReport: (classId: string, options: any) =>
+    api.post(`/teacher/analytics/export/${classId}`, options, {
+      responseType: 'blob'
+    }),
+  
+  // Assessment management endpoints
   createAssessment: (assessmentData: any) =>
-    api.post('/assessment/create', assessmentData),
-  getAssessments: () => api.get('/assessment/list'),
-  getAssessmentResults: (assessmentId: string) =>
-    api.get(`/assessment/${assessmentId}/results`),
+    api.post('/teacher/assessment/create', assessmentData),
+  updateAssessment: (assessmentId: string, assessmentData: any) =>
+    api.put(`/teacher/assessment/${assessmentId}`, assessmentData),
+  getAssessment: (assessmentId: string) =>
+    api.get(`/teacher/assessment/${assessmentId}`),
+  getAssessments: (filters?: any) => 
+    api.get('/teacher/assessment/list', { params: filters }),
+  deleteAssessment: (assessmentId: string) =>
+    api.delete(`/teacher/assessment/${assessmentId}`),
+  duplicateAssessment: (assessmentId: string) =>
+    api.post(`/teacher/assessment/${assessmentId}/duplicate`),
+  
+  // Assessment publishing and assignment
+  publishAssessment: (assessmentId: string, publishData: any) =>
+    api.post(`/teacher/assessment/${assessmentId}/publish`, publishData),
+  assignAssessment: (assessmentId: string, assignmentData: any) =>
+    api.post(`/teacher/assessment/${assessmentId}/assign`, assignmentData),
+  getAssignedClasses: (assessmentId: string) =>
+    api.get(`/teacher/assessment/${assessmentId}/assignments`),
+  
+  // Assessment results and analytics
+  getAssessmentResults: (assessmentId: string, filters?: any) =>
+    api.get(`/teacher/assessment/${assessmentId}/results`, { params: filters }),
+  getAssessmentAnalytics: (assessmentId: string) =>
+    api.get(`/teacher/assessment/${assessmentId}/analytics`),
+  getStudentAssessmentResult: (assessmentId: string, studentId: string) =>
+    api.get(`/teacher/assessment/${assessmentId}/student/${studentId}/result`),
+  
+  // Question bank endpoints
+  getQuestionBank: (filters?: any) =>
+    api.get('/teacher/question-bank', { params: filters }),
+  createQuestion: (questionData: any) =>
+    api.post('/teacher/question-bank/create', questionData),
+  updateQuestion: (questionId: string, questionData: any) =>
+    api.put(`/teacher/question-bank/${questionId}`, questionData),
+  deleteQuestion: (questionId: string) =>
+    api.delete(`/teacher/question-bank/${questionId}`),
+  getQuestionUsageStats: (questionId: string) =>
+    api.get(`/teacher/question-bank/${questionId}/stats`),
+  
+  // AI-powered question generation
+  generateQuestionSuggestions: (criteria: any) =>
+    api.post('/teacher/question-bank/generate', criteria),
+  improveQuestion: (questionId: string, improvementCriteria: any) =>
+    api.post(`/teacher/question-bank/${questionId}/improve`, improvementCriteria),
+  
+  // Rubric management
+  createRubric: (rubricData: any) =>
+    api.post('/teacher/rubric/create', rubricData),
+  getRubrics: (filters?: any) =>
+    api.get('/teacher/rubric/list', { params: filters }),
+  getRubric: (rubricId: string) =>
+    api.get(`/teacher/rubric/${rubricId}`),
+  updateRubric: (rubricId: string, rubricData: any) =>
+    api.put(`/teacher/rubric/${rubricId}`, rubricData),
+  deleteRubric: (rubricId: string) =>
+    api.delete(`/teacher/rubric/${rubricId}`),
+  
+  // Assessment templates
+  getAssessmentTemplates: (filters?: any) =>
+    api.get('/teacher/assessment/templates', { params: filters }),
+  createAssessmentFromTemplate: (templateId: string, customizations: any) =>
+    api.post(`/teacher/assessment/templates/${templateId}/create`, customizations),
+  saveAsTemplate: (assessmentId: string, templateData: any) =>
+    api.post(`/teacher/assessment/${assessmentId}/save-as-template`, templateData),
+
+  // Learning Path Management
+  getLearningPathRecommendations: (request: any) =>
+    api.post('/learning-paths/recommendations', request),
+  assignLearningPath: (request: any) =>
+    api.post('/learning-paths/assign', request),
+  bulkAssignLearningPath: (request: any) =>
+    api.post('/learning-paths/bulk-assign', request),
+  updateLearningPathProgress: (assignmentId: string, progress: any) =>
+    api.put(`/learning-paths/progress/${assignmentId}`, progress),
+  adjustLearningPathDifficulty: (request: any) =>
+    api.put('/learning-paths/adjust-difficulty', request),
+  getLearningPathAnalytics: (pathId: string) =>
+    api.get(`/learning-paths/analytics/${pathId}`),
+  updateTopicMastery: (masteryUpdate: any) =>
+    api.post('/learning-paths/topic-mastery', masteryUpdate),
+  createCustomLearningPath: (request: any) =>
+    api.post('/learning-paths/create-custom', request),
+  getLearningPathTemplates: (filters?: any) =>
+    api.get('/learning-paths/templates', { params: filters }),
+  getStudentAssignments: (studentId: string, filters?: any) =>
+    api.get(`/learning-paths/student/${studentId}/assignments`, { params: filters }),
+  getClassAssignments: (classId: string, filters?: any) =>
+    api.get(`/learning-paths/class/${classId}/assignments`, { params: filters }),
 };
 
 export const parentAPI = {

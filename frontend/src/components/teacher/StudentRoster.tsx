@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { 
   Search, 
   Filter, 
@@ -11,7 +11,8 @@ import {
   CheckCircle,
   Clock,
   Award,
-  MoreVertical
+  MoreVertical,
+  RefreshCw
 } from 'lucide-react';
 import { StudentSummary, StudentFilter } from '../../types/teacher';
 
@@ -20,6 +21,8 @@ interface StudentRosterProps {
   classId: string;
   onStudentSelect: (studentId: string) => void;
   onStudentAction: (studentId: string, action: string) => void;
+  onRefresh?: () => Promise<void>;
+  autoRefreshInterval?: number; // in milliseconds, default 30000 (30 seconds)
 }
 
 type SortField = 'name' | 'averageScore' | 'timeSpent' | 'lastActive' | 'currentStreak';
@@ -29,7 +32,9 @@ export const StudentRoster: React.FC<StudentRosterProps> = ({
   students,
   classId,
   onStudentSelect,
-  onStudentAction
+  onStudentAction,
+  onRefresh,
+  autoRefreshInterval = 30000
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<StudentFilter>({});
@@ -37,6 +42,39 @@ export const StudentRoster: React.FC<StudentRosterProps> = ({
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [selectedStudents, setSelectedStudents] = useState<Set<string>>(new Set());
   const [showFilters, setShowFilters] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastRefreshTime, setLastRefreshTime] = useState<Date>(new Date());
+
+  // Auto-refresh functionality
+  useEffect(() => {
+    if (!onRefresh || autoRefreshInterval <= 0) return;
+
+    const intervalId = setInterval(async () => {
+      try {
+        await onRefresh();
+        setLastRefreshTime(new Date());
+      } catch (error) {
+        console.error('Auto-refresh failed:', error);
+      }
+    }, autoRefreshInterval);
+
+    return () => clearInterval(intervalId);
+  }, [onRefresh, autoRefreshInterval]);
+
+  // Manual refresh handler
+  const handleManualRefresh = useCallback(async () => {
+    if (!onRefresh || isRefreshing) return;
+
+    try {
+      setIsRefreshing(true);
+      await onRefresh();
+      setLastRefreshTime(new Date());
+    } catch (error) {
+      console.error('Manual refresh failed:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [onRefresh, isRefreshing]);
 
   const filteredAndSortedStudents = useMemo(() => {
     let filtered = students.filter(student => {
@@ -143,14 +181,30 @@ export const StudentRoster: React.FC<StudentRosterProps> = ({
     return null;
   };
 
+  const getTimeSinceLastRefresh = () => {
+    const seconds = Math.floor((new Date().getTime() - lastRefreshTime.getTime()) / 1000);
+    if (seconds < 60) return `${seconds}s ago`;
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    return `${hours}h ago`;
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-sm border">
       {/* Header */}
       <div className="p-6 border-b">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">
-            Student Roster ({filteredAndSortedStudents.length})
-          </h2>
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">
+              Student Roster ({filteredAndSortedStudents.length})
+            </h2>
+            {onRefresh && (
+              <p className="text-xs text-gray-500 mt-1">
+                Last updated: {getTimeSinceLastRefresh()}
+              </p>
+            )}
+          </div>
           <div className="flex items-center space-x-2">
             {selectedStudents.size > 0 && (
               <div className="flex items-center space-x-2">
@@ -161,6 +215,16 @@ export const StudentRoster: React.FC<StudentRosterProps> = ({
                   Bulk Actions
                 </button>
               </div>
+            )}
+            {onRefresh && (
+              <button
+                onClick={handleManualRefresh}
+                disabled={isRefreshing}
+                className={`p-2 rounded-md text-gray-600 hover:bg-gray-100 ${isRefreshing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                title="Refresh data"
+              >
+                <RefreshCw className={`h-5 w-5 ${isRefreshing ? 'animate-spin' : ''}`} />
+              </button>
             )}
             <button
               onClick={() => setShowFilters(!showFilters)}

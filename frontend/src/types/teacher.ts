@@ -287,3 +287,304 @@ export interface DifficultyAnalysis {
     completionRate: number;
   };
 }
+// Message system types
+export interface Message {
+  id: string;
+  senderId: string;
+  senderName: string;
+  subject: string;
+  content: string;
+  messageType: MessageType;
+  priority: MessagePriority;
+  createdAt: Date;
+  scheduledAt?: Date;
+  sentAt?: Date;
+  metadata?: Record<string, any>;
+  isDraft: boolean;
+  isArchived: boolean;
+  recipients: MessageRecipient[];
+}
+
+export interface MessageRecipient {
+  id: string;
+  recipientId: string;
+  recipientName: string;
+  recipientType: 'student' | 'parent' | 'teacher';
+  deliveryStatus: DeliveryStatus;
+  deliveredAt?: Date;
+  readAt?: Date;
+  failureReason?: string;
+}
+
+export type MessageType = 'direct' | 'group' | 'class' | 'announcement' | 'automated';
+export type MessagePriority = 'low' | 'normal' | 'high' | 'urgent';
+export type DeliveryStatus = 'pending' | 'sent' | 'delivered' | 'read' | 'failed';
+
+export interface MessageCreate {
+  subject: string;
+  content: string;
+  messageType: MessageType;
+  priority: MessagePriority;
+  recipientIds: string[];
+  scheduledAt?: Date;
+  metadata?: Record<string, any>;
+  isDraft: boolean;
+}
+
+export interface MessageTemplate {
+  id: string;
+  name: string;
+  description?: string;
+  subjectTemplate: string;
+  contentTemplate: string;
+  createdBy: string;
+  createdAt: Date;
+  updatedAt: Date;
+  isPublic: boolean;
+  category?: string;
+  variables?: Record<string, any>;
+}
+
+export interface MessageTemplateCreate {
+  name: string;
+  description?: string;
+  subjectTemplate: string;
+  contentTemplate: string;
+  isPublic: boolean;
+  category?: string;
+  variables?: Record<string, any>;
+}
+
+export interface MessageStatistics {
+  totalMessagesSent: number;
+  messagesByType: Record<string, number>;
+  deliveryStatistics: Record<string, number>;
+  recentActivity: number;
+  draftMessages: number;
+}
+
+export interface RecipientInfo {
+  id: string;
+  name: string;
+  email?: string;
+  role: string;
+  className?: string;
+}
+
+export interface RecipientSelection {
+  messageType: MessageType;
+  classIds?: string[];
+  studentIds?: string[];
+  includeParents: boolean;
+}
+
+export interface RecipientSelectionResponse {
+  recipients: RecipientInfo[];
+  totalCount: number;
+  studentCount: number;
+  parentCount: number;
+  teacherCount: number;
+}
+
+export interface MessageComposerState {
+  subject: string;
+  content: string;
+  messageType: MessageType;
+  priority: MessagePriority;
+  selectedRecipients: string[];
+  selectedClasses: string[];
+  includeParents: boolean;
+  scheduledAt?: Date;
+  isDraft: boolean;
+  template?: MessageTemplate;
+}
+
+export interface MessageFilter {
+  messageType?: MessageType;
+  priority?: MessagePriority;
+  deliveryStatus?: DeliveryStatus;
+  dateFrom?: Date;
+  dateTo?: Date;
+  isDraft?: boolean;
+  isArchived?: boolean;
+  searchQuery?: string;
+}
+
+export interface MessageThread {
+  id: string;
+  subject: string;
+  createdBy: string;
+  createdAt: Date;
+  updatedAt: Date;
+  isClosed: boolean;
+  participantIds: string[];
+  messages: Message[];
+}
+
+export interface NotificationSettings {
+  id: string;
+  userId: string;
+  emailNotifications: boolean;
+  pushNotifications: boolean;
+  smsNotifications: boolean;
+  quietHoursStart?: string;
+  quietHoursEnd?: string;
+  weekendNotifications: boolean;
+  directMessages: boolean;
+  groupMessages: boolean;
+  announcements: boolean;
+  automatedMessages: boolean;
+}
+// Announcement and notification system types
+export interface Announcement {
+  id: string;
+  title: string;
+  content: string;
+  targetClasses: string[];
+  priority: MessagePriority;
+  scheduledAt?: Date;
+  createdAt: Date;
+  includeParents: boolean;
+  metadata?: Record<string, any>;
+}
+
+export interface AnnouncementCreate {
+  title: string;
+  content: string;
+  targetClasses: string[];
+  priority: MessagePriority;
+  scheduledAt?: Date;
+  includeParents: boolean;
+  metadata?: Record<string, any>;
+}
+
+export interface ProgressReport {
+  studentId: string;
+  studentName: string;
+  reportPeriod: {
+    startDate: Date;
+    endDate: Date;
+    days: number;
+  };
+  metrics: {
+    totalXpGained: number;
+    currentLevel: number;
+    currentStreak: number;
+    subjectsStudied: string[];
+    topicsCompleted: number;
+    averageScore: number;
+    totalAttempts: number;
+  };
+  weakAreas: Array<{
+    subject: string;
+    averageScore: number;
+    attempts: number;
+  }>;
+  recommendations: string[];
+  generatedAt: Date;
+}
+
+export interface ProgressReportRequest {
+  studentId: string;
+  reportPeriodDays: number;
+  includeParents: boolean;
+}
+
+export interface PerformanceAlert {
+  studentId: string;
+  studentName: string;
+  averageScore: number;
+  threshold: number;
+  alertGeneratedAt: Date;
+  recentPerformance: Array<{
+    subject: string;
+    score: number;
+    date: Date;
+  }>;
+}
+
+export interface PerformanceAlertRequest {
+  classIds: string[];
+  performanceThreshold: number;
+  daysToCheck: number;
+}
+
+export interface WeeklySummary {
+  classId: string;
+  className: string;
+  weekPeriod: {
+    startDate: Date;
+    endDate: Date;
+  };
+  metrics: {
+    totalStudents: number;
+    activeStudents: number;
+    engagementRate: number;
+    totalAttempts: number;
+    classAverage: number;
+  };
+  subjectPerformance: Record<string, {
+    averageScore: number;
+    totalAttempts: number;
+  }>;
+  topPerformers: Array<{
+    name: string;
+    averageScore: number;
+  }>;
+  generatedAt: Date;
+}
+
+export type NotificationType = 
+  | 'progress_report'
+  | 'performance_alert'
+  | 'achievement_notification'
+  | 'weekly_summary'
+  | 'assessment_reminder'
+  | 'milestone_completion';
+
+export interface NotificationSchedule {
+  teacherId: string;
+  notificationType: NotificationType;
+  scheduleConfig: {
+    frequency: 'daily' | 'weekly' | 'monthly';
+    dayOfWeek?: number;
+    dayOfMonth?: number;
+    time: string;
+    timezone?: string;
+  };
+  targetClasses?: string[];
+  enabled: boolean;
+  nextExecution?: Date;
+}
+
+export interface AnnouncementTemplate {
+  id: string;
+  name: string;
+  subjectTemplate: string;
+  contentTemplate: string;
+  variables: string[];
+  category?: string;
+}
+
+export interface NotificationSettings {
+  progressReports: {
+    enabled: boolean;
+    frequency: 'weekly' | 'monthly';
+    includeParents: boolean;
+  };
+  performanceAlerts: {
+    enabled: boolean;
+    threshold: number;
+    daysToCheck: number;
+    includeParents: boolean;
+  };
+  weeklySummaries: {
+    enabled: boolean;
+    dayOfWeek: number;
+    includeParents: boolean;
+  };
+  achievements: {
+    enabled: boolean;
+    includeParents: boolean;
+  };
+}

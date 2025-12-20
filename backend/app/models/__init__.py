@@ -22,6 +22,16 @@ from .teacher import (
     StudentClassProgress,
     student_class_association
 )
+from .message import (
+    Message,
+    MessageRecipient,
+    MessageThread,
+    MessageTemplate,
+    MessageNotificationSettings,
+    MessageType,
+    MessagePriority,
+    DeliveryStatus
+)
 
 __all__ = [
     "User",
@@ -47,5 +57,13 @@ __all__ = [
     "TeacherPermission",
     "ClassAnnouncement",
     "StudentClassProgress",
-    "student_class_association"
+    "student_class_association",
+    "Message",
+    "MessageRecipient",
+    "MessageThread",
+    "MessageTemplate",
+    "MessageNotificationSettings",
+    "MessageType",
+    "MessagePriority",
+    "DeliveryStatus"
 ]
