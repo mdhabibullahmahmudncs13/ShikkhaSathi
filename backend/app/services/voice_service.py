@@ -1,6 +1,6 @@
 """
 Voice Learning Service for ShikkhaSathi
-Handles speech-to-text and text-to-speech functionality
+Handles speech-to-text and text-to-speech functionality using local models
 """
 
 import os
@@ -11,14 +11,29 @@ from typing import Optional, Dict, Any
 from pathlib import Path
 import tempfile
 import uuid
+import logging
 from app.core.config import settings
+from .local_whisper_service import local_whisper_service
+from .local_tts_service import local_tts_service
+
+logger = logging.getLogger(__name__)
 
 class VoiceService:
-    """Service for handling voice input/output operations"""
+    """Service for handling voice input/output operations using local models"""
     
     def __init__(self):
-        self.whisper_api_key = settings.OPENAI_API_KEY
+        # Keep API keys for fallback (optional)
+        self.whisper_api_key = getattr(settings, 'OPENAI_API_KEY', None)
         self.elevenlabs_api_key = getattr(settings, 'ELEVENLABS_API_KEY', None)
+        
+        # Local services
+        self.local_whisper = local_whisper_service
+        self.local_tts = local_tts_service
+        
+        # Configuration
+        self.use_local_services = getattr(settings, 'USE_LOCAL_VOICE_SERVICES', True)
+        self.fallback_to_api = getattr(settings, 'VOICE_API_FALLBACK', False)
+        
         self.audio_storage_path = Path("data/audio")
         self.audio_storage_path.mkdir(parents=True, exist_ok=True)
         
@@ -28,11 +43,7 @@ class VoiceService:
             'en': 'English'
         }
         
-        # ElevenLabs voice IDs (you'll need to get these from ElevenLabs)
-        self.voice_ids = {
-            'en': 'EXAVITQu4vr4xnSDxMaL',  # Default English voice
-            'bn': 'EXAVITQu4vr4xnSDxMaL'   # For now, use same voice (can be changed)
-        }
+        logger.info(f"Voice service initialized - Local: {self.use_local_services}, Fallback: {self.fallback_to_api}")
     
     async def speech_to_text(
         self, 
@@ -40,7 +51,7 @@ class VoiceService:
         language: str = 'auto'
     ) -> Dict[str, Any]:
         """
-        Convert speech to text using OpenAI Whisper API
+        Convert speech to text using local Whisper or API fallback
         
         Args:
             audio_file_path: Path to the audio file
@@ -48,6 +59,52 @@ class VoiceService:
             
         Returns:
             Dict with transcribed text and detected language
+        """
+        try:
+            # Try local Whisper first
+            if self.use_local_services:
+                logger.info(f"Using local Whisper for transcription: {audio_file_path}")
+                result = await self.local_whisper.transcribe_audio(audio_file_path, language)
+                
+                if result['success']:
+                    return {
+                        'success': True,
+                        'text': result['text'],
+                        'language': result['language'],
+                        'confidence': result.get('confidence', 1.0),
+                        'method': 'local_whisper',
+                        'model': result.get('model', 'whisper-local')
+                    }
+                else:
+                    logger.warning(f"Local Whisper failed: {result.get('error')}")
+                    if not self.fallback_to_api:
+                        return result
+            
+            # Fallback to OpenAI API if enabled and available
+            if self.fallback_to_api and self.whisper_api_key:
+                logger.info("Falling back to OpenAI Whisper API")
+                return await self._speech_to_text_api(audio_file_path, language)
+            
+            # No API fallback available
+            return {
+                'success': False,
+                'error': 'Local speech-to-text failed and no API fallback available'
+            }
+            
+        except Exception as e:
+            logger.error(f"Speech-to-text error: {str(e)}")
+            return {
+                'success': False,
+                'error': f"Speech-to-text error: {str(e)}"
+            }
+    
+    async def _speech_to_text_api(
+        self, 
+        audio_file_path: str, 
+        language: str = 'auto'
+    ) -> Dict[str, Any]:
+        """
+        Convert speech to text using OpenAI Whisper API (fallback)
         """
         try:
             if not self.whisper_api_key:
@@ -88,7 +145,8 @@ class VoiceService:
                             'success': True,
                             'text': result.get('text', ''),
                             'language': detected_language,
-                            'confidence': 1.0  # Whisper doesn't provide confidence scores
+                            'confidence': 1.0,  # Whisper doesn't provide confidence scores
+                            'method': 'openai_api'
                         }
                     else:
                         error_text = await response.text()
@@ -100,7 +158,7 @@ class VoiceService:
         except Exception as e:
             return {
                 'success': False,
-                'error': f"Speech-to-text error: {str(e)}"
+                'error': f"API speech-to-text error: {str(e)}"
             }
     
     async def text_to_speech(
@@ -110,7 +168,7 @@ class VoiceService:
         voice_id: Optional[str] = None
     ) -> Dict[str, Any]:
         """
-        Convert text to speech using ElevenLabs API
+        Convert text to speech using local TTS or API fallback
         
         Args:
             text: Text to convert to speech
@@ -121,8 +179,51 @@ class VoiceService:
             Dict with audio file path and metadata
         """
         try:
+            # Try local TTS first
+            if self.use_local_services:
+                logger.info(f"Using local TTS for synthesis: {len(text)} chars in {language}")
+                result = await self.local_tts.synthesize_text(text, language, voice_id)
+                
+                if result['success']:
+                    return result
+                else:
+                    logger.warning(f"Local TTS failed: {result.get('error')}")
+                    if not self.fallback_to_api:
+                        return result
+            
+            # Fallback to ElevenLabs API if enabled and available
+            if self.fallback_to_api and self.elevenlabs_api_key:
+                logger.info("Falling back to ElevenLabs API")
+                return await self._text_to_speech_api(text, language, voice_id)
+            
+            # No API fallback available - return text-only response
+            return {
+                'success': True,
+                'audio_path': None,
+                'text': text,
+                'language': language,
+                'fallback': True,
+                'message': 'Local TTS not available and no API fallback configured'
+            }
+            
+        except Exception as e:
+            logger.error(f"Text-to-speech error: {str(e)}")
+            return {
+                'success': False,
+                'error': f"Text-to-speech error: {str(e)}"
+            }
+    
+    async def _text_to_speech_api(
+        self, 
+        text: str, 
+        language: str = 'en',
+        voice_id: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Convert text to speech using ElevenLabs API (fallback)
+        """
+        try:
             if not self.elevenlabs_api_key:
-                # Fallback: Return text without audio
                 return {
                     'success': True,
                     'audio_path': None,
@@ -132,8 +233,14 @@ class VoiceService:
                     'message': 'ElevenLabs API not configured, text-only response'
                 }
             
+            # ElevenLabs voice IDs (you'll need to get these from ElevenLabs)
+            voice_ids = {
+                'en': 'EXAVITQu4vr4xnSDxMaL',  # Default English voice
+                'bn': 'EXAVITQu4vr4xnSDxMaL'   # For now, use same voice (can be changed)
+            }
+            
             # Select voice
-            selected_voice_id = voice_id or self.voice_ids.get(language, self.voice_ids['en'])
+            selected_voice_id = voice_id or voice_ids.get(language, voice_ids['en'])
             
             # Prepare request to ElevenLabs API
             url = f"https://api.elevenlabs.io/v1/text-to-speech/{selected_voice_id}"
@@ -173,7 +280,8 @@ class VoiceService:
                             'audio_url': f"/api/v1/voice/audio/{audio_id}",
                             'text': text,
                             'language': language,
-                            'voice_id': selected_voice_id
+                            'voice_id': selected_voice_id,
+                            'method': 'elevenlabs_api'
                         }
                     else:
                         error_text = await response.text()
@@ -185,7 +293,7 @@ class VoiceService:
         except Exception as e:
             return {
                 'success': False,
-                'error': f"Text-to-speech error: {str(e)}"
+                'error': f"API text-to-speech error: {str(e)}"
             }
     
     def _detect_language(self, text: str) -> str:
@@ -222,6 +330,12 @@ class VoiceService:
         Returns:
             File path if exists, None otherwise
         """
+        # Try local TTS storage first
+        local_path = await self.local_tts.get_audio_file(audio_id)
+        if local_path:
+            return local_path
+        
+        # Fallback to legacy storage
         audio_path = self.audio_storage_path / f"{audio_id}.mp3"
         return str(audio_path) if audio_path.exists() else None
     
@@ -233,6 +347,10 @@ class VoiceService:
             max_age_hours: Maximum age of files to keep (in hours)
         """
         try:
+            # Clean up local TTS files
+            await self.local_tts.cleanup_old_audio_files(max_age_hours)
+            
+            # Clean up legacy files
             import time
             current_time = time.time()
             max_age_seconds = max_age_hours * 3600
@@ -243,7 +361,7 @@ class VoiceService:
                     audio_file.unlink()
                     
         except Exception as e:
-            print(f"Error cleaning up audio files: {e}")
+            logger.error(f"Error cleaning up audio files: {e}")
     
     def get_supported_languages(self) -> Dict[str, str]:
         """Get list of supported languages"""
@@ -251,7 +369,70 @@ class VoiceService:
     
     def get_available_voices(self) -> Dict[str, str]:
         """Get list of available voice IDs"""
-        return self.voice_ids.copy()
+        return {
+            'local_en': 'Local English TTS',
+            'local_bn': 'Local Bengali TTS'
+        }
+    
+    async def get_service_status(self) -> Dict[str, Any]:
+        """Get comprehensive status of voice services"""
+        try:
+            # Get local service status
+            whisper_info = await self.local_whisper.get_model_info()
+            tts_info = await self.local_tts.get_service_info()
+            
+            return {
+                'local_services_enabled': self.use_local_services,
+                'api_fallback_enabled': self.fallback_to_api,
+                'whisper_status': {
+                    'available': whisper_info.get('model_loaded', False),
+                    'model_size': whisper_info.get('model_size'),
+                    'device': whisper_info.get('device'),
+                    'cuda_available': whisper_info.get('cuda_available', False)
+                },
+                'tts_status': {
+                    'available': tts_info.get('tts_available', False),
+                    'loaded_models': tts_info.get('loaded_models', []),
+                    'supported_languages': tts_info.get('supported_languages', {})
+                },
+                'api_status': {
+                    'openai_configured': bool(self.whisper_api_key),
+                    'elevenlabs_configured': bool(self.elevenlabs_api_key)
+                }
+            }
+            
+        except Exception as e:
+            logger.error(f"Error getting service status: {str(e)}")
+            return {
+                'error': str(e),
+                'local_services_enabled': self.use_local_services
+            }
+    
+    async def test_voice_pipeline(self) -> Dict[str, Any]:
+        """Test the complete voice pipeline"""
+        try:
+            results = {}
+            
+            # Test local Whisper
+            if self.use_local_services:
+                whisper_test = await self.local_whisper.test_transcription()
+                results['whisper_test'] = whisper_test
+                
+                # Test local TTS
+                tts_test = await self.local_tts.test_synthesis()
+                results['tts_test'] = tts_test
+            
+            return {
+                'test_passed': True,
+                'results': results
+            }
+            
+        except Exception as e:
+            logger.error(f"Voice pipeline test failed: {str(e)}")
+            return {
+                'test_passed': False,
+                'error': str(e)
+            }
 
 # Global service instance
 voice_service = VoiceService()

@@ -44,17 +44,38 @@ class Settings(BaseSettings):
     # Redis
     REDIS_URL: str = "redis://localhost:6379"
     
-    # OpenAI API
+    # OpenAI API (for fallback)
     OPENAI_API_KEY: str = ""
     
-    # Pinecone
+    # Pinecone (legacy - now using ChromaDB)
     PINECONE_API_KEY: str = ""
     PINECONE_ENVIRONMENT: str = ""
     PINECONE_INDEX_NAME: str = "shikkhasathi-embeddings"
     
-    # Voice Services
+    # Voice Services (legacy - for fallback)
     ELEVENLABS_API_KEY: str = ""
     ELEVENLABS_VOICE_ID: str = "21m00Tcm4TlvDq8ikWAM"  # Default voice ID
+    
+    # Local AI Configuration
+    OLLAMA_BASE_URL: str = "http://localhost:11434"
+    OLLAMA_MODEL: str = "llama2"
+    
+    # Local Voice Services Configuration
+    USE_LOCAL_VOICE_SERVICES: bool = True
+    VOICE_API_FALLBACK: bool = False
+    
+    # Local Whisper Configuration
+    WHISPER_MODEL_SIZE: str = "base"  # tiny, base, small, medium, large
+    WHISPER_DEVICE: str = "auto"  # auto, cpu, cuda
+    
+    # Local TTS Configuration
+    TTS_ENGINE: str = "coqui"  # coqui, espeak, festival
+    TTS_VOICE_EN: str = "ljspeech"
+    TTS_VOICE_BN: str = "custom-bengali"
+    
+    # Performance Settings
+    MAX_CONCURRENT_VOICE_REQUESTS: int = 3
+    VOICE_CACHE_SIZE: int = 100
     
     # Password Hashing Fallback (for development/testing)
     FORCE_PASSWORD_FALLBACK: bool = False
