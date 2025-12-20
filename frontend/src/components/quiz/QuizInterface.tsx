@@ -84,18 +84,7 @@ const QuizInterface: React.FC<QuizInterfaceProps> = ({ quiz, onComplete }) => {
   };
 
   const getOptionLabel = (option: string) => {
-    switch (option) {
-      case 'A':
-        return currentQuestion.option_a;
-      case 'B':
-        return currentQuestion.option_b;
-      case 'C':
-        return currentQuestion.option_c;
-      case 'D':
-        return currentQuestion.option_d;
-      default:
-        return '';
-    }
+    return currentQuestion.options[option as keyof typeof currentQuestion.options] || '';
   };
 
   return (

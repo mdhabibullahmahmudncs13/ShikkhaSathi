@@ -70,11 +70,12 @@ class GamificationService:
         Returns:
             Dict with XP awarded, level changes, and notifications
         """
-        # Convert user_id to string if it's a UUID object
-        if hasattr(user_id, 'hex'):  # UUID object
-            user_id = str(user_id)
-        elif not isinstance(user_id, str):
-            user_id = str(user_id)
+        # Ensure user_id is a UUID object, not a string
+        from uuid import UUID
+        if isinstance(user_id, str):
+            user_id = UUID(user_id)
+        elif not hasattr(user_id, 'hex'):  # Not a UUID object
+            user_id = UUID(str(user_id))
         # Get or create gamification record
         gamification = self.db.query(Gamification).filter(
             Gamification.user_id == user_id
@@ -162,11 +163,17 @@ class GamificationService:
         
         return result
     
-    def get_xp_history(self, user_id: str, days: int = 30) -> List[Dict[str, Any]]:
+    def get_xp_history(self, user_id, days: int = 30) -> List[Dict[str, Any]]:
         """
         Get XP history for a user (would need separate XP history table in production).
         For now, we'll calculate from quiz attempts and other activities.
         """
+        # Ensure user_id is a UUID object, not a string
+        from uuid import UUID
+        if isinstance(user_id, str):
+            user_id = UUID(user_id)
+        elif not hasattr(user_id, 'hex'):  # Not a UUID object
+            user_id = UUID(str(user_id))
         # This is a simplified version - in production, you'd want a separate xp_history table
         since_date = datetime.utcnow() - timedelta(days=days)
         
@@ -198,11 +205,17 @@ class GamificationService:
         
         return history
     
-    def validate_xp_integrity(self, user_id: str) -> Dict[str, Any]:
+    def validate_xp_integrity(self, user_id) -> Dict[str, Any]:
         """
         Validate XP integrity and detect potential cheating.
         Check for suspicious XP gains or impossible activity patterns.
         """
+        # Ensure user_id is a UUID object, not a string
+        from uuid import UUID
+        if isinstance(user_id, str):
+            user_id = UUID(user_id)
+        elif not hasattr(user_id, 'hex'):  # Not a UUID object
+            user_id = UUID(str(user_id))
         gamification = self.db.query(Gamification).filter(
             Gamification.user_id == user_id
         ).first()
@@ -239,14 +252,28 @@ class GamificationService:
             "estimated_xp_range": [estimated_min_xp, estimated_max_xp]
         }
     
-    def get_user_gamification(self, user_id: str) -> Optional[Gamification]:
+    def get_user_gamification(self, user_id) -> Optional[Gamification]:
         """Get gamification data for a user"""
+        # Ensure user_id is a UUID object, not a string
+        from uuid import UUID
+        if isinstance(user_id, str):
+            user_id = UUID(user_id)
+        elif not hasattr(user_id, 'hex'):  # Not a UUID object
+            user_id = UUID(str(user_id))
+            
         return self.db.query(Gamification).filter(
             Gamification.user_id == user_id
         ).first()
     
-    def create_user_gamification(self, user_id: str) -> Gamification:
+    def create_user_gamification(self, user_id) -> Gamification:
         """Create initial gamification record for a new user"""
+        # Ensure user_id is a UUID object, not a string
+        from uuid import UUID
+        if isinstance(user_id, str):
+            user_id = UUID(user_id)
+        elif not hasattr(user_id, 'hex'):  # Not a UUID object
+            user_id = UUID(str(user_id))
+            
         gamification = Gamification(
             user_id=user_id,
             total_xp=0,

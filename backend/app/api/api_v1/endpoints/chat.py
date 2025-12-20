@@ -2,15 +2,113 @@ import json
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, HTTPException, Query, UploadFile, File
 from fastapi.responses import Response
 from app.services.websocket_manager import manager
+from app.services.rag.ai_tutor_service import ai_tutor_service
 from app.core.deps import get_current_user
 from app.models.user import User
 from app.db.mongodb import get_mongodb
-from typing import Optional
+from typing import Optional, List, Dict, Any
+from pydantic import BaseModel
+from datetime import datetime
 import logging
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+# Pydantic models for request/response
+class ChatRequest(BaseModel):
+    message: str
+    conversation_history: Optional[List[Dict[str, str]]] = []
+    subject: Optional[str] = None
+
+class ChatResponse(BaseModel):
+    response: str
+    sources: List[str] = []
+    context_used: bool = False
+    model: str = "llama2"
+
+@router.post("/chat", response_model=ChatResponse)
+async def chat_with_ai_tutor(
+    request: ChatRequest,
+    current_user: User = Depends(get_current_user)
+) -> ChatResponse:
+    """
+    Chat with AI tutor using POST request
+    Simple endpoint for frontend integration
+    """
+    try:
+        logger.info(f"Chat request from user {current_user.id}: {request.message[:100]}...")
+        
+        # Call AI tutor service
+        result = await ai_tutor_service.chat(
+            message=request.message,
+            conversation_history=request.conversation_history,
+            subject=request.subject,
+            grade=current_user.grade
+        )
+        
+        # Store conversation in MongoDB
+        try:
+            db = get_mongodb()
+            chat_collection = db.chat_history
+            
+            # Create or update chat session
+            session_id = f"user_{current_user.id}_session"
+            
+            # Add user message and AI response to history
+            current_time = datetime.utcnow().isoformat() + "Z"
+            new_messages = [
+                {
+                    "role": "user",
+                    "content": request.message,
+                    "timestamp": current_time
+                },
+                {
+                    "role": "assistant", 
+                    "content": result["response"],
+                    "timestamp": current_time,
+                    "sources": result.get("sources", [])
+                }
+            ]
+            
+            await chat_collection.update_one(
+                {"user_id": str(current_user.id), "session_id": session_id},
+                {
+                    "$push": {"messages": {"$each": new_messages}},
+                    "$set": {"updated_at": current_time},
+                    "$setOnInsert": {"created_at": current_time}
+                },
+                upsert=True
+            )
+        except Exception as e:
+            logger.warning(f"Failed to store chat history: {e}")
+            # Don't fail the request if chat storage fails
+        
+        return ChatResponse(
+            response=result["response"],
+            sources=result.get("sources", []),
+            context_used=result.get("context_used", False),
+            model=result.get("model", "llama2")
+        )
+        
+    except Exception as e:
+        logger.error(f"Error in chat endpoint: {str(e)}")
+        raise HTTPException(
+            status_code=500, 
+            detail="I'm sorry, I'm having trouble processing your question right now. Please try again in a moment."
+        )
+
+# Pydantic models for request/response
+class ChatRequest(BaseModel):
+    message: str
+    conversation_history: Optional[List[Dict[str, str]]] = []
+    subject: Optional[str] = None
+
+class ChatResponse(BaseModel):
+    response: str
+    sources: List[str] = []
+    context_used: bool = False
+    model: str = "llama2"
 
 @router.websocket("/ws/{session_id}")
 async def websocket_endpoint(websocket: WebSocket, session_id: str, token: str = Query(...)):

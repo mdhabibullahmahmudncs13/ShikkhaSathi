@@ -4,6 +4,24 @@ from .quiz_attempt import QuizAttempt
 from .gamification import Gamification
 from .learning_path import LearningPath
 from .question import Question, Quiz
+from .assessment import (
+    Assessment,
+    AssessmentQuestion,
+    AssessmentRubric,
+    RubricCriterion,
+    RubricLevel,
+    AssessmentAttempt,
+    AssessmentResponse,
+    AssessmentAnalytics
+)
+from .teacher import (
+    Teacher, 
+    TeacherClass, 
+    TeacherPermission, 
+    ClassAnnouncement, 
+    StudentClassProgress,
+    student_class_association
+)
 
 __all__ = [
     "User",
@@ -15,5 +33,19 @@ __all__ = [
     "Gamification",
     "LearningPath",
     "Question",
-    "Quiz"
+    "Quiz",
+    "Assessment",
+    "AssessmentQuestion",
+    "AssessmentRubric",
+    "RubricCriterion",
+    "RubricLevel",
+    "AssessmentAttempt",
+    "AssessmentResponse",
+    "AssessmentAnalytics",
+    "Teacher",
+    "TeacherClass",
+    "TeacherPermission",
+    "ClassAnnouncement",
+    "StudentClassProgress",
+    "student_class_association"
 ]

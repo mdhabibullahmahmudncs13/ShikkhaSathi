@@ -27,11 +27,12 @@ class StreakService:
         Returns:
             Dict with streak information and any changes
         """
-        # Convert user_id to string if it's a UUID object
-        if hasattr(user_id, 'hex'):  # UUID object
-            user_id = str(user_id)
-        elif not isinstance(user_id, str):
-            user_id = str(user_id)
+        # Ensure user_id is a UUID object, not a string
+        from uuid import UUID
+        if isinstance(user_id, str):
+            user_id = UUID(user_id)
+        elif not hasattr(user_id, 'hex'):  # Not a UUID object
+            user_id = UUID(str(user_id))
             
         if activity_date is None:
             activity_date = date.today()
@@ -108,17 +109,23 @@ class StreakService:
             "days_since_last": days_diff
         }
     
-    def use_streak_freeze(self, user_id: str) -> Dict[str, Any]:
+    def use_streak_freeze(self, user_id) -> Dict[str, Any]:
         """
         Use a streak freeze to maintain streak despite missing a day.
         Users get 2 streak freezes per month.
         
         Args:
-            user_id: User UUID
+            user_id: User UUID (can be UUID object or string)
         
         Returns:
             Dict with freeze usage result
         """
+        # Ensure user_id is a UUID object, not a string
+        from uuid import UUID
+        if isinstance(user_id, str):
+            user_id = UUID(user_id)
+        elif not hasattr(user_id, 'hex'):  # Not a UUID object
+            user_id = UUID(str(user_id))
         gamification = self.db.query(Gamification).filter(
             Gamification.user_id == user_id
         ).first()
@@ -154,8 +161,14 @@ class StreakService:
             "new_last_activity_date": gamification.last_activity_date
         }
     
-    def get_streak_info(self, user_id: str) -> Dict[str, Any]:
+    def get_streak_info(self, user_id) -> Dict[str, Any]:
         """Get comprehensive streak information for a user"""
+        # Ensure user_id is a UUID object, not a string
+        from uuid import UUID
+        if isinstance(user_id, str):
+            user_id = UUID(user_id)
+        elif not hasattr(user_id, 'hex'):  # Not a UUID object
+            user_id = UUID(str(user_id))
         gamification = self.db.query(Gamification).filter(
             Gamification.user_id == user_id
         ).first()

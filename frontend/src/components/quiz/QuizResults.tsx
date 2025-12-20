@@ -80,7 +80,7 @@ const QuizResults: React.FC<QuizResultsProps> = ({
         </h2>
 
         <div className="space-y-4">
-          {result.question_results.map((qResult, index) => (
+          {result.results?.map((qResult, index) => (
             <div
               key={qResult.question_id}
               className={`p-4 rounded-lg border-2 ${
@@ -104,7 +104,7 @@ const QuizResults: React.FC<QuizResultsProps> = ({
                     <div className="flex items-center gap-2">
                       <span className="text-gray-600">Your answer:</span>
                       <span className={qResult.is_correct ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>
-                        {qResult.selected_answer || 'Not answered'}
+                        {qResult.student_answer || 'Not answered'}
                       </span>
                     </div>
                     
@@ -127,7 +127,7 @@ const QuizResults: React.FC<QuizResultsProps> = ({
                 </div>
               </div>
             </div>
-          ))}
+          )) || []}
         </div>
       </div>
 

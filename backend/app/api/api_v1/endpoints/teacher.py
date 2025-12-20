@@ -1,17 +1,255 @@
 """
-Teacher Analytics API Endpoints
-Provides comprehensive analytics and performance tracking for teachers
+Teacher Analytics and Authentication API Endpoints
+Provides comprehensive analytics, performance tracking, and authentication for teachers
 """
 
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Dict
 from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_db, get_current_user, require_teacher
 from app.models.user import User
 from app.services.teacher_analytics_service import TeacherAnalyticsService
+from app.services.teacher_auth_service import TeacherAuthService
+from app.schemas.teacher import (
+    TeacherCreate, TeacherLogin, TeacherUpdate, TeacherAuthResponse,
+    TeacherResponse, TeacherProfileResponse, TeacherPermissionCreate,
+    TeacherPermissionResponse, TeacherAccessValidation
+)
+from app.core.security import verify_token
+import uuid
 
 router = APIRouter()
+security = HTTPBearer()
+
+
+def get_current_teacher(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db)
+) -> Dict[str, Any]:
+    """Get current authenticated teacher"""
+    token = credentials.credentials
+    user_id = verify_token(token)
+    
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication token"
+        )
+    
+    auth_service = TeacherAuthService(db)
+    validation = auth_service.validate_teacher_access(user_id)
+    
+    if not validation['valid']:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=validation['reason']
+        )
+    
+    return validation
+
+
+# Authentication Endpoints
+
+@router.post("/register", response_model=TeacherAuthResponse)
+async def register_teacher(
+    teacher_data: TeacherCreate,
+    db: Session = Depends(get_db)
+):
+    """Register a new teacher account"""
+    try:
+        auth_service = TeacherAuthService(db)
+        
+        # Create teacher user
+        user = auth_service.create_teacher_user(teacher_data.dict())
+        
+        # Get teacher profile
+        teacher_profile = auth_service.get_teacher_profile(str(user.id))
+        if not teacher_profile:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to create teacher profile"
+            )
+        
+        # Create session token
+        access_token = auth_service.create_teacher_session(user, teacher_profile)
+        
+        # Get permissions
+        permissions = auth_service.get_teacher_permissions(teacher_profile.id)
+        
+        # Build response
+        teacher_response = TeacherResponse(
+            id=user.id,
+            email=user.email,
+            full_name=user.full_name,
+            role=user.role.value,
+            is_active=user.is_active,
+            created_at=user.created_at,
+            last_login=user.last_login,
+            teacher_profile=TeacherProfileResponse.from_orm(teacher_profile),
+            permissions=permissions
+        )
+        
+        return TeacherAuthResponse(
+            access_token=access_token,
+            user=teacher_response
+        )
+        
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Registration failed: {str(e)}"
+        )
+
+
+@router.post("/login", response_model=TeacherAuthResponse)
+async def login_teacher(
+    login_data: TeacherLogin,
+    db: Session = Depends(get_db)
+):
+    """Authenticate teacher login"""
+    try:
+        auth_service = TeacherAuthService(db)
+        
+        # Authenticate teacher
+        auth_result = auth_service.authenticate_teacher(
+            login_data.email, 
+            login_data.password
+        )
+        
+        if not auth_result:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid email or password"
+            )
+        
+        user = auth_result['user']
+        teacher_profile = auth_result['teacher_profile']
+        
+        # Create session token
+        access_token = auth_service.create_teacher_session(user, teacher_profile)
+        
+        # Get permissions
+        permissions = auth_service.get_teacher_permissions(teacher_profile.id)
+        
+        # Build response
+        teacher_response = TeacherResponse(
+            id=user.id,
+            email=user.email,
+            full_name=user.full_name,
+            role=user.role.value,
+            is_active=user.is_active,
+            created_at=user.created_at,
+            last_login=user.last_login,
+            teacher_profile=TeacherProfileResponse.from_orm(teacher_profile),
+            permissions=permissions
+        )
+        
+        return TeacherAuthResponse(
+            access_token=access_token,
+            user=teacher_response
+        )
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Login failed: {str(e)}"
+        )
+
+
+@router.get("/profile", response_model=TeacherResponse)
+async def get_teacher_profile(
+    current_teacher: Dict[str, Any] = Depends(get_current_teacher)
+):
+    """Get current teacher's profile"""
+    user = current_teacher['user']
+    teacher_profile = current_teacher['teacher_profile']
+    permissions = current_teacher['permissions']
+    
+    return TeacherResponse(
+        id=user.id,
+        email=user.email,
+        full_name=user.full_name,
+        role=user.role.value,
+        is_active=user.is_active,
+        created_at=user.created_at,
+        last_login=user.last_login,
+        teacher_profile=TeacherProfileResponse.from_orm(teacher_profile),
+        permissions=permissions
+    )
+
+
+@router.put("/profile", response_model=TeacherProfileResponse)
+async def update_teacher_profile(
+    update_data: TeacherUpdate,
+    current_teacher: Dict[str, Any] = Depends(get_current_teacher),
+    db: Session = Depends(get_db)
+):
+    """Update teacher profile"""
+    try:
+        auth_service = TeacherAuthService(db)
+        teacher_profile = current_teacher['teacher_profile']
+        
+        updated_profile = auth_service.update_teacher_profile(
+            teacher_profile.id,
+            update_data.dict(exclude_unset=True)
+        )
+        
+        if not updated_profile:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Teacher profile not found"
+            )
+        
+        return TeacherProfileResponse.from_orm(updated_profile)
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Profile update failed: {str(e)}"
+        )
+
+
+@router.post("/logout")
+async def logout_teacher(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db)
+):
+    """Logout teacher and invalidate session"""
+    try:
+        token = credentials.credentials
+        auth_service = TeacherAuthService(db)
+        
+        # Invalidate session
+        success = auth_service.invalidate_teacher_session(token)
+        
+        return {
+            "message": "Logged out successfully",
+            "session_invalidated": success
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Logout failed: {str(e)}"
+        )
+
+
+@router.get("/permissions", response_model=list[str])
+async def get_teacher_permissions(
+    current_teacher: Dict[str, Any] = Depends(get_current_teacher)
+):
+    """Get current teacher's permissions"""
+    return current_teacher['permissions']
+
+
+# Analytics Endpoints (existing functionality)
 
 
 @router.get("/class-performance")

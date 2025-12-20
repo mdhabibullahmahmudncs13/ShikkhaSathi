@@ -31,8 +31,22 @@ export interface Quiz {
   bloom_level: number;
   question_count: number;
   time_limit_minutes?: number;
-  questions: Question[];
-  language: 'english' | 'bangla';
+  questions: Array<{
+    id: string;
+    question_text: string;
+    options: {
+      A: string;
+      B: string;
+      C: string;
+      D: string;
+    };
+    subject: string;
+    topic: string;
+    difficulty_level: number;
+    bloom_level: number;
+  }>;
+  created_at: string;
+  expires_at?: string;
 }
 
 export interface QuizSubmission {
@@ -57,13 +71,32 @@ export interface QuizResult {
   score: number;
   max_score: number;
   percentage: number;
-  xp_earned: number;
+  correct_count: number;
+  incorrect_count: number;
   time_taken_seconds: number;
-  question_results: QuestionResult[];
-  subject: string;
-  topic?: string;
-  difficulty_level: number;
-  completed_at: string;
+  xp_earned: number;
+  total_xp: number;
+  level: number;
+  level_up: boolean;
+  results: Array<{
+    question_id: string;
+    question_text: string;
+    student_answer: string;
+    correct_answer: string;
+    is_correct: boolean;
+    explanation: string;
+    options: {
+      A: string;
+      B: string;
+      C: string;
+      D: string;
+    };
+  }>;
+  performance_summary: {
+    level: string;
+    message: string;
+    recommendations: string[];
+  };
 }
 
 export interface QuizHistory {
