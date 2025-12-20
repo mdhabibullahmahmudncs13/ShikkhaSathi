@@ -59,17 +59,33 @@ class LocalWhisperService:
                 loop = asyncio.get_event_loop()
                 self.model = await loop.run_in_executor(
                     self.executor,
-                    whisper.load_model,
-                    self.model_size,
-                    self.device
+                    self._load_model_sync
                 )
                 
-                logger.info(f"Whisper model loaded successfully on {self.device}")
-                return True
+                if self.model is not None:
+                    logger.info(f"Whisper model loaded successfully on {self.device}")
+                    return True
+                else:
+                    logger.error("Failed to load Whisper model - model is None")
+                    return False
+            else:
+                return True  # Already loaded
                 
         except Exception as e:
             logger.error(f"Failed to load Whisper model: {str(e)}")
             return False
+    
+    def _load_model_sync(self):
+        """Synchronous model loading for thread pool execution"""
+        try:
+            import whisper
+            logger.info(f"Loading Whisper model {self.model_size} on device {self.device}")
+            model = whisper.load_model(self.model_size, device=self.device)
+            logger.info(f"Model loaded successfully: {type(model)}")
+            return model
+        except Exception as e:
+            logger.error(f"Sync model loading error: {str(e)}")
+            return None
     
     async def transcribe_audio(
         self, 
