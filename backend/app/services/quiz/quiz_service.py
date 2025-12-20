@@ -180,8 +180,28 @@ class QuizService:
                 raise ValueError(f"Quiz is {quiz.status}, cannot submit")
             
             # Get questions
-            question_ids = [UUID(qid) for qid in quiz.question_ids]
-            questions = self.db.query(Question).filter(Question.id.in_(question_ids)).all()
+            try:
+                # Ensure all question IDs are converted to UUID objects
+                question_ids = []
+                for qid in quiz.question_ids:
+                    if isinstance(qid, str):
+                        question_ids.append(UUID(qid))
+                    elif isinstance(qid, UUID):
+                        question_ids.append(qid)
+                    else:
+                        # Convert to string first, then to UUID
+                        question_ids.append(UUID(str(qid)))
+                
+                # Query questions one by one to avoid sorting issues
+                questions = []
+                for qid in question_ids:
+                    question = self.db.query(Question).filter(Question.id == qid).first()
+                    if question:
+                        questions.append(question)
+                        
+            except Exception as e:
+                logger.error(f"Error processing question IDs: {e}, question_ids: {quiz.question_ids}")
+                raise ValueError(f"Invalid question IDs in quiz: {e}")
             
             # Create question lookup
             question_map = {str(q.id): q for q in questions}
@@ -251,7 +271,7 @@ class QuizService:
             
             # Award XP
             xp_result = self.gamification_service.award_xp(
-                user_id=str(user_id),
+                user_id=user_id,  # Pass UUID directly, not string
                 activity_type='quiz_completion',
                 amount=None,  # Will use default
                 metadata={
@@ -265,7 +285,7 @@ class QuizService:
             # Award bonus XP for perfect score
             if score == max_score:
                 bonus_xp = self.gamification_service.award_xp(
-                    user_id=str(user_id),
+                    user_id=user_id,  # Pass UUID directly, not string
                     activity_type='perfect_quiz',
                     metadata={'quiz_id': str(quiz_id)}
                 )

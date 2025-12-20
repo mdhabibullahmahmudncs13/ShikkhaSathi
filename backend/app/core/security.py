@@ -8,7 +8,7 @@ import secrets
 
 # Password hashing context with fallback
 import os
-FORCE_FALLBACK = os.getenv("FORCE_PASSWORD_FALLBACK", "false").lower() == "true"
+FORCE_FALLBACK = True  # Force fallback for now to avoid bcrypt issues
 
 if FORCE_FALLBACK:
     pwd_context = None

@@ -31,7 +31,7 @@ class GamificationService:
     
     def calculate_level(self, total_xp: int) -> int:
         """Calculate level using sqrt formula: level = floor(sqrt(total_xp / 100))"""
-        if total_xp <= 0:
+        if total_xp is None or total_xp <= 0:
             return 1
         return max(1, math.floor(math.sqrt(total_xp / 100)))
     
@@ -57,12 +57,12 @@ class GamificationService:
             "progress_percentage": min(100, (current_xp / xp_for_next_level) * 100) if xp_for_next_level > 0 else 100
         }
     
-    def award_xp(self, user_id: str, activity_type: str, amount: int = None, metadata: Dict[str, Any] = None) -> Dict[str, Any]:
+    def award_xp(self, user_id, activity_type: str, amount: int = None, metadata: Dict[str, Any] = None) -> Dict[str, Any]:
         """
         Award XP for an activity and update level if necessary.
         
         Args:
-            user_id: User UUID
+            user_id: User UUID (can be UUID object or string)
             activity_type: Type of activity (lesson_completion, quiz_completion, etc.)
             amount: Custom XP amount (overrides default)
             metadata: Additional data about the activity
@@ -70,14 +70,28 @@ class GamificationService:
         Returns:
             Dict with XP awarded, level changes, and notifications
         """
+        # Convert user_id to string if it's a UUID object
+        if hasattr(user_id, 'hex'):  # UUID object
+            user_id = str(user_id)
+        elif not isinstance(user_id, str):
+            user_id = str(user_id)
         # Get or create gamification record
         gamification = self.db.query(Gamification).filter(
             Gamification.user_id == user_id
         ).first()
         
         if not gamification:
-            gamification = Gamification(user_id=user_id)
+            gamification = Gamification(
+                user_id=user_id,
+                total_xp=0,
+                current_level=1,
+                current_streak=0,
+                longest_streak=0,
+                achievements=[],
+                streak_freeze_count=0
+            )
             self.db.add(gamification)
+            self.db.flush()  # Flush to ensure defaults are set
         
         # Determine XP amount
         if amount is None:
@@ -111,6 +125,18 @@ class GamificationService:
         # Update last activity date for streak tracking
         today = date.today()
         
+        # Initialize result dictionary
+        result = {
+            "xp_awarded": amount,
+            "total_xp": gamification.total_xp,
+            "old_level": old_level,
+            "new_level": new_level,
+            "level_up": level_up,
+            "activity_type": activity_type,
+            "timestamp": datetime.utcnow(),
+            "xp_progress": self.calculate_xp_to_next_level(gamification.total_xp)
+        }
+        
         # Update streak if this is a new day of activity
         if gamification.last_activity_date != today:
             from app.services.streak_service import StreakService
@@ -122,23 +148,14 @@ class GamificationService:
                 milestone_bonus = XPActivity.STREAK_MILESTONE * (streak_result["current_streak"] // 7)
                 gamification.total_xp += milestone_bonus
                 result["streak_milestone_bonus"] = milestone_bonus
+                # Recalculate total_xp in result after bonus
+                result["total_xp"] = gamification.total_xp
             
             result["streak_info"] = streak_result
         else:
             gamification.last_activity_date = today
         
         self.db.commit()
-        
-        result = {
-            "xp_awarded": amount,
-            "total_xp": gamification.total_xp,
-            "old_level": old_level,
-            "new_level": new_level,
-            "level_up": level_up,
-            "activity_type": activity_type,
-            "timestamp": datetime.utcnow(),
-            "xp_progress": self.calculate_xp_to_next_level(gamification.total_xp)
-        }
         
         if metadata:
             result["metadata"] = metadata

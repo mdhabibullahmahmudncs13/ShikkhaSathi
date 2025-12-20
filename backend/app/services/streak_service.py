@@ -16,17 +16,23 @@ class StreakService:
     def __init__(self, db: Session):
         self.db = db
     
-    def update_streak(self, user_id: str, activity_date: date = None) -> Dict[str, Any]:
+    def update_streak(self, user_id, activity_date: date = None) -> Dict[str, Any]:
         """
         Update user's streak based on activity.
         
         Args:
-            user_id: User UUID
+            user_id: User UUID (can be UUID object or string)
             activity_date: Date of activity (defaults to today)
         
         Returns:
             Dict with streak information and any changes
         """
+        # Convert user_id to string if it's a UUID object
+        if hasattr(user_id, 'hex'):  # UUID object
+            user_id = str(user_id)
+        elif not isinstance(user_id, str):
+            user_id = str(user_id)
+            
         if activity_date is None:
             activity_date = date.today()
         
