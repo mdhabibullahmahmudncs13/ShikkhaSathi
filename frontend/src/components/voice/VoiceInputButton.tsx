@@ -1,91 +1,236 @@
-/**
- * VoiceInputButton Component
- * Microphone button with recording states and visual feedback
- */
+import React, { useState, useRef, useEffect } from 'react';
+import { Mic, MicOff, Square } from 'lucide-react';
 
-import React from 'react';
-import { Mic, MicOff, Loader2 } from 'lucide-react';
-import { VoiceInputButtonProps, RecordingStatus } from '../../types/voice';
-
-interface ExtendedVoiceInputButtonProps extends VoiceInputButtonProps {
-  status?: RecordingStatus;
-  duration?: number;
+interface VoiceInputButtonProps {
+  onStartRecording: () => void;
+  onStopRecording: () => void;
+  onAudioReady: (audioBlob: Blob) => void;
+  isEnabled: boolean;
+  isProcessing?: boolean;
+  className?: string;
 }
 
-const VoiceInputButton: React.FC<ExtendedVoiceInputButtonProps> = ({
+export const VoiceInputButton: React.FC<VoiceInputButtonProps> = ({
   onStartRecording,
   onStopRecording,
-  isRecording,
+  onAudioReady,
   isEnabled,
-  status = RecordingStatus.IDLE,
-  duration = 0,
+  isProcessing = false,
   className = ''
 }) => {
-  const handleClick = () => {
-    if (!isEnabled) return;
-    
-    if (isRecording) {
-      onStopRecording();
-    } else {
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [audioLevel, setAudioLevel] = useState(0);
+  
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const animationRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      // Cleanup on unmount
+      stopRecording();
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, []);
+
+  const startRecording = async () => {
+    try {
+      // Request microphone permission
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        } 
+      });
+      
+      streamRef.current = stream;
+
+      // Set up audio analysis for visualization
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const analyser = audioContext.createAnalyser();
+      const source = audioContext.createMediaStreamSource(stream);
+      
+      analyser.fftSize = 256;
+      source.connect(analyser);
+      
+      audioContextRef.current = audioContext;
+      analyserRef.current = analyser;
+
+      // Set up MediaRecorder
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: 'audio/webm;codecs=opus'
+      });
+      
+      const audioChunks: Blob[] = [];
+      
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunks.push(event.data);
+        }
+      };
+      
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+        onAudioReady(audioBlob);
+        cleanup();
+      };
+      
+      mediaRecorderRef.current = mediaRecorder;
+      
+      // Start recording
+      mediaRecorder.start();
+      setIsRecording(true);
+      setRecordingTime(0);
       onStartRecording();
+      
+      // Start timer
+      intervalRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+      
+      // Start audio level monitoring
+      monitorAudioLevel();
+      
+    } catch (error) {
+      console.error('Error starting recording:', error);
+      alert('Could not access microphone. Please check permissions.');
     }
   };
 
-  const formatDuration = (seconds: number): string => {
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      onStopRecording();
+      
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+        animationRef.current = null;
+      }
+    }
+  };
+
+  const cleanup = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+      audioContextRef.current = null;
+    }
+    
+    analyserRef.current = null;
+    setAudioLevel(0);
+  };
+
+  const monitorAudioLevel = () => {
+    if (!analyserRef.current) return;
+    
+    const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
+    
+    const updateLevel = () => {
+      if (!analyserRef.current || !isRecording) return;
+      
+      analyserRef.current.getByteFrequencyData(dataArray);
+      const average = dataArray.reduce((sum, value) => sum + value, 0) / dataArray.length;
+      setAudioLevel(average / 255); // Normalize to 0-1
+      
+      animationRef.current = requestAnimationFrame(updateLevel);
+    };
+    
+    updateLevel();
+  };
+
+  const handleClick = () => {
+    if (!isEnabled || isProcessing) return;
+    
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
+  };
+
+  const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
+    const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const getButtonStyle = () => {
-    if (!isEnabled) {
-      return 'bg-gray-300 cursor-not-allowed';
-    }
-    if (isRecording) {
-      return 'bg-red-600 hover:bg-red-700 animate-pulse';
-    }
-    return 'bg-blue-600 hover:bg-blue-700';
+  const getButtonColor = () => {
+    if (!isEnabled || isProcessing) return 'bg-gray-400';
+    if (isRecording) return 'bg-red-500 hover:bg-red-600';
+    return 'bg-blue-500 hover:bg-blue-600';
   };
 
   const getIcon = () => {
-    if (status === RecordingStatus.PROCESSING) {
-      return <Loader2 className="w-5 h-5 text-white animate-spin" />;
-    }
-    if (!isEnabled) {
-      return <MicOff className="w-5 h-5 text-gray-500" />;
-    }
-    return <Mic className="w-5 h-5 text-white" />;
+    if (isProcessing) return <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full" />;
+    if (isRecording) return <Square className="w-5 h-5" />;
+    return isEnabled ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />;
   };
 
   return (
     <div className={`flex items-center space-x-2 ${className}`}>
       <button
         onClick={handleClick}
-        disabled={!isEnabled || status === RecordingStatus.PROCESSING}
+        disabled={!isEnabled || isProcessing}
         className={`
-          p-3 rounded-full transition-all duration-200 
-          focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
-          ${getButtonStyle()}
+          relative p-3 rounded-full text-white transition-all duration-200
+          ${getButtonColor()}
+          ${isRecording ? 'animate-pulse' : ''}
+          disabled:cursor-not-allowed
         `}
-        title={isRecording ? 'Stop recording' : 'Start recording'}
-        aria-label={isRecording ? 'Stop recording' : 'Start recording'}
+        title={
+          !isEnabled ? 'Voice input disabled' :
+          isProcessing ? 'Processing...' :
+          isRecording ? 'Stop recording' : 'Start recording'
+        }
       >
         {getIcon()}
+        
+        {/* Audio level indicator */}
+        {isRecording && (
+          <div 
+            className="absolute inset-0 rounded-full border-4 border-white opacity-50"
+            style={{
+              transform: `scale(${1 + audioLevel * 0.3})`,
+              transition: 'transform 0.1s ease-out'
+            }}
+          />
+        )}
       </button>
       
-      {isRecording && duration > 0 && (
-        <span className="text-sm font-mono text-gray-700">
-          {formatDuration(duration)}
-        </span>
+      {/* Recording timer */}
+      {isRecording && (
+        <div className="flex items-center space-x-1 text-sm text-gray-600">
+          <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+          <span>{formatTime(recordingTime)}</span>
+        </div>
       )}
       
-      {status === RecordingStatus.REQUESTING_PERMISSION && (
-        <span className="text-xs text-gray-500">
-          Requesting microphone access...
-        </span>
+      {/* Processing indicator */}
+      {isProcessing && (
+        <div className="text-sm text-gray-600">
+          Processing...
+        </div>
       )}
     </div>
   );
 };
-
-export default VoiceInputButton;

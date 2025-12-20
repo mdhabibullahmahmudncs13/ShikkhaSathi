@@ -1,12 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, BookOpen, Lightbulb, HelpCircle } from 'lucide-react';
-import { apiClient } from '../services/apiClient';
+import { Send, Bot, User, BookOpen, Lightbulb, HelpCircle, Volume2 } from 'lucide-react';
+import apiClient from '../services/apiClient';
+import { VoiceInputButton } from '../components/voice/VoiceInputButton';
+import { VoicePlayer } from '../components/voice/VoicePlayer';
+import { VoiceControls } from '../components/voice/VoiceControls';
+import { useVoice } from '../hooks/useVoice';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: string;
   sources?: string[];
+  audioUrl?: string;
+  isVoiceMessage?: boolean;
 }
 
 interface ChatResponse {
@@ -29,6 +35,18 @@ const AITutorChat: React.FC = () => {
   const [selectedSubject, setSelectedSubject] = useState<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Voice functionality
+  const {
+    state: voiceState,
+    settings: voiceSettings,
+    transcribeAudio,
+    synthesizeText,
+    toggleInput,
+    toggleOutput,
+    changeLanguage,
+    clearError
+  } = useVoice();
+
   const subjects = ['Physics', 'Chemistry', 'Mathematics', 'Biology', 'Bangla', 'English'];
 
   const quickQuestions = [
@@ -48,18 +66,40 @@ const AITutorChat: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const sendMessage = async (messageText?: string) => {
-    const message = messageText || inputMessage.trim();
-    if (!message) return;
+  // Voice input handlers
+  const handleVoiceInput = async (audioBlob: Blob) => {
+    try {
+      const transcriptionResult = await transcribeAudio(audioBlob);
+      
+      if (transcriptionResult.success && transcriptionResult.text) {
+        const voiceMessage: ChatMessage = {
+          role: 'user',
+          content: transcriptionResult.text,
+          timestamp: new Date().toISOString(),
+          isVoiceMessage: true
+        };
+        
+        setMessages(prev => [...prev, voiceMessage]);
+        
+        // Send the transcribed message to AI
+        await sendMessageToAI(transcriptionResult.text);
+      } else {
+        console.error('Voice transcription failed:', transcriptionResult.error);
+      }
+    } catch (error) {
+      console.error('Error processing voice input:', error);
+    }
+  };
 
-    const userMessage: ChatMessage = {
-      role: 'user',
-      content: message,
-      timestamp: new Date().toISOString()
-    };
+  const handleStartRecording = () => {
+    clearError();
+  };
 
-    setMessages(prev => [...prev, userMessage]);
-    setInputMessage('');
+  const handleStopRecording = () => {
+    // Recording stopped, waiting for audio processing
+  };
+
+  const sendMessageToAI = async (message: string) => {
     setIsLoading(true);
 
     try {
@@ -77,6 +117,23 @@ const AITutorChat: React.FC = () => {
       };
 
       setMessages(prev => [...prev, assistantMessage]);
+
+      // Generate voice output if enabled
+      if (voiceSettings.outputEnabled && voiceState.serviceAvailable) {
+        try {
+          const synthesisResult = await synthesizeText(response.data.response);
+          if (synthesisResult.success && synthesisResult.audioId) {
+            // Update the message with audio URL
+            setMessages(prev => prev.map(msg => 
+              msg === assistantMessage 
+                ? { ...msg, audioUrl: synthesisResult.audioId }
+                : msg
+            ));
+          }
+        } catch (error) {
+          console.error('Voice synthesis failed:', error);
+        }
+      }
     } catch (error) {
       console.error('Error sending message:', error);
       const errorMessage: ChatMessage = {
@@ -88,6 +145,22 @@ const AITutorChat: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const sendMessage = async (messageText?: string) => {
+    const message = messageText || inputMessage.trim();
+    if (!message) return;
+
+    const userMessage: ChatMessage = {
+      role: 'user',
+      content: message,
+      timestamp: new Date().toISOString()
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setInputMessage('');
+    
+    await sendMessageToAI(message);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -119,21 +192,71 @@ const AITutorChat: React.FC = () => {
             </div>
           </div>
           
-          {/* Subject Selector */}
-          <div className="flex items-center space-x-2">
-            <BookOpen className="w-5 h-5 text-gray-400" />
-            <select
-              value={selectedSubject}
-              onChange={(e) => setSelectedSubject(e.target.value)}
-              className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All Subjects</option>
-              {subjects.map(subject => (
-                <option key={subject} value={subject}>{subject}</option>
-              ))}
-            </select>
+          <div className="flex items-center space-x-4">
+            {/* Voice Controls */}
+            <VoiceControls
+              voiceInputEnabled={voiceState.voiceInputEnabled}
+              voiceOutputEnabled={voiceState.voiceOutputEnabled}
+              selectedLanguage={voiceState.selectedLanguage}
+              onToggleInput={toggleInput}
+              onToggleOutput={toggleOutput}
+              onLanguageChange={changeLanguage}
+              serviceStatus={{
+                whisperAvailable: voiceState.serviceAvailable,
+                ttsAvailable: voiceState.serviceAvailable,
+                processing: voiceState.isProcessing
+              }}
+              className="hidden md:block"
+            />
+            
+            {/* Subject Selector */}
+            <div className="flex items-center space-x-2">
+              <BookOpen className="w-5 h-5 text-gray-400" />
+              <select
+                value={selectedSubject}
+                onChange={(e) => setSelectedSubject(e.target.value)}
+                className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">All Subjects</option>
+                {subjects.map(subject => (
+                  <option key={subject} value={subject}>{subject}</option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
+
+        {/* Mobile Voice Controls */}
+        <div className="md:hidden mt-3 pt-3 border-t border-gray-200">
+          <VoiceControls
+            voiceInputEnabled={voiceState.voiceInputEnabled}
+            voiceOutputEnabled={voiceState.voiceOutputEnabled}
+            selectedLanguage={voiceState.selectedLanguage}
+            onToggleInput={toggleInput}
+            onToggleOutput={toggleOutput}
+            onLanguageChange={changeLanguage}
+            serviceStatus={{
+              whisperAvailable: voiceState.serviceAvailable,
+              ttsAvailable: voiceState.serviceAvailable,
+              processing: voiceState.isProcessing
+            }}
+          />
+        </div>
+
+        {/* Error Display */}
+        {voiceState.lastError && (
+          <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-center justify-between">
+              <span className="text-red-700 text-sm">{voiceState.lastError}</span>
+              <button
+                onClick={clearError}
+                className="text-red-500 hover:text-red-700 text-sm"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Messages */}
@@ -166,7 +289,14 @@ const AITutorChat: React.FC = () => {
                     ? 'bg-green-600 text-white'
                     : 'bg-white text-gray-900 shadow-sm border'
                 }`}>
-                  <p className="whitespace-pre-wrap">{message.content}</p>
+                  <div className="flex items-start space-x-2">
+                    <p className="whitespace-pre-wrap flex-1">{message.content}</p>
+                    {message.isVoiceMessage && (
+                      <div title="Voice message">
+                        <Volume2 className="w-4 h-4 text-gray-400 flex-shrink-0 mt-1" />
+                      </div>
+                    )}
+                  </div>
                   
                   {/* Sources */}
                   {message.sources && message.sources.length > 0 && (
@@ -185,6 +315,18 @@ const AITutorChat: React.FC = () => {
                     </div>
                   )}
                 </div>
+
+                {/* Voice Player for AI responses */}
+                {message.role === 'assistant' && message.audioUrl && (
+                  <div className="mt-2 w-full max-w-md">
+                    <VoicePlayer
+                      audioUrl={message.audioUrl}
+                      text={message.content}
+                      autoPlay={voiceSettings.autoPlay}
+                      showControls={true}
+                    />
+                  </div>
+                )}
                 
                 <span className="text-xs text-gray-500 mt-1">
                   {formatTimestamp(message.timestamp)}
@@ -240,12 +382,28 @@ const AITutorChat: React.FC = () => {
       {/* Input */}
       <div className="bg-white border-t px-6 py-4">
         <div className="flex space-x-3">
+          {/* Voice Input Button */}
+          {voiceState.voiceInputEnabled && (
+            <VoiceInputButton
+              onStartRecording={handleStartRecording}
+              onStopRecording={handleStopRecording}
+              onAudioReady={handleVoiceInput}
+              isEnabled={voiceState.serviceAvailable && !isLoading}
+              isProcessing={voiceState.isProcessing}
+              className="flex-shrink-0"
+            />
+          )}
+          
           <div className="flex-1">
             <textarea
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Ask me anything about your studies..."
+              placeholder={
+                voiceState.voiceInputEnabled 
+                  ? "Type your message or use voice input..." 
+                  : "Ask me anything about your studies..."
+              }
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
               rows={1}
               disabled={isLoading}
