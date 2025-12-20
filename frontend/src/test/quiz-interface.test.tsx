@@ -96,11 +96,10 @@ describe('Quiz Interface', () => {
       </BrowserRouter>
     );
 
-    expect(screen.getByText('Create Your Quiz')).toBeInTheDocument();
-    expect(screen.getByLabelText('Subject')).toBeInTheDocument();
-    expect(screen.getByLabelText('Topic')).toBeInTheDocument();
-    expect(screen.getByLabelText('Grade')).toBeInTheDocument();
-    expect(screen.getByText('Generate Quiz')).toBeInTheDocument();
+    expect(screen.getByText('Start a Quiz')).toBeInTheDocument();
+    expect(screen.getByText('Subject')).toBeInTheDocument();
+    expect(screen.getByText('Number of Questions')).toBeInTheDocument();
+    expect(screen.getByText('Start Quiz')).toBeInTheDocument();
   });
 
   it('displays quiz questions correctly', () => {

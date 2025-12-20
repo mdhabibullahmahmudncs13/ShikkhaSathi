@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, BookOpen, Lightbulb, HelpCircle, Volume2 } from 'lucide-react';
+import { Send, Bot, User, BookOpen, Lightbulb, HelpCircle, Volume2, Download, Settings } from 'lucide-react';
 import apiClient from '../services/apiClient';
 import { VoiceInputButton } from '../components/voice/VoiceInputButton';
 import { VoicePlayer } from '../components/voice/VoicePlayer';
 import { VoiceControls } from '../components/voice/VoiceControls';
+import { ConversationExport } from '../components/chat/ConversationExport';
 import { useVoice } from '../hooks/useVoice';
 
 interface ChatMessage {
@@ -33,6 +34,8 @@ const AITutorChat: React.FC = () => {
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState<string>('');
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [showVoiceSettings, setShowVoiceSettings] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Voice functionality
@@ -193,6 +196,27 @@ const AITutorChat: React.FC = () => {
           </div>
           
           <div className="flex items-center space-x-4">
+            {/* Export Button */}
+            <button
+              onClick={() => setShowExportModal(true)}
+              disabled={messages.length <= 1}
+              className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Export Conversation"
+            >
+              <Download className="w-5 h-5" />
+              <span className="hidden sm:inline">Export</span>
+            </button>
+
+            {/* Voice Settings Button */}
+            <button
+              onClick={() => setShowVoiceSettings(!showVoiceSettings)}
+              className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+              title="Voice Settings"
+            >
+              <Settings className="w-5 h-5" />
+              <span className="hidden sm:inline">Voice</span>
+            </button>
+
             {/* Voice Controls */}
             <VoiceControls
               voiceInputEnabled={voiceState.voiceInputEnabled}
@@ -418,6 +442,60 @@ const AITutorChat: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Export Modal */}
+      <ConversationExport
+        messages={messages}
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+      />
+
+      {/* Voice Settings Panel */}
+      {showVoiceSettings && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Voice Settings</h3>
+              <button
+                onClick={() => setShowVoiceSettings(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <Settings className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <VoiceControls
+              voiceInputEnabled={voiceState.voiceInputEnabled}
+              voiceOutputEnabled={voiceState.voiceOutputEnabled}
+              selectedLanguage={voiceState.selectedLanguage}
+              onToggleInput={toggleInput}
+              onToggleOutput={toggleOutput}
+              onLanguageChange={changeLanguage}
+              serviceStatus={{
+                whisperAvailable: voiceState.serviceAvailable,
+                ttsAvailable: voiceState.serviceAvailable,
+                processing: voiceState.isProcessing
+              }}
+              showLabels={true}
+            />
+
+            {voiceState.lastError && (
+              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-sm text-red-700">{voiceState.lastError}</p>
+              </div>
+            )}
+
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={() => setShowVoiceSettings(false)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

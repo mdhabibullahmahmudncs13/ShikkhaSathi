@@ -230,20 +230,22 @@ class Logger {
       }, 0);
     });
 
-    // Monitor resource loading
-    const observer = new PerformanceObserver((list) => {
-      for (const entry of list.getEntries()) {
-        if (entry.entryType === 'resource') {
-          const resource = entry as PerformanceResourceTiming;
-          this.recordMetric('resource_load_time', resource.responseEnd - resource.fetchStart, {
-            name: resource.name,
-            type: resource.initiatorType
-          });
+    // Monitor resource loading (only in browser environment)
+    if (typeof PerformanceObserver !== 'undefined') {
+      const observer = new PerformanceObserver((list) => {
+        for (const entry of list.getEntries()) {
+          if (entry.entryType === 'resource') {
+            const resource = entry as PerformanceResourceTiming;
+            this.recordMetric('resource_load_time', resource.responseEnd - resource.fetchStart, {
+              name: resource.name,
+              type: resource.initiatorType
+            });
+          }
         }
-      }
-    });
+      });
 
-    observer.observe({ entryTypes: ['resource'] });
+      observer.observe({ entryTypes: ['resource'] });
+    }
   }
 
   // API call monitoring

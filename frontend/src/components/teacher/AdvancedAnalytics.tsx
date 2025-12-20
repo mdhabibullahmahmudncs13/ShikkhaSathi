@@ -1,405 +1,282 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  Users, 
-  Clock, 
-  Activity,
-  AlertTriangle,
-  CheckCircle,
-  BarChart3,
-  PieChart,
-  Calendar
-} from 'lucide-react';
-import { useTeacherAnalytics } from '../../hooks/useTeacherAnalytics';
+/**
+ * Advanced Analytics Dashboard for Teachers
+ * Comprehensive analytics with detailed insights and visualizations
+ */
 
-interface AdvancedAnalyticsProps {
+import React, { useState, useEffect } from 'react';
+import {
+  BarChart3,
+  TrendingUp,
+  Users,
+  Clock,
+  Target,
+  Brain,
+  Award,
+  AlertTriangle,
+  Calendar,
+  Download,
+  Filter,
+  RefreshCw
+} from 'lucide-react';
+
+interface StudentAnalytics {
+  id: string;
+  name: string;
+  averageScore: number;
+  timeSpent: number;
+  questionsAnswered: number;
+  streakDays: number;
+  riskLevel: 'low' | 'medium' | 'high';
+  lastActive: string;
+  subjectScores: Record<string, number>;
+  weeklyProgress: Array<{
+    week: string;
+    score: number;
+    timeSpent: number;
+  }>;
+}
+
+interface ClassAnalytics {
   classId: string;
   className: string;
+  totalStudents: number;
+  activeStudents: number;
+  averageScore: number;
+  totalTimeSpent: number;
+  completionRate: number;
+  riskStudents: number;
+  topPerformers: StudentAnalytics[];
+  strugglingStudents: StudentAnalytics[];
+  subjectPerformance: Array<{
+    subject: string;
+    averageScore: number;
+    completionRate: number;
+    timeSpent: number;
+    difficulty: number;
+  }>;
+  weeklyTrends: Array<{
+    week: string;
+    averageScore: number;
+    activeStudents: number;
+    timeSpent: number;
+  }>;
+}
+
+interface AdvancedAnalyticsProps {
+  teacherId: string;
+  selectedClass?: string;
 }
 
 export const AdvancedAnalytics: React.FC<AdvancedAnalyticsProps> = ({
-  classId,
-  className
+  teacherId,
+  selectedClass
 }) => {
-  const [selectedTimeRange, setSelectedTimeRange] = useState<'week' | 'month' | 'quarter'>('month');
-  const [selectedView, setSelectedView] = useState<'engagement' | 'retention' | 'patterns'>('engagement');
-  
-  const {
-    engagementAnalysis,
-    retentionMetrics,
-    activityPatterns,
-    loading,
-    error,
-    loadDetailedEngagementAnalysis,
-    loadRetentionAnalysis,
-    loadActivityPatterns,
-    clearError
-  } = useTeacherAnalytics(classId, false);
+  const [analytics, setAnalytics] = useState<ClassAnalytics | null>(null);
+  const [students, setStudents] = useState<StudentAnalytics[]>([]);
+  const [timeRange, setTimeRange] = useState<'week' | 'month' | 'semester'>('month');
+  const [selectedSubject, setSelectedSubject] = useState<string>('all');
+  const [isLoading, setIsLoading] = useState(true);
+  const [showExportModal, setShowExportModal] = useState(false);
 
-  // Load analytics when component mounts or parameters change
+  // Mock data - in real app this would come from API
   useEffect(() => {
-    const loadAnalytics = async () => {
-      await Promise.all([
-        loadDetailedEngagementAnalysis(classId, selectedTimeRange),
-        loadRetentionAnalysis(classId, selectedTimeRange),
-        loadActivityPatterns(classId, selectedTimeRange)
-      ]);
+    const mockAnalytics: ClassAnalytics = {
+      classId: selectedClass || 'class-1',
+      className: 'Physics 9A',
+      totalStudents: 32,
+      activeStudents: 28,
+      averageScore: 78.5,
+      totalTimeSpent: 2400, // minutes
+      completionRate: 85.2,
+      riskStudents: 4,
+      topPerformers: [
+        {
+          id: 'student-1',
+          name: 'রাহুল আহমেদ',
+          averageScore: 92,
+          timeSpent: 180,
+          questionsAnswered: 45,
+          streakDays: 12,
+          riskLevel: 'low',
+          lastActive: '2024-12-20T09:15:00',
+          subjectScores: { Physics: 92, Math: 88, Chemistry: 90 },
+          weeklyProgress: [
+            { week: 'Week 1', score: 85, timeSpent: 120 },
+            { week: 'Week 2', score: 88, timeSpent: 140 },
+            { week: 'Week 3', score: 90, timeSpent: 160 },
+            { week: 'Week 4', score: 92, timeSpent: 180 }
+          ]
+        },
+        {
+          id: 'student-2',
+          name: 'সারা খান',
+          averageScore: 89,
+          timeSpent: 165,
+          questionsAnswered: 42,
+          streakDays: 8,
+          riskLevel: 'low',
+          lastActive: '2024-12-20T08:30:00',
+          subjectScores: { Physics: 89, Math: 91, Chemistry: 87 },
+          weeklyProgress: [
+            { week: 'Week 1', score: 82, timeSpent: 110 },
+            { week: 'Week 2', score: 85, timeSpent: 130 },
+            { week: 'Week 3', score: 87, timeSpent: 150 },
+            { week: 'Week 4', score: 89, timeSpent: 165 }
+          ]
+        }
+      ],
+      strugglingStudents: [
+        {
+          id: 'student-3',
+          name: 'করিম উদ্দিন',
+          averageScore: 45,
+          timeSpent: 60,
+          questionsAnswered: 15,
+          streakDays: 1,
+          riskLevel: 'high',
+          lastActive: '2024-12-18T14:20:00',
+          subjectScores: { Physics: 45, Math: 48, Chemistry: 42 },
+          weeklyProgress: [
+            { week: 'Week 1', score: 50, timeSpent: 80 },
+            { week: 'Week 2', score: 48, timeSpent: 70 },
+            { week: 'Week 3', score: 46, timeSpent: 65 },
+            { week: 'Week 4', score: 45, timeSpent: 60 }
+          ]
+        }
+      ],
+      subjectPerformance: [
+        {
+          subject: 'Physics',
+          averageScore: 78.5,
+          completionRate: 82.3,
+          timeSpent: 800,
+          difficulty: 7.2
+        },
+        {
+          subject: 'Mathematics',
+          averageScore: 81.2,
+          completionRate: 88.1,
+          timeSpent: 720,
+          difficulty: 6.8
+        },
+        {
+          subject: 'Chemistry',
+          averageScore: 75.8,
+          completionRate: 79.5,
+          timeSpent: 880,
+          difficulty: 7.8
+        }
+      ],
+      weeklyTrends: [
+        { week: 'Week 1', averageScore: 75.2, activeStudents: 26, timeSpent: 520 },
+        { week: 'Week 2', averageScore: 76.8, activeStudents: 27, timeSpent: 580 },
+        { week: 'Week 3', averageScore: 77.5, activeStudents: 28, timeSpent: 620 },
+        { week: 'Week 4', averageScore: 78.5, activeStudents: 28, timeSpent: 680 }
+      ]
     };
-    
-    loadAnalytics();
-  }, [classId, selectedTimeRange, loadDetailedEngagementAnalysis, loadRetentionAnalysis, loadActivityPatterns]);
 
-  if (loading) {
+    setAnalytics(mockAnalytics);
+    setStudents([...mockAnalytics.topPerformers, ...mockAnalytics.strugglingStudents]);
+    setIsLoading(false);
+  }, [selectedClass, timeRange]);
+
+  const formatTime = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+  };
+
+  const getRiskColor = (level: string) => {
+    switch (level) {
+      case 'high': return 'text-red-600 bg-red-50 border-red-200';
+      case 'medium': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+      default: return 'text-green-600 bg-green-50 border-green-200';
+    }
+  };
+
+  const generateReport = () => {
+    if (!analytics) return;
+
+    const report = `
+# Class Analytics Report - ${analytics.className}
+Generated on: ${new Date().toLocaleString()}
+Time Range: ${timeRange}
+
+## Class Overview
+- Total Students: ${analytics.totalStudents}
+- Active Students: ${analytics.activeStudents}
+- Average Score: ${analytics.averageScore.toFixed(1)}%
+- Completion Rate: ${analytics.completionRate.toFixed(1)}%
+- At-Risk Students: ${analytics.riskStudents}
+
+## Subject Performance
+${analytics.subjectPerformance.map(subject => `
+### ${subject.subject}
+- Average Score: ${subject.averageScore.toFixed(1)}%
+- Completion Rate: ${subject.completionRate.toFixed(1)}%
+- Time Spent: ${formatTime(subject.timeSpent)}
+- Difficulty Rating: ${subject.difficulty}/10
+`).join('')}
+
+## Top Performers
+${analytics.topPerformers.map(student => `
+- ${student.name}: ${student.averageScore}% (${student.streakDays} day streak)
+`).join('')}
+
+## Students Needing Support
+${analytics.strugglingStudents.map(student => `
+- ${student.name}: ${student.averageScore}% (Risk Level: ${student.riskLevel})
+`).join('')}
+
+## Recommendations
+${analytics.riskStudents > 0 ? `
+- Provide additional support to ${analytics.riskStudents} at-risk students
+- Consider peer tutoring programs
+- Schedule one-on-one sessions with struggling students
+` : '- Continue current teaching strategies'}
+${analytics.averageScore < 70 ? `
+- Review teaching methods for challenging topics
+- Increase interactive learning activities
+- Provide more practice materials
+` : ''}
+`;
+
+    const blob = new Blob([report], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${analytics.className}-analytics-${new Date().toISOString().split('T')[0]}.md`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <span className="ml-2 text-gray-600">Loading advanced analytics...</span>
+      <div className="space-y-6">
+        {[1, 2, 3].map(i => (
+          <div key={i} className="bg-white rounded-lg shadow-sm border p-6 animate-pulse">
+            <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
+            <div className="space-y-3">
+              <div className="h-4 bg-gray-200 rounded"></div>
+              <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+            </div>
+          </div>
+        ))}
       </div>
     );
   }
 
-  if (error) {
+  if (!analytics) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-        <div className="flex items-center">
-          <AlertTriangle className="h-5 w-5 text-red-600 mr-2" />
-          <h3 className="text-red-800 font-medium">Error Loading Analytics</h3>
-        </div>
-        <p className="text-red-700 mt-2">{error}</p>
-        <button
-          onClick={clearError}
-          className="mt-3 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-        >
-          Retry
-        </button>
+      <div className="bg-white rounded-lg shadow-sm border p-8 text-center">
+        <BarChart3 className="w-16 h-16 mx-auto text-gray-300 mb-4" />
+        <h3 className="text-lg font-medium text-gray-900 mb-2">No Analytics Available</h3>
+        <p className="text-gray-600">Select a class to view detailed analytics.</p>
       </div>
     );
   }
-
-  const renderEngagementAnalysis = () => {
-    if (!engagementAnalysis?.engagement_analysis) return null;
-
-    const analysis = engagementAnalysis.engagement_analysis;
-    const recommendations = engagementAnalysis.recommendations || [];
-
-    return (
-      <div className="space-y-6">
-        {/* Engagement Overview */}
-        <div className="bg-white rounded-lg shadow-sm border p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Engagement Overview</h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <div className="p-4 bg-blue-50 rounded-lg">
-              <div className="flex items-center">
-                <Users className="h-8 w-8 text-blue-600" />
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-blue-900">Total Students</p>
-                  <p className="text-2xl font-bold text-blue-900">{analysis.total_students}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-4 bg-green-50 rounded-lg">
-              <div className="flex items-center">
-                <Activity className="h-8 w-8 text-green-600" />
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-green-900">Active Students</p>
-                  <p className="text-2xl font-bold text-green-900">{analysis.active_students}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-4 bg-purple-50 rounded-lg">
-              <div className="flex items-center">
-                <Clock className="h-8 w-8 text-purple-600" />
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-purple-900">Avg Session</p>
-                  <p className="text-2xl font-bold text-purple-900">
-                    {Math.round(analysis.session_metrics?.average_duration || 0)}m
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-4 bg-orange-50 rounded-lg">
-              <div className="flex items-center">
-                <BarChart3 className="h-8 w-8 text-orange-600" />
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-orange-900">Total Sessions</p>
-                  <p className="text-2xl font-bold text-orange-900">
-                    {analysis.session_metrics?.total_sessions || 0}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Engagement Distribution */}
-          <div className="mb-6">
-            <h4 className="font-medium text-gray-900 mb-3">Engagement Distribution</h4>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {Object.entries(analysis.engagement_percentages || {}).map(([level, percentage]) => (
-                <div key={level} className="text-center">
-                  <div className={`p-3 rounded-lg ${
-                    level === 'highly_engaged' ? 'bg-green-100' :
-                    level === 'moderately_engaged' ? 'bg-yellow-100' :
-                    level === 'low_engaged' ? 'bg-orange-100' : 'bg-red-100'
-                  }`}>
-                    <p className="text-sm font-medium text-gray-700 capitalize">
-                      {level.replace('_', ' ')}
-                    </p>
-                    <p className={`text-2xl font-bold ${
-                      level === 'highly_engaged' ? 'text-green-800' :
-                      level === 'moderately_engaged' ? 'text-yellow-800' :
-                      level === 'low_engaged' ? 'text-orange-800' : 'text-red-800'
-                    }`}>
-                      {percentage}%
-                    </p>
-                    <p className="text-xs text-gray-600">
-                      {analysis.engagement_distribution?.[level] || 0} students
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Recommendations */}
-          {recommendations.length > 0 && (
-            <div>
-              <h4 className="font-medium text-gray-900 mb-3">Recommendations</h4>
-              <div className="space-y-3">
-                {recommendations.map((rec: any, index: number) => (
-                  <div
-                    key={index}
-                    className={`border rounded-lg p-4 ${
-                      rec.priority === 'high' ? 'border-red-200 bg-red-50' :
-                      rec.priority === 'medium' ? 'border-yellow-200 bg-yellow-50' :
-                      'border-blue-200 bg-blue-50'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <h5 className="font-medium text-gray-900">{rec.title}</h5>
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                        rec.priority === 'high' ? 'bg-red-100 text-red-800' :
-                        rec.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-blue-100 text-blue-800'
-                      }`}>
-                        {rec.priority} priority
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-700 mb-3">{rec.description}</p>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900 mb-1">Suggested Actions:</p>
-                      <ul className="text-sm text-gray-600 space-y-1">
-                        {rec.actions?.map((action: string, actionIndex: number) => (
-                          <li key={actionIndex} className="flex items-start">
-                            <span className="text-blue-500 mr-2">•</span>
-                            {action}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
-
-  const renderRetentionAnalysis = () => {
-    if (!retentionMetrics) return null;
-
-    return (
-      <div className="space-y-6">
-        {/* Retention Overview */}
-        <div className="bg-white rounded-lg shadow-sm border p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Retention Analysis</h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div className="p-4 bg-blue-50 rounded-lg">
-              <div className="flex items-center">
-                <Users className="h-8 w-8 text-blue-600" />
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-blue-900">Total Active</p>
-                  <p className="text-2xl font-bold text-blue-900">{retentionMetrics.total_active_users || 0}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className={`p-4 rounded-lg ${
-              (retentionMetrics.churn_risk || 0) > 25 ? 'bg-red-50' : 'bg-green-50'
-            }`}>
-              <div className="flex items-center">
-                <AlertTriangle className={`h-8 w-8 ${
-                  (retentionMetrics.churn_risk || 0) > 25 ? 'text-red-600' : 'text-green-600'
-                }`} />
-                <div className="ml-3">
-                  <p className={`text-sm font-medium ${
-                    (retentionMetrics.churn_risk || 0) > 25 ? 'text-red-900' : 'text-green-900'
-                  }`}>
-                    Churn Risk
-                  </p>
-                  <p className={`text-2xl font-bold ${
-                    (retentionMetrics.churn_risk || 0) > 25 ? 'text-red-900' : 'text-green-900'
-                  }`}>
-                    {retentionMetrics.churn_risk || 0}%
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-4 bg-orange-50 rounded-lg">
-              <div className="flex items-center">
-                <TrendingDown className="h-8 w-8 text-orange-600" />
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-orange-900">At Risk</p>
-                  <p className="text-2xl font-bold text-orange-900">{retentionMetrics.at_risk_count || 0}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Weekly Retention Chart */}
-          {retentionMetrics.weekly_retention && (
-            <div>
-              <h4 className="font-medium text-gray-900 mb-3">Weekly Retention Trend</h4>
-              <div className="space-y-3">
-                {retentionMetrics.weekly_retention.map((week: any) => (
-                  <div key={week.week} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">Week {week.week}</p>
-                      <p className="text-xs text-gray-600">{week.active_users} active users</p>
-                    </div>
-                    <div className="flex items-center">
-                      <div className="w-32 bg-gray-200 rounded-full h-2 mr-3">
-                        <div
-                          className={`h-2 rounded-full ${
-                            week.retention_rate >= 80 ? 'bg-green-500' :
-                            week.retention_rate >= 60 ? 'bg-yellow-500' : 'bg-red-500'
-                          }`}
-                          style={{ width: `${week.retention_rate}%` }}
-                        />
-                      </div>
-                      <span className="text-sm font-medium text-gray-900">
-                        {week.retention_rate}%
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
-
-  const renderActivityPatterns = () => {
-    if (!activityPatterns) return null;
-
-    return (
-      <div className="space-y-6">
-        {/* Activity Overview */}
-        <div className="bg-white rounded-lg shadow-sm border p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Activity Patterns</h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Peak Hours */}
-            <div>
-              <h4 className="font-medium text-gray-900 mb-3">Peak Activity Hours</h4>
-              <div className="space-y-2">
-                {activityPatterns.peak_hours?.slice(0, 5).map(([hour, count]: [number, number], index: number) => (
-                  <div key={hour} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                    <span className="text-sm text-gray-700">{hour}:00 - {hour + 1}:00</span>
-                    <div className="flex items-center">
-                      <div className="w-20 bg-gray-200 rounded-full h-2 mr-2">
-                        <div
-                          className="bg-blue-500 h-2 rounded-full"
-                          style={{ 
-                            width: `${(count / Math.max(...activityPatterns.peak_hours.map(([, c]: [number, number]) => c))) * 100}%` 
-                          }}
-                        />
-                      </div>
-                      <span className="text-sm font-medium text-gray-900">{count}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Peak Days */}
-            <div>
-              <h4 className="font-medium text-gray-900 mb-3">Peak Activity Days</h4>
-              <div className="space-y-2">
-                {activityPatterns.peak_days?.slice(0, 5).map(([day, count]: [string, number]) => (
-                  <div key={day} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                    <span className="text-sm text-gray-700">{day}</span>
-                    <div className="flex items-center">
-                      <div className="w-20 bg-gray-200 rounded-full h-2 mr-2">
-                        <div
-                          className="bg-green-500 h-2 rounded-full"
-                          style={{ 
-                            width: `${(count / Math.max(...activityPatterns.peak_days.map(([, c]: [string, number]) => c))) * 100}%` 
-                          }}
-                        />
-                      </div>
-                      <span className="text-sm font-medium text-gray-900">{count}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Activity Trend */}
-          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="font-medium text-gray-900">Activity Trend</h4>
-                <p className="text-sm text-gray-600">Overall activity pattern over time</p>
-              </div>
-              <div className="flex items-center">
-                {activityPatterns.activity_trend === 'increasing' && (
-                  <>
-                    <TrendingUp className="h-5 w-5 text-green-600 mr-2" />
-                    <span className="text-sm font-medium text-green-600">Increasing</span>
-                  </>
-                )}
-                {activityPatterns.activity_trend === 'decreasing' && (
-                  <>
-                    <TrendingDown className="h-5 w-5 text-red-600 mr-2" />
-                    <span className="text-sm font-medium text-red-600">Decreasing</span>
-                  </>
-                )}
-                {activityPatterns.activity_trend === 'stable' && (
-                  <>
-                    <Activity className="h-5 w-5 text-blue-600 mr-2" />
-                    <span className="text-sm font-medium text-blue-600">Stable</span>
-                  </>
-                )}
-                {activityPatterns.activity_trend === 'insufficient_data' && (
-                  <>
-                    <AlertTriangle className="h-5 w-5 text-gray-600 mr-2" />
-                    <span className="text-sm font-medium text-gray-600">Insufficient Data</span>
-                  </>
-                )}
-              </div>
-            </div>
-            <div className="mt-2">
-              <p className="text-sm text-gray-600">
-                Total Activities: {activityPatterns.total_activities || 0}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
 
   return (
     <div className="space-y-6">
@@ -407,69 +284,284 @@ export const AdvancedAnalytics: React.FC<AdvancedAnalyticsProps> = ({
       <div className="bg-white rounded-lg shadow-sm border p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">Advanced Analytics</h2>
-            <p className="text-sm text-gray-600 mt-1">
-              Deep insights into {className} engagement and performance patterns
-            </p>
+            <h2 className="text-2xl font-bold text-gray-900">{analytics.className} Analytics</h2>
+            <p className="text-gray-600">Comprehensive performance insights and trends</p>
           </div>
-          
-          <div className="flex items-center space-x-4">
-            <select
-              value={selectedTimeRange}
-              onChange={(e) => setSelectedTimeRange(e.target.value as 'week' | 'month' | 'quarter')}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={generateReport}
+              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
             >
-              <option value="week">Last Week</option>
-              <option value="month">Last Month</option>
-              <option value="quarter">Last Quarter</option>
+              <Download className="w-4 h-4" />
+              <span>Export Report</span>
+            </button>
+            <button className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100">
+              <RefreshCw className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Filters */}
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
+            <Calendar className="w-4 h-4 text-gray-400" />
+            <select
+              value={timeRange}
+              onChange={(e) => setTimeRange(e.target.value as any)}
+              className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="week">This Week</option>
+              <option value="month">This Month</option>
+              <option value="semester">This Semester</option>
+            </select>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Filter className="w-4 h-4 text-gray-400" />
+            <select
+              value={selectedSubject}
+              onChange={(e) => setSelectedSubject(e.target.value)}
+              className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="all">All Subjects</option>
+              <option value="Physics">Physics</option>
+              <option value="Mathematics">Mathematics</option>
+              <option value="Chemistry">Chemistry</option>
             </select>
           </div>
         </div>
+      </div>
 
-        {/* View Tabs */}
-        <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
-          <button
-            onClick={() => setSelectedView('engagement')}
-            className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-              selectedView === 'engagement'
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <Activity className="h-4 w-4 inline mr-2" />
-            Engagement
-          </button>
-          <button
-            onClick={() => setSelectedView('retention')}
-            className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-              selectedView === 'retention'
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <Users className="h-4 w-4 inline mr-2" />
-            Retention
-          </button>
-          <button
-            onClick={() => setSelectedView('patterns')}
-            className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-              selectedView === 'patterns'
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <Calendar className="h-4 w-4 inline mr-2" />
-            Patterns
-          </button>
+      {/* Key Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="bg-white rounded-lg shadow-sm border p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Class Average</p>
+              <p className="text-3xl font-bold text-gray-900">{analytics.averageScore.toFixed(1)}%</p>
+              <p className="text-sm text-green-600">+2.3% from last month</p>
+            </div>
+            <div className="p-3 bg-blue-100 rounded-full">
+              <Target className="w-6 h-6 text-blue-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm border p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Active Students</p>
+              <p className="text-3xl font-bold text-gray-900">{analytics.activeStudents}/{analytics.totalStudents}</p>
+              <p className="text-sm text-green-600">{((analytics.activeStudents / analytics.totalStudents) * 100).toFixed(1)}% engagement</p>
+            </div>
+            <div className="p-3 bg-green-100 rounded-full">
+              <Users className="w-6 h-6 text-green-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm border p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Study Time</p>
+              <p className="text-3xl font-bold text-gray-900">{formatTime(analytics.totalTimeSpent)}</p>
+              <p className="text-sm text-blue-600">Avg: {formatTime(Math.round(analytics.totalTimeSpent / analytics.totalStudents))}/student</p>
+            </div>
+            <div className="p-3 bg-purple-100 rounded-full">
+              <Clock className="w-6 h-6 text-purple-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm border p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">At-Risk Students</p>
+              <p className="text-3xl font-bold text-gray-900">{analytics.riskStudents}</p>
+              <p className="text-sm text-red-600">{((analytics.riskStudents / analytics.totalStudents) * 100).toFixed(1)}% need support</p>
+            </div>
+            <div className="p-3 bg-red-100 rounded-full">
+              <AlertTriangle className="w-6 h-6 text-red-600" />
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Content based on selected view */}
-      {selectedView === 'engagement' && renderEngagementAnalysis()}
-      {selectedView === 'retention' && renderRetentionAnalysis()}
-      {selectedView === 'patterns' && renderActivityPatterns()}
+      {/* Subject Performance */}
+      <div className="bg-white rounded-lg shadow-sm border p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Subject Performance Analysis</h3>
+        <div className="space-y-4">
+          {analytics.subjectPerformance.map((subject) => (
+            <div key={subject.subject} className="p-4 border rounded-lg">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-medium text-gray-900">{subject.subject}</h4>
+                <div className="flex items-center space-x-4 text-sm text-gray-600">
+                  <span>Difficulty: {subject.difficulty}/10</span>
+                  <span>Time: {formatTime(subject.timeSpent)}</span>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4 mb-3">
+                <div>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span>Average Score</span>
+                    <span className="font-medium">{subject.averageScore.toFixed(1)}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className={`h-2 rounded-full ${
+                        subject.averageScore >= 80 ? 'bg-green-500' :
+                        subject.averageScore >= 60 ? 'bg-yellow-500' : 'bg-red-500'
+                      }`}
+                      style={{ width: `${subject.averageScore}%` }}
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span>Completion Rate</span>
+                    <span className="font-medium">{subject.completionRate.toFixed(1)}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className="h-2 rounded-full bg-blue-500"
+                      style={{ width: `${subject.completionRate}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Student Performance Lists */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Top Performers */}
+        <div className="bg-white rounded-lg shadow-sm border p-6">
+          <div className="flex items-center space-x-2 mb-4">
+            <Award className="w-5 h-5 text-yellow-600" />
+            <h3 className="text-lg font-semibold text-gray-900">Top Performers</h3>
+          </div>
+          <div className="space-y-3">
+            {analytics.topPerformers.map((student) => (
+              <div key={student.id} className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-medium text-gray-900">{student.name}</h4>
+                  <span className="text-lg font-bold text-green-600">{student.averageScore}%</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-sm text-gray-600">
+                  <div>
+                    <span className="block text-xs">Study Time</span>
+                    <span className="font-medium">{formatTime(student.timeSpent)}</span>
+                  </div>
+                  <div>
+                    <span className="block text-xs">Questions</span>
+                    <span className="font-medium">{student.questionsAnswered}</span>
+                  </div>
+                  <div>
+                    <span className="block text-xs">Streak</span>
+                    <span className="font-medium">{student.streakDays} days</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Students Needing Support */}
+        <div className="bg-white rounded-lg shadow-sm border p-6">
+          <div className="flex items-center space-x-2 mb-4">
+            <AlertTriangle className="w-5 h-5 text-red-600" />
+            <h3 className="text-lg font-semibold text-gray-900">Students Needing Support</h3>
+          </div>
+          <div className="space-y-3">
+            {analytics.strugglingStudents.map((student) => (
+              <div key={student.id} className={`p-3 border rounded-lg ${getRiskColor(student.riskLevel)}`}>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-medium text-gray-900">{student.name}</h4>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-lg font-bold">{student.averageScore}%</span>
+                    <span className={`px-2 py-1 text-xs rounded-full ${getRiskColor(student.riskLevel)}`}>
+                      {student.riskLevel} risk
+                    </span>
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-sm text-gray-600">
+                  <div>
+                    <span className="block text-xs">Study Time</span>
+                    <span className="font-medium">{formatTime(student.timeSpent)}</span>
+                  </div>
+                  <div>
+                    <span className="block text-xs">Last Active</span>
+                    <span className="font-medium">{new Date(student.lastActive).toLocaleDateString()}</span>
+                  </div>
+                  <div>
+                    <span className="block text-xs">Streak</span>
+                    <span className="font-medium">{student.streakDays} days</span>
+                  </div>
+                </div>
+                <div className="mt-2 pt-2 border-t border-gray-200">
+                  <div className="flex space-x-2">
+                    <button className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700">
+                      Send Message
+                    </button>
+                    <button className="px-3 py-1 text-xs bg-gray-600 text-white rounded hover:bg-gray-700">
+                      Schedule Meeting
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Weekly Trends */}
+      <div className="bg-white rounded-lg shadow-sm border p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2">
+          <TrendingUp className="w-5 h-5" />
+          <span>Weekly Performance Trends</span>
+        </h3>
+        <div className="space-y-4">
+          {analytics.weeklyTrends.map((week, index) => (
+            <div key={week.week} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div className="flex items-center space-x-4">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                <span className="font-medium text-gray-900">{week.week}</span>
+              </div>
+              <div className="flex items-center space-x-6 text-sm">
+                <div className="text-center">
+                  <div className="text-gray-600">Avg Score</div>
+                  <div className="font-bold text-gray-900">{week.averageScore.toFixed(1)}%</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-gray-600">Active</div>
+                  <div className="font-bold text-gray-900">{week.activeStudents}</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-gray-600">Time</div>
+                  <div className="font-bold text-gray-900">{formatTime(week.timeSpent)}</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-gray-600">Trend</div>
+                  <div className={`font-bold ${
+                    index > 0 && week.averageScore > analytics.weeklyTrends[index - 1].averageScore
+                      ? 'text-green-600' : index > 0 && week.averageScore < analytics.weeklyTrends[index - 1].averageScore
+                      ? 'text-red-600' : 'text-gray-600'
+                  }`}>
+                    {index > 0 
+                      ? week.averageScore > analytics.weeklyTrends[index - 1].averageScore ? '↗️' 
+                      : week.averageScore < analytics.weeklyTrends[index - 1].averageScore ? '↘️' : '➡️'
+                      : '➡️'
+                    }
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 };
-
-export default AdvancedAnalytics;

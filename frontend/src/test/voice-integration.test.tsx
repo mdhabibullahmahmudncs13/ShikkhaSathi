@@ -14,6 +14,14 @@ vi.mock('../services/voiceService', () => ({
     synthesizeText: vi.fn(),
     getAudioUrl: vi.fn(),
     checkServiceAvailability: vi.fn().mockResolvedValue(true),
+    checkBrowserSupport: vi.fn().mockReturnValue({
+      mediaRecorder: true,
+      audioContext: true,
+      speechRecognition: false,
+      audioPlayback: true,
+      fileDownload: true
+    }),
+    getSupportedMimeTypes: vi.fn().mockReturnValue(['audio/webm', 'audio/wav'])
   }
 }));
 
@@ -98,18 +106,18 @@ describe('Voice Integration', () => {
   });
 
   describe('Voice Service Integration', () => {
-    it('should have voice service available', () => {
-      const { voiceService } = require('../services/voiceService');
+    it('should have voice service available', async () => {
+      const { voiceService } = await import('../services/voiceService');
       expect(voiceService).toBeDefined();
       expect(voiceService.transcribeAudio).toBeDefined();
       expect(voiceService.synthesizeText).toBeDefined();
     });
 
     it('should handle voice service errors gracefully', async () => {
-      const { voiceService } = require('../services/voiceService');
+      const { voiceService } = await import('../services/voiceService');
       
       // Mock a failed transcription
-      voiceService.transcribeAudio.mockResolvedValue({
+      vi.spyOn(voiceService, 'transcribeAudio').mockResolvedValue({
         success: false,
         error: 'Transcription failed'
       });
@@ -123,8 +131,15 @@ describe('Voice Integration', () => {
   });
 
   describe('Browser Compatibility', () => {
-    it('should detect browser support', () => {
-      const { voiceService } = require('../services/voiceService');
+    it('should detect browser support', async () => {
+      // Import the voice service using named export
+      const { voiceService } = await import('../services/voiceService');
+      
+      // Mock browser APIs for testing
+      global.MediaRecorder = vi.fn() as any;
+      global.AudioContext = vi.fn() as any;
+      global.Audio = vi.fn() as any;
+      
       const support = voiceService.checkBrowserSupport();
       
       expect(support).toHaveProperty('mediaRecorder');
@@ -132,8 +147,9 @@ describe('Voice Integration', () => {
       expect(support).toHaveProperty('audioPlayback');
     });
 
-    it('should get supported MIME types', () => {
-      const { voiceService } = require('../services/voiceService');
+    it('should get supported MIME types', async () => {
+      // Import the voice service using named export
+      const { voiceService } = await import('../services/voiceService');
       
       // Mock MediaRecorder.isTypeSupported
       global.MediaRecorder = {

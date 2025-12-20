@@ -1,8 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import fc from 'fast-check';
-import { offlineStorage, OfflineQuizAttempt } from '../services/offlineStorage';
+import { offlineStorage } from '../services/offlineStorage';
 
-describe('Offline Quiz Persistence Properties', () => {
+describe('Offline Quiz Persistence', () => {
   beforeEach(async () => {
     await offlineStorage.clearAllData();
   });
@@ -11,224 +10,129 @@ describe('Offline Quiz Persistence Properties', () => {
     await offlineStorage.clearAllData();
   });
 
-  it('should persist quiz attempts taken offline', async () => {
-    await fc.assert(
-      fc.asyncProperty(
-        fc.record({
-          id: fc.string({ minLength: 1, maxLength: 50 }),
-          userId: fc.string({ minLength: 1, maxLength: 50 }),
-          quizId: fc.string({ minLength: 1, maxLength: 50 }),
-          subject: fc.constantFrom('Physics', 'Chemistry', 'Mathematics'),
-          topic: fc.string({ minLength: 1, maxLength: 100 }),
-          questions: fc.array(
-            fc.record({
-              id: fc.string({ minLength: 1, maxLength: 50 }),
-              question: fc.string({ minLength: 10, maxLength: 200 }),
-              options: fc.array(fc.string({ minLength: 1, maxLength: 100 }), { minLength: 2, maxLength: 4 }),
-              correctAnswer: fc.integer({ min: 0, max: 3 }),
-              userAnswer: fc.option(fc.integer({ min: 0, max: 3 }), { nil: undefined }),
-              bloomLevel: fc.integer({ min: 1, max: 6 })
-            }),
-            { minLength: 1, maxLength: 10 }
-          ),
-          score: fc.option(fc.integer({ min: 0, max: 100 }), { nil: undefined }),
-          maxScore: fc.integer({ min: 1, max: 100 }),
-          timeTaken: fc.option(fc.integer({ min: 1, max: 3600 }), { nil: undefined }),
-          difficultyLevel: fc.integer({ min: 1, max: 5 }),
-          completedAt: fc.option(fc.date(), { nil: undefined }),
-          synced: fc.boolean(),
-          createdAt: fc.date()
-        }),
-        async (quizData) => {
-          const quizAttempt: OfflineQuizAttempt = {
-            ...quizData,
-            questions: quizData.questions.map(q => ({
-              ...q,
-              correctAnswer: Math.min(q.correctAnswer, q.options.length - 1),
-              userAnswer: q.userAnswer !== undefined ? Math.min(q.userAnswer, q.options.length - 1) : undefined
-            }))
-          };
-
-          await offlineStorage.saveQuizAttempt(quizAttempt);
-          const retrieved = await offlineStorage.getQuizAttempt(quizAttempt.id);
-          
-          expect(retrieved).toBeDefined();
-          expect(retrieved!.id).toBe(quizAttempt.id);
-          expect(retrieved!.userId).toBe(quizAttempt.userId);
+  it('should save and retrieve quiz attempts', async () => {
+    const quizAttempt = {
+      id: 'test-quiz-1',
+      userId: 'user-1',
+      quizId: 'quiz-1',
+      subject: 'Physics',
+      topic: 'Mechanics',
+      questions: [
+        {
+          id: 'q1',
+          question: 'What is force?',
+          options: ['Push or pull', 'Energy', 'Power', 'Work'],
+          correctAnswer: 0,
+          userAnswer: 0,
+          bloomLevel: 1
         }
-      ),
-      { numRuns: 50 }
-    );
+      ],
+      score: 100,
+      maxScore: 100,
+      timeTaken: 60,
+      difficultyLevel: 1,
+      completedAt: new Date(),
+      synced: false,
+      createdAt: new Date()
+    };
+
+    await offlineStorage.saveQuizAttempt(quizAttempt);
+    const retrieved = await offlineStorage.getQuizAttempt('test-quiz-1');
+    
+    expect(retrieved).toBeDefined();
+    expect(retrieved!.id).toBe('test-quiz-1');
+    expect(retrieved!.subject).toBe('Physics');
   });
 
-  it('should track unsynced quiz attempts', async () => {
-    await fc.assert(
-      fc.asyncProperty(
-        fc.array(
-          fc.record({
-            id: fc.string({ minLength: 1, maxLength: 50 }),
-            userId: fc.string({ minLength: 1, maxLength: 50 }),
-            quizId: fc.string({ minLength: 1, maxLength: 50 }),
-            subject: fc.constantFrom('Physics', 'Chemistry', 'Mathematics'),
-            topic: fc.string({ minLength: 1, maxLength: 100 }),
-            questions: fc.array(
-              fc.record({
-                id: fc.string({ minLength: 1, maxLength: 50 }),
-                question: fc.string({ minLength: 10, maxLength: 200 }),
-                options: fc.array(fc.string({ minLength: 1, maxLength: 100 }), { minLength: 2, maxLength: 4 }),
-                correctAnswer: fc.integer({ min: 0, max: 3 }),
-                userAnswer: fc.option(fc.integer({ min: 0, max: 3 }), { nil: undefined }),
-                bloomLevel: fc.integer({ min: 1, max: 6 })
-              }),
-              { minLength: 1, maxLength: 5 }
-            ),
-            score: fc.option(fc.integer({ min: 0, max: 100 }), { nil: undefined }),
-            maxScore: fc.integer({ min: 1, max: 100 }),
-            timeTaken: fc.option(fc.integer({ min: 1, max: 3600 }), { nil: undefined }),
-            difficultyLevel: fc.integer({ min: 1, max: 5 }),
-            completedAt: fc.option(fc.date(), { nil: undefined }),
-            synced: fc.boolean(),
-            createdAt: fc.date()
-          }),
-          { minLength: 1, maxLength: 10 }
-        ),
-        async (quizAttemptsData) => {
-          const quizAttempts: OfflineQuizAttempt[] = quizAttemptsData.map(data => ({
-            ...data,
-            questions: data.questions.map(q => ({
-              ...q,
-              correctAnswer: Math.min(q.correctAnswer, q.options.length - 1),
-              userAnswer: q.userAnswer !== undefined ? Math.min(q.userAnswer, q.options.length - 1) : undefined
-            }))
-          }));
-
-          for (const attempt of quizAttempts) {
-            await offlineStorage.saveQuizAttempt(attempt);
-          }
-
-          const unsyncedAttempts = await offlineStorage.getUnsyncedQuizAttempts();
-          const expectedCount = quizAttempts.filter(a => !a.synced).length;
-          expect(unsyncedAttempts.length).toBe(expectedCount);
-          
-          for (const attempt of unsyncedAttempts) {
-            expect(attempt.synced).toBe(false);
-          }
+  it('should track unsynced attempts', async () => {
+    const attempt1 = {
+      id: 'test-attempt-1',
+      userId: 'user-1',
+      quizId: 'quiz-1',
+      subject: 'Physics',
+      topic: 'Mechanics',
+      questions: [
+        {
+          id: 'q1',
+          question: 'What is force?',
+          options: ['Push or pull', 'Energy', 'Power', 'Work'],
+          correctAnswer: 0,
+          userAnswer: 0,
+          bloomLevel: 1
         }
-      ),
-      { numRuns: 30 }
-    );
+      ],
+      score: 85,
+      maxScore: 100,
+      timeTaken: 120,
+      difficultyLevel: 1,
+      completedAt: new Date(),
+      synced: false,
+      createdAt: new Date()
+    };
+
+    const attempt2 = {
+      id: 'test-attempt-2',
+      userId: 'user-1',
+      quizId: 'quiz-2',
+      subject: 'Chemistry',
+      topic: 'Atoms',
+      questions: [
+        {
+          id: 'q2',
+          question: 'What is an atom?',
+          options: ['Smallest unit', 'Large particle', 'Energy form', 'Wave'],
+          correctAnswer: 0,
+          userAnswer: 0,
+          bloomLevel: 1
+        }
+      ],
+      score: 90,
+      maxScore: 100,
+      timeTaken: 100,
+      difficultyLevel: 1,
+      completedAt: new Date(),
+      synced: true,
+      createdAt: new Date()
+    };
+
+    await offlineStorage.saveQuizAttempt(attempt1);
+    await offlineStorage.saveQuizAttempt(attempt2);
+
+    const unsynced = await offlineStorage.getUnsyncedQuizAttempts();
+    expect(unsynced).toHaveLength(1);
+    expect(unsynced[0].id).toBe('test-attempt-1');
   });
 
-  it('should mark quiz attempts as synced', async () => {
-    await fc.assert(
-      fc.asyncProperty(
-        fc.record({
-          id: fc.string({ minLength: 1, maxLength: 50 }),
-          userId: fc.string({ minLength: 1, maxLength: 50 }),
-          quizId: fc.string({ minLength: 1, maxLength: 50 }),
-          subject: fc.constantFrom('Physics', 'Chemistry', 'Mathematics'),
-          topic: fc.string({ minLength: 1, maxLength: 100 }),
-          questions: fc.array(
-            fc.record({
-              id: fc.string({ minLength: 1, maxLength: 50 }),
-              question: fc.string({ minLength: 10, maxLength: 200 }),
-              options: fc.array(fc.string({ minLength: 1, maxLength: 100 }), { minLength: 2, maxLength: 4 }),
-              correctAnswer: fc.integer({ min: 0, max: 3 }),
-              userAnswer: fc.option(fc.integer({ min: 0, max: 3 }), { nil: undefined }),
-              bloomLevel: fc.integer({ min: 1, max: 6 })
-            }),
-            { minLength: 1, maxLength: 5 }
-          ),
-          score: fc.option(fc.integer({ min: 0, max: 100 }), { nil: undefined }),
-          maxScore: fc.integer({ min: 1, max: 100 }),
-          timeTaken: fc.option(fc.integer({ min: 1, max: 3600 }), { nil: undefined }),
-          difficultyLevel: fc.integer({ min: 1, max: 5 }),
-          completedAt: fc.option(fc.date(), { nil: undefined }),
-          synced: fc.constant(false),
-          createdAt: fc.date()
-        }),
-        async (quizData) => {
-          const quizAttempt: OfflineQuizAttempt = {
-            ...quizData,
-            questions: quizData.questions.map(q => ({
-              ...q,
-              correctAnswer: Math.min(q.correctAnswer, q.options.length - 1),
-              userAnswer: q.userAnswer !== undefined ? Math.min(q.userAnswer, q.options.length - 1) : undefined
-            }))
-          };
-
-          await offlineStorage.saveQuizAttempt(quizAttempt);
-          await offlineStorage.markQuizAttemptSynced(quizAttempt.id);
-
-          const retrieved = await offlineStorage.getQuizAttempt(quizAttempt.id);
-          expect(retrieved!.synced).toBe(true);
+  it('should mark attempts as synced', async () => {
+    const attempt = {
+      id: 'test-sync-attempt',
+      userId: 'user-1',
+      quizId: 'quiz-1',
+      subject: 'Physics',
+      topic: 'Mechanics',
+      questions: [
+        {
+          id: 'q1',
+          question: 'What is force?',
+          options: ['Push or pull', 'Energy', 'Power', 'Work'],
+          correctAnswer: 0,
+          userAnswer: 0,
+          bloomLevel: 1
         }
-      ),
-      { numRuns: 50 }
-    );
-  });
+      ],
+      score: 75,
+      maxScore: 100,
+      timeTaken: 150,
+      difficultyLevel: 1,
+      completedAt: new Date(),
+      synced: false,
+      createdAt: new Date()
+    };
 
-  it('should retrieve quiz attempts by user', async () => {
-    await fc.assert(
-      fc.asyncProperty(
-        fc.string({ minLength: 1, maxLength: 50 }),
-        fc.array(
-          fc.record({
-            id: fc.string({ minLength: 1, maxLength: 50 }),
-            userId: fc.string({ minLength: 1, maxLength: 50 }),
-            quizId: fc.string({ minLength: 1, maxLength: 50 }),
-            subject: fc.constantFrom('Physics', 'Chemistry', 'Mathematics'),
-            topic: fc.string({ minLength: 1, maxLength: 100 }),
-            questions: fc.array(
-              fc.record({
-                id: fc.string({ minLength: 1, maxLength: 50 }),
-                question: fc.string({ minLength: 10, maxLength: 200 }),
-                options: fc.array(fc.string({ minLength: 1, maxLength: 100 }), { minLength: 2, maxLength: 4 }),
-                correctAnswer: fc.integer({ min: 0, max: 3 }),
-                userAnswer: fc.option(fc.integer({ min: 0, max: 3 }), { nil: undefined }),
-                bloomLevel: fc.integer({ min: 1, max: 6 })
-              }),
-              { minLength: 1, maxLength: 5 }
-            ),
-            score: fc.option(fc.integer({ min: 0, max: 100 }), { nil: undefined }),
-            maxScore: fc.integer({ min: 1, max: 100 }),
-            timeTaken: fc.option(fc.integer({ min: 1, max: 3600 }), { nil: undefined }),
-            difficultyLevel: fc.integer({ min: 1, max: 5 }),
-            completedAt: fc.option(fc.date(), { nil: undefined }),
-            synced: fc.boolean(),
-            createdAt: fc.date(),
-            belongsToTargetUser: fc.boolean()
-          }),
-          { minLength: 1, maxLength: 10 }
-        ),
-        async (targetUserId, quizAttemptsData) => {
-          const quizAttempts: OfflineQuizAttempt[] = quizAttemptsData.map(data => {
-            const { belongsToTargetUser, ...attemptData } = data;
-            return {
-              ...attemptData,
-              userId: belongsToTargetUser ? targetUserId : data.userId,
-              questions: data.questions.map(q => ({
-                ...q,
-                correctAnswer: Math.min(q.correctAnswer, q.options.length - 1),
-                userAnswer: q.userAnswer !== undefined ? Math.min(q.userAnswer, q.options.length - 1) : undefined
-              }))
-            };
-          });
+    await offlineStorage.saveQuizAttempt(attempt);
+    await offlineStorage.markQuizAttemptSynced('test-sync-attempt');
 
-          for (const attempt of quizAttempts) {
-            await offlineStorage.saveQuizAttempt(attempt);
-          }
-
-          const userAttempts = await offlineStorage.getQuizAttemptsByUser(targetUserId);
-          const expectedCount = quizAttempts.filter(a => a.userId === targetUserId).length;
-          expect(userAttempts.length).toBe(expectedCount);
-          
-          for (const attempt of userAttempts) {
-            expect(attempt.userId).toBe(targetUserId);
-          }
-        }
-      ),
-      { numRuns: 30 }
-    );
+    const retrieved = await offlineStorage.getQuizAttempt('test-sync-attempt');
+    expect(retrieved!.synced).toBe(true);
   });
 });

@@ -104,10 +104,10 @@ class ShikkhaSathiDB extends Dexie {
     this.version(1).stores({
       users: 'id, email, grade, medium, lastSync',
       lessonContent: 'id, subject, grade, chapter, topic, downloadedAt, lastAccessed, [subject+grade]',
-      quizAttempts: 'id, userId, quizId, subject, topic, synced, createdAt, completedAt',
-      progress: 'id, userId, subject, topic, bloomLevel, synced, lastAccessed',
-      chatMessages: 'id, userId, sessionId, synced, timestamp',
-      achievements: 'id, userId, achievementId, synced, unlockedAt'
+      quizAttempts: 'id, userId, quizId, subject, topic, createdAt, completedAt',
+      progress: 'id, userId, subject, topic, bloomLevel, lastAccessed',
+      chatMessages: 'id, userId, sessionId, timestamp',
+      achievements: 'id, userId, achievementId, unlockedAt'
     });
   }
 }
@@ -176,7 +176,7 @@ export class OfflineStorageService {
   }
 
   async getUnsyncedQuizAttempts(): Promise<OfflineQuizAttempt[]> {
-    return await db.quizAttempts.where('synced').equals(false).toArray();
+    return await db.quizAttempts.filter(attempt => attempt.synced === false).toArray();
   }
 
   async markQuizAttemptSynced(id: string): Promise<void> {
@@ -203,7 +203,7 @@ export class OfflineStorageService {
   }
 
   async getUnsyncedProgress(): Promise<OfflineProgress[]> {
-    return await db.progress.where('synced').equals(false).toArray();
+    return await db.progress.filter(progress => progress.synced === false).toArray();
   }
 
   async markProgressSynced(id: string): Promise<void> {
@@ -223,7 +223,7 @@ export class OfflineStorageService {
   }
 
   async getUnsyncedChatMessages(): Promise<OfflineChatMessage[]> {
-    return await db.chatMessages.where('synced').equals(false).toArray();
+    return await db.chatMessages.filter(message => message.synced === false).toArray();
   }
 
   async markChatMessageSynced(id: string): Promise<void> {
@@ -240,7 +240,7 @@ export class OfflineStorageService {
   }
 
   async getUnsyncedAchievements(): Promise<OfflineAchievement[]> {
-    return await db.achievements.where('synced').equals(false).toArray();
+    return await db.achievements.filter(achievement => achievement.synced === false).toArray();
   }
 
   async markAchievementSynced(id: string): Promise<void> {
@@ -291,16 +291,12 @@ export class OfflineStorageService {
 
     // Clear old synced quiz attempts
     await db.quizAttempts
-      .where('synced')
-      .equals(true)
-      .and(attempt => attempt.createdAt < cutoffDate)
+      .filter(attempt => attempt.synced === true && attempt.createdAt < cutoffDate)
       .delete();
 
     // Clear old synced chat messages
     await db.chatMessages
-      .where('synced')
-      .equals(true)
-      .and(message => message.timestamp < cutoffDate)
+      .filter(message => message.synced === true && message.timestamp < cutoffDate)
       .delete();
   }
 
