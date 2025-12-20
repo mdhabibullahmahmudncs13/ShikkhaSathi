@@ -1,1 +1,1 @@
-# RAG System Services
+# RAG services package

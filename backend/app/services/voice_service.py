@@ -1,155 +1,196 @@
+"""
+Voice Learning Service for ShikkhaSathi
+Handles speech-to-text and text-to-speech functionality
+"""
+
 import os
-import tempfile
-import logging
+import asyncio
+import aiofiles
+import aiohttp
 from typing import Optional, Dict, Any
-import openai
-import requests
+from pathlib import Path
+import tempfile
+import uuid
 from app.core.config import settings
 
-logger = logging.getLogger(__name__)
-
 class VoiceService:
+    """Service for handling voice input/output operations"""
+    
     def __init__(self):
-        # Initialize OpenAI client only if API key is available
-        openai_api_key = getattr(settings, 'OPENAI_API_KEY', None)
-        if openai_api_key:
-            self.openai_client = openai.OpenAI(api_key=openai_api_key)
-        else:
-            self.openai_client = None
-            
+        self.whisper_api_key = settings.OPENAI_API_KEY
         self.elevenlabs_api_key = getattr(settings, 'ELEVENLABS_API_KEY', None)
-        self.elevenlabs_voice_id = getattr(settings, 'ELEVENLABS_VOICE_ID', '21m00Tcm4TlvDq8ikWAM')  # Default voice
+        self.audio_storage_path = Path("data/audio")
+        self.audio_storage_path.mkdir(parents=True, exist_ok=True)
         
-    async def speech_to_text(self, audio_data: bytes, language: str = "bn") -> Dict[str, Any]:
+        # Supported languages
+        self.supported_languages = {
+            'bn': 'Bengali',
+            'en': 'English'
+        }
+        
+        # ElevenLabs voice IDs (you'll need to get these from ElevenLabs)
+        self.voice_ids = {
+            'en': 'EXAVITQu4vr4xnSDxMaL',  # Default English voice
+            'bn': 'EXAVITQu4vr4xnSDxMaL'   # For now, use same voice (can be changed)
+        }
+    
+    async def speech_to_text(
+        self, 
+        audio_file_path: str, 
+        language: str = 'auto'
+    ) -> Dict[str, Any]:
         """
         Convert speech to text using OpenAI Whisper API
         
         Args:
-            audio_data: Audio file bytes
-            language: Language code (bn for Bangla, en for English)
+            audio_file_path: Path to the audio file
+            language: Language code ('bn', 'en', or 'auto' for detection)
             
         Returns:
-            Dict containing transcribed text and confidence
+            Dict with transcribed text and detected language
         """
         try:
-            if not self.openai_client:
-                return {
-                    "success": False,
-                    "error": "OpenAI API key not configured",
-                    "text": "",
-                    "confidence": 0.0
-                }
-            # Create temporary file for audio data
-            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_audio:
-                temp_audio.write(audio_data)
-                temp_audio_path = temp_audio.name
-
-            try:
-                # Use OpenAI Whisper API for transcription
-                with open(temp_audio_path, "rb") as audio_file:
-                    transcript = self.openai_client.audio.transcriptions.create(
-                        model="whisper-1",
-                        file=audio_file,
-                        language=language,
-                        response_format="verbose_json"
-                    )
-                
-                return {
-                    "success": True,
-                    "text": transcript.text,
-                    "language": transcript.language,
-                    "duration": getattr(transcript, 'duration', None),
-                    "confidence": 0.95  # Whisper doesn't provide confidence, using default high value
-                }
-                
-            finally:
-                # Clean up temporary file
-                if os.path.exists(temp_audio_path):
-                    os.unlink(temp_audio_path)
-                    
-        except Exception as e:
-            logger.error(f"Error in speech-to-text conversion: {e}")
-            return {
-                "success": False,
-                "error": str(e),
-                "text": "",
-                "confidence": 0.0
+            if not self.whisper_api_key:
+                raise ValueError("OpenAI API key not configured")
+            
+            # Read audio file
+            async with aiofiles.open(audio_file_path, 'rb') as audio_file:
+                audio_data = await audio_file.read()
+            
+            # Prepare request to Whisper API
+            url = "https://api.openai.com/v1/audio/transcriptions"
+            headers = {
+                "Authorization": f"Bearer {self.whisper_api_key}"
             }
-
-    async def text_to_speech(self, text: str, language: str = "bn") -> Dict[str, Any]:
+            
+            # Create form data
+            data = aiohttp.FormData()
+            data.add_field('file', audio_data, filename='audio.wav', content_type='audio/wav')
+            data.add_field('model', 'whisper-1')
+            
+            if language != 'auto' and language in self.supported_languages:
+                # Map our language codes to Whisper language codes
+                whisper_lang = 'bn' if language == 'bn' else 'en'
+                data.add_field('language', whisper_lang)
+            
+            data.add_field('response_format', 'json')
+            
+            # Make API request
+            async with aiohttp.ClientSession() as session:
+                async with session.post(url, headers=headers, data=data) as response:
+                    if response.status == 200:
+                        result = await response.json()
+                        
+                        # Detect language if not specified
+                        detected_language = self._detect_language(result.get('text', ''))
+                        
+                        return {
+                            'success': True,
+                            'text': result.get('text', ''),
+                            'language': detected_language,
+                            'confidence': 1.0  # Whisper doesn't provide confidence scores
+                        }
+                    else:
+                        error_text = await response.text()
+                        return {
+                            'success': False,
+                            'error': f"Whisper API error: {response.status} - {error_text}"
+                        }
+                        
+        except Exception as e:
+            return {
+                'success': False,
+                'error': f"Speech-to-text error: {str(e)}"
+            }
+    
+    async def text_to_speech(
+        self, 
+        text: str, 
+        language: str = 'en',
+        voice_id: Optional[str] = None
+    ) -> Dict[str, Any]:
         """
         Convert text to speech using ElevenLabs API
         
         Args:
             text: Text to convert to speech
-            language: Language code (bn for Bangla, en for English)
+            language: Language code ('bn' or 'en')
+            voice_id: Specific voice ID (optional)
             
         Returns:
-            Dict containing audio data and metadata
+            Dict with audio file path and metadata
         """
         try:
             if not self.elevenlabs_api_key:
-                # Fallback: return empty audio data with message
+                # Fallback: Return text without audio
                 return {
-                    "success": False,
-                    "error": "ElevenLabs API key not configured",
-                    "audio_data": None,
-                    "content_type": "audio/mpeg"
+                    'success': True,
+                    'audio_path': None,
+                    'text': text,
+                    'language': language,
+                    'fallback': True,
+                    'message': 'ElevenLabs API not configured, text-only response'
                 }
-
-            # ElevenLabs API endpoint
-            url = f"https://api.elevenlabs.io/v1/text-to-speech/{self.elevenlabs_voice_id}"
             
+            # Select voice
+            selected_voice_id = voice_id or self.voice_ids.get(language, self.voice_ids['en'])
+            
+            # Prepare request to ElevenLabs API
+            url = f"https://api.elevenlabs.io/v1/text-to-speech/{selected_voice_id}"
             headers = {
                 "Accept": "audio/mpeg",
                 "Content-Type": "application/json",
                 "xi-api-key": self.elevenlabs_api_key
             }
             
-            # Prepare request data
-            data = {
+            payload = {
                 "text": text,
-                "model_id": "eleven_multilingual_v2",  # Supports multiple languages including Bangla
+                "model_id": "eleven_multilingual_v2",  # Supports multiple languages
                 "voice_settings": {
                     "stability": 0.5,
-                    "similarity_boost": 0.5,
-                    "style": 0.0,
-                    "use_speaker_boost": True
+                    "similarity_boost": 0.5
                 }
             }
             
-            # Make request to ElevenLabs API
-            response = requests.post(url, json=data, headers=headers, timeout=30)
-            
-            if response.status_code == 200:
-                return {
-                    "success": True,
-                    "audio_data": response.content,
-                    "content_type": "audio/mpeg",
-                    "text": text,
-                    "language": language
-                }
-            else:
-                logger.error(f"ElevenLabs API error: {response.status_code} - {response.text}")
-                return {
-                    "success": False,
-                    "error": f"ElevenLabs API error: {response.status_code}",
-                    "audio_data": None,
-                    "content_type": "audio/mpeg"
-                }
-                
+            # Make API request
+            async with aiohttp.ClientSession() as session:
+                async with session.post(url, headers=headers, json=payload) as response:
+                    if response.status == 200:
+                        # Generate unique filename
+                        audio_id = str(uuid.uuid4())
+                        audio_filename = f"{audio_id}.mp3"
+                        audio_path = self.audio_storage_path / audio_filename
+                        
+                        # Save audio file
+                        audio_data = await response.read()
+                        async with aiofiles.open(audio_path, 'wb') as audio_file:
+                            await audio_file.write(audio_data)
+                        
+                        return {
+                            'success': True,
+                            'audio_path': str(audio_path),
+                            'audio_id': audio_id,
+                            'audio_url': f"/api/v1/voice/audio/{audio_id}",
+                            'text': text,
+                            'language': language,
+                            'voice_id': selected_voice_id
+                        }
+                    else:
+                        error_text = await response.text()
+                        return {
+                            'success': False,
+                            'error': f"ElevenLabs API error: {response.status} - {error_text}"
+                        }
+                        
         except Exception as e:
-            logger.error(f"Error in text-to-speech conversion: {e}")
             return {
-                "success": False,
-                "error": str(e),
-                "audio_data": None,
-                "content_type": "audio/mpeg"
+                'success': False,
+                'error': f"Text-to-speech error: {str(e)}"
             }
-
-    def detect_language(self, text: str) -> str:
+    
+    def _detect_language(self, text: str) -> str:
         """
-        Simple language detection for Bangla vs English
+        Simple language detection based on character patterns
         
         Args:
             text: Text to analyze
@@ -157,67 +198,60 @@ class VoiceService:
         Returns:
             Language code ('bn' or 'en')
         """
-        try:
-            # Count Bangla Unicode characters
-            bangla_chars = sum(1 for char in text if '\u0980' <= char <= '\u09FF')
-            total_chars = len([char for char in text if char.isalpha()])
-            
-            if total_chars == 0:
-                return 'en'  # Default to English if no alphabetic characters
-            
-            # If more than 30% of characters are Bangla, consider it Bangla text
-            bangla_ratio = bangla_chars / total_chars
-            return 'bn' if bangla_ratio > 0.3 else 'en'
-            
-        except Exception as e:
-            logger.error(f"Error in language detection: {e}")
-            return 'en'  # Default to English on error
-
-    async def process_voice_message(self, audio_data: bytes) -> Dict[str, Any]:
+        if not text:
+            return 'en'
+        
+        # Count Bengali characters (Unicode range for Bengali)
+        bengali_chars = sum(1 for char in text if '\u0980' <= char <= '\u09FF')
+        total_chars = len([char for char in text if char.isalpha()])
+        
+        if total_chars == 0:
+            return 'en'
+        
+        # If more than 30% Bengali characters, consider it Bengali
+        bengali_ratio = bengali_chars / total_chars
+        return 'bn' if bengali_ratio > 0.3 else 'en'
+    
+    async def get_audio_file(self, audio_id: str) -> Optional[str]:
         """
-        Complete voice message processing: speech-to-text with language detection
+        Get audio file path by ID
         
         Args:
-            audio_data: Audio file bytes
+            audio_id: Audio file ID
             
         Returns:
-            Dict containing transcribed text and detected language
+            File path if exists, None otherwise
+        """
+        audio_path = self.audio_storage_path / f"{audio_id}.mp3"
+        return str(audio_path) if audio_path.exists() else None
+    
+    async def cleanup_old_audio_files(self, max_age_hours: int = 24):
+        """
+        Clean up old audio files to save storage space
+        
+        Args:
+            max_age_hours: Maximum age of files to keep (in hours)
         """
         try:
-            # First, try to transcribe without specifying language (auto-detect)
-            result = await self.speech_to_text(audio_data, language=None)
+            import time
+            current_time = time.time()
+            max_age_seconds = max_age_hours * 3600
             
-            if result["success"]:
-                # Detect language from transcribed text
-                detected_language = self.detect_language(result["text"])
-                result["detected_language"] = detected_language
-                
-                # If confidence is low or language detection suggests different language,
-                # retry with specific language
-                if result.get("confidence", 0) < 0.8:
-                    if detected_language == 'bn':
-                        retry_result = await self.speech_to_text(audio_data, language="bn")
-                        if retry_result["success"] and len(retry_result["text"]) > len(result["text"]):
-                            result = retry_result
-                            result["detected_language"] = detected_language
-            
-            return result
-            
+            for audio_file in self.audio_storage_path.glob("*.mp3"):
+                file_age = current_time - audio_file.stat().st_mtime
+                if file_age > max_age_seconds:
+                    audio_file.unlink()
+                    
         except Exception as e:
-            logger.error(f"Error in voice message processing: {e}")
-            return {
-                "success": False,
-                "error": str(e),
-                "text": "",
-                "detected_language": "en"
-            }
+            print(f"Error cleaning up audio files: {e}")
+    
+    def get_supported_languages(self) -> Dict[str, str]:
+        """Get list of supported languages"""
+        return self.supported_languages.copy()
+    
+    def get_available_voices(self) -> Dict[str, str]:
+        """Get list of available voice IDs"""
+        return self.voice_ids.copy()
 
-# Global voice service instance - initialized when needed
-voice_service = None
-
-def get_voice_service():
-    """Get or create voice service instance"""
-    global voice_service
-    if voice_service is None:
-        voice_service = VoiceService()
-    return voice_service
+# Global service instance
+voice_service = VoiceService()

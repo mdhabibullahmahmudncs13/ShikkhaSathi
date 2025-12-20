@@ -2,7 +2,6 @@ import json
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, HTTPException, Query, UploadFile, File
 from fastapi.responses import Response
 from app.services.websocket_manager import manager
-from app.services.voice_service import get_voice_service
 from app.core.deps import get_current_user
 from app.models.user import User
 from app.db.mongodb import get_mongodb
@@ -166,7 +165,6 @@ async def transcribe_audio(
             raise HTTPException(status_code=400, detail="Empty audio file")
         
         # Process voice message
-        voice_service = get_voice_service()
         result = await voice_service.process_voice_message(audio_data)
         
         if result["success"]:
@@ -199,7 +197,6 @@ async def synthesize_speech(
             raise HTTPException(status_code=400, detail="Text too long (max 5000 characters)")
         
         # Generate speech
-        voice_service = get_voice_service()
         result = await voice_service.text_to_speech(text, language)
         
         if result["success"] and result["audio_data"]:

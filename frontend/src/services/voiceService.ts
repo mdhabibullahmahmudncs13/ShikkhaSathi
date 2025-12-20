@@ -1,185 +1,285 @@
-const API_BASE_URL = 'http://localhost:8000/api/v1';
+/**
+ * Voice Service Client for ShikkhaSathi
+ * Handles API communication for voice transcription and synthesis
+ */
 
-export interface TranscriptionResult {
-  text: string;
-  language: string;
-  confidence: number;
-}
+import apiClient from './apiClient';
+import {
+  TranscriptionRequest,
+  TranscriptionResponse,
+  SynthesisRequest,
+  SynthesisResponse,
+  VoiceCapabilities,
+  VoiceError,
+  VoiceErrorType,
+  AudioProcessingOptions
+} from '../types/voice';
 
-export interface SynthesisResult {
-  audioBlob: Blob;
-  audioUrl: string;
-}
+class VoiceService {
+  private readonly maxRetries = 3;
+  private readonly timeoutMs = 30000; // 30 seconds
+  private readonly maxFileSize = 10 * 1024 * 1024; // 10MB
 
-export class VoiceService {
-  private token: string;
-
-  constructor(token: string) {
-    this.token = token;
-  }
-
-  async transcribeAudio(audioBlob: Blob): Promise<TranscriptionResult> {
+  /**
+   * Convert speech to text using the backend transcription service
+   */
+  async transcribeAudio(
+    audioBlob: Blob,
+    language: 'bn' | 'en' | 'auto' = 'auto'
+  ): Promise<TranscriptionResponse> {
     try {
+      // Validate audio file size
+      if (audioBlob.size > this.maxFileSize) {
+        throw new Error(`Audio file too large: ${audioBlob.size} bytes (max: ${this.maxFileSize})`);
+      }
+
+      // Create form data for file upload
       const formData = new FormData();
-      formData.append('audio', audioBlob, 'recording.webm');
+      formData.append('audio_file', audioBlob, 'recording.wav');
+      formData.append('language', language);
 
-      const response = await fetch(`${API_BASE_URL}/chat/voice/transcribe`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.token}`,
-        },
-        body: formData,
+      // Make API request with retry logic
+      const response = await this.withRetry(async () => {
+        return await apiClient.post('/voice/transcribe', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+          timeout: this.timeoutMs,
+        });
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const result = await response.json();
-      return {
-        text: result.text || '',
-        language: result.language || 'en',
-        confidence: result.confidence || 0,
-      };
+      return response.data as TranscriptionResponse;
     } catch (error) {
-      console.error('Error transcribing audio:', error);
-      throw new Error(error instanceof Error ? error.message : 'Failed to transcribe audio');
+      console.error('Transcription error:', error);
+      return this.handleTranscriptionError(error);
     }
   }
 
-  async synthesizeSpeech(text: string, language: string = 'bn'): Promise<SynthesisResult> {
+  /**
+   * Convert text to speech using the backend synthesis service
+   */
+  async synthesizeText(
+    text: string,
+    language: 'bn' | 'en' = 'en',
+    voiceId?: string
+  ): Promise<SynthesisResponse> {
     try {
-      const response = await fetch(`${API_BASE_URL}/chat/voice/synthesize`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.token}`,
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-          text,
-          language,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`);
+      // Validate text length
+      if (!text.trim()) {
+        throw new Error('Text cannot be empty');
       }
 
-      const audioBlob = await response.blob();
-      const audioUrl = URL.createObjectURL(audioBlob);
+      if (text.length > 5000) {
+        throw new Error('Text too long (max 5000 characters)');
+      }
 
-      return {
-        audioBlob,
-        audioUrl,
+      const request: SynthesisRequest = {
+        text: text.trim(),
+        language,
+        voiceId
       };
+
+      // Use test endpoint for now (no auth required)
+      const response = await this.withRetry(async () => {
+        return await apiClient.post('/voice/test-synthesize', request, {
+          timeout: this.timeoutMs,
+        });
+      });
+
+      return response.data as SynthesisResponse;
     } catch (error) {
-      console.error('Error synthesizing speech:', error);
-      throw new Error(error instanceof Error ? error.message : 'Failed to synthesize speech');
+      console.error('Synthesis error:', error);
+      return this.handleSynthesisError(error);
     }
   }
 
-  // Utility method to check if browser supports audio recording
-  static isRecordingSupported(): boolean {
-    return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+  /**
+   * Get audio file URL for playback
+   */
+  getAudioUrl(audioId: string): string {
+    return `${apiClient.defaults.baseURL}/voice/test-audio/${audioId}`;
   }
 
-  // Utility method to check if browser supports audio playback
-  static isPlaybackSupported(): boolean {
-    return !!(window.Audio || window.HTMLAudioElement);
-  }
-
-  // Utility method to request microphone permission
-  static async requestMicrophonePermission(): Promise<boolean> {
+  /**
+   * Get voice service capabilities
+   */
+  async getCapabilities(): Promise<VoiceCapabilities | null> {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      // Stop the stream immediately as we just wanted to check permission
-      stream.getTracks().forEach(track => track.stop());
-      return true;
+      const response = await apiClient.get('/voice/capabilities');
+      return response.data as VoiceCapabilities;
     } catch (error) {
-      console.error('Microphone permission denied:', error);
+      console.error('Failed to get voice capabilities:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Check if voice services are available
+   */
+  async checkServiceAvailability(): Promise<boolean> {
+    try {
+      // Test with a simple synthesis request
+      const testResponse = await this.synthesizeText('test', 'en');
+      return testResponse.success;
+    } catch (error) {
+      console.error('Voice service availability check failed:', error);
       return false;
     }
   }
 
-  // Convert audio blob to different format if needed
-  static async convertAudioFormat(audioBlob: Blob, _targetFormat: string = 'audio/wav'): Promise<Blob> {
-    return new Promise((resolve, reject) => {
-      const audio = new Audio();
-      const audioContext = new AudioContext();
-      
-      audio.onloadeddata = async () => {
-        try {
-          const arrayBuffer = await audioBlob.arrayBuffer();
-          const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-          
-          // Create offline context for rendering
-          const offlineContext = new OfflineAudioContext(
-            audioBuffer.numberOfChannels,
-            audioBuffer.length,
-            audioBuffer.sampleRate
-          );
-          
-          const source = offlineContext.createBufferSource();
-          source.buffer = audioBuffer;
-          source.connect(offlineContext.destination);
-          source.start();
-          
-          const renderedBuffer = await offlineContext.startRendering();
-          
-          // Convert to WAV format (simplified)
-          const wavBlob = this.audioBufferToWav(renderedBuffer);
-          resolve(wavBlob);
-        } catch (error) {
-          reject(error);
-        }
-      };
-      
-      audio.onerror = () => reject(new Error('Failed to load audio'));
-      audio.src = URL.createObjectURL(audioBlob);
-    });
+  /**
+   * Process audio blob for optimal API transmission
+   */
+  async processAudioBlob(
+    audioBlob: Blob,
+    _options: AudioProcessingOptions = {}
+  ): Promise<Blob> {
+    try {
+      // For now, return the blob as-is
+      // In the future, we could add compression, format conversion, etc.
+      return audioBlob;
+    } catch (error) {
+      console.error('Audio processing error:', error);
+      throw error;
+    }
   }
 
-  // Helper method to convert AudioBuffer to WAV Blob
-  private static audioBufferToWav(buffer: AudioBuffer): Blob {
-    const length = buffer.length;
-    const numberOfChannels = buffer.numberOfChannels;
-    const sampleRate = buffer.sampleRate;
-    const arrayBuffer = new ArrayBuffer(44 + length * numberOfChannels * 2);
-    const view = new DataView(arrayBuffer);
-    
-    // WAV header
-    const writeString = (offset: number, string: string) => {
-      for (let i = 0; i < string.length; i++) {
-        view.setUint8(offset + i, string.charCodeAt(i));
+  /**
+   * Convert audio blob to different format if needed
+   */
+  async convertAudioFormat(
+    audioBlob: Blob,
+    _targetFormat: 'wav' | 'mp3' | 'webm' = 'wav'
+  ): Promise<Blob> {
+    // For now, return the original blob
+    // Future implementation could use Web Audio API for format conversion
+    return audioBlob;
+  }
+
+  /**
+   * Retry wrapper for API calls
+   */
+  private async withRetry<T>(
+    operation: () => Promise<T>,
+    retries: number = this.maxRetries
+  ): Promise<T> {
+    try {
+      return await operation();
+    } catch (error) {
+      if (retries > 0 && this.isRetryableError(error)) {
+        console.warn(`Retrying operation, ${retries} attempts remaining`);
+        await this.delay(1000); // Wait 1 second before retry
+        return this.withRetry(operation, retries - 1);
       }
-    };
-    
-    writeString(0, 'RIFF');
-    view.setUint32(4, 36 + length * numberOfChannels * 2, true);
-    writeString(8, 'WAVE');
-    writeString(12, 'fmt ');
-    view.setUint32(16, 16, true);
-    view.setUint16(20, 1, true);
-    view.setUint16(22, numberOfChannels, true);
-    view.setUint32(24, sampleRate, true);
-    view.setUint32(28, sampleRate * numberOfChannels * 2, true);
-    view.setUint16(32, numberOfChannels * 2, true);
-    view.setUint16(34, 16, true);
-    writeString(36, 'data');
-    view.setUint32(40, length * numberOfChannels * 2, true);
-    
-    // Convert float samples to 16-bit PCM
-    let offset = 44;
-    for (let i = 0; i < length; i++) {
-      for (let channel = 0; channel < numberOfChannels; channel++) {
-        const sample = Math.max(-1, Math.min(1, buffer.getChannelData(channel)[i]));
-        view.setInt16(offset, sample * 0x7FFF, true);
-        offset += 2;
-      }
+      throw error;
+    }
+  }
+
+  /**
+   * Check if an error is retryable
+   */
+  private isRetryableError(error: any): boolean {
+    // Retry on network errors, timeouts, and 5xx server errors
+    if (error.code === 'NETWORK_ERROR' || error.code === 'TIMEOUT') {
+      return true;
     }
     
-    return new Blob([arrayBuffer], { type: 'audio/wav' });
+    if (error.response?.status >= 500) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Handle transcription errors
+   */
+  private handleTranscriptionError(error: any): TranscriptionResponse {
+    let errorMessage = 'Failed to transcribe audio';
+    
+    if (error.response?.status === 413) {
+      errorMessage = 'Audio file too large';
+    } else if (error.response?.status === 415) {
+      errorMessage = 'Unsupported audio format';
+    } else if (error.code === 'NETWORK_ERROR') {
+      errorMessage = 'Network connection failed';
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+
+    return {
+      success: false,
+      error: errorMessage
+    };
+  }
+
+  /**
+   * Handle synthesis errors
+   */
+  private handleSynthesisError(error: any): SynthesisResponse {
+    let errorMessage = 'Failed to synthesize speech';
+    
+    if (error.response?.status === 400) {
+      errorMessage = 'Invalid text input';
+    } else if (error.code === 'NETWORK_ERROR') {
+      errorMessage = 'Network connection failed';
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+
+    return {
+      success: false,
+      error: errorMessage
+    };
+  }
+
+  /**
+   * Utility delay function
+   */
+  private delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Create a VoiceError object
+   */
+  createError(type: VoiceErrorType, message: string, details?: any): VoiceError {
+    return {
+      type,
+      message,
+      details,
+      timestamp: new Date()
+    };
+  }
+
+  /**
+   * Check browser support for voice features
+   */
+  checkBrowserSupport() {
+    return {
+      mediaRecorder: typeof MediaRecorder !== 'undefined',
+      audioContext: typeof AudioContext !== 'undefined' || typeof (window as any).webkitAudioContext !== 'undefined',
+      speechRecognition: 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window,
+      audioPlayback: typeof Audio !== 'undefined',
+      fileDownload: typeof document.createElement('a').download !== 'undefined'
+    };
+  }
+
+  /**
+   * Get supported audio MIME types for recording
+   */
+  getSupportedMimeTypes(): string[] {
+    const types = [
+      'audio/webm;codecs=opus',
+      'audio/webm',
+      'audio/mp4',
+      'audio/wav'
+    ];
+
+    return types.filter(type => MediaRecorder.isTypeSupported(type));
   }
 }
+
+// Export singleton instance
+export const voiceService = new VoiceService();
+export default voiceService;

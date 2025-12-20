@@ -2,8 +2,8 @@ import json
 import asyncio
 from typing import Dict, List, Optional
 from fastapi import WebSocket, WebSocketDisconnect
-from app.services.rag.rag_service import RAGService, RAGServiceConfig
-from app.services.voice_service import get_voice_service
+from app.services.rag.rag_service import RAGService
+from app.services.voice_service import voice_service
 from app.db.mongodb import get_mongodb
 from app.core.config import settings
 from datetime import datetime
