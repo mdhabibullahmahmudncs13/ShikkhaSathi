@@ -12,7 +12,7 @@ from .rag_service import rag_service
 logger = logging.getLogger(__name__)
 
 class AITutorService:
-    def __init__(self, model_name: str = "llama2"):
+    def __init__(self, model_name: str = "llama3.2:1b"):
         """
         Initialize AI Tutor service with Ollama
         

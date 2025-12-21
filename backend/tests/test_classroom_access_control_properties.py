@@ -83,7 +83,7 @@ class TestClassroomAccessControlProperties:
         student=student_strategy(),
         enrollment=student_class_strategy()
     )
-    def test_teacher_can_only_access_own_class_students(
+    async def test_teacher_can_only_access_own_class_students(
         self, 
         teacher1, 
         teacher2, 

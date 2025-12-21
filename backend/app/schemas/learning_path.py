@@ -27,10 +27,11 @@ class TopicNode(BaseModel):
     prerequisites: List[str] = Field(default_factory=list, description="List of prerequisite topic IDs")
     is_weak_area: bool = Field(False, description="Whether this is identified as a weak area")
     
-    @validator('target_mastery')
-    def target_must_be_higher_than_current(cls, v, values):
-        if 'current_mastery' in values and v <= values['current_mastery']:
-            return max(values['current_mastery'] + 0.1, 0.8)
+    @field_validator('target_mastery')
+    @classmethod
+    def target_must_be_higher_than_current(cls, v, info):
+        if info.data and 'current_mastery' in info.data and v <= info.data['current_mastery']:
+            return max(info.data['current_mastery'] + 0.1, 0.8)
         return v
 
 
@@ -59,7 +60,8 @@ class PersonalizedPath(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     performance_profile: Optional[Dict[str, Any]] = Field(None, description="Student performance profile")
     
-    @validator('topics')
+    @field_validator('topics')
+    @classmethod
     def topics_must_not_be_empty(cls, v):
         if not v:
             raise ValueError('Learning path must contain at least one topic')

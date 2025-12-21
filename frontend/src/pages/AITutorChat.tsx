@@ -106,7 +106,7 @@ const AITutorChat: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const response = await apiClient.post<ChatResponse>('/api/v1/chat/chat', {
+      const response = await apiClient.post<ChatResponse>('/chat/chat', {
         message,
         conversation_history: messages.slice(-10), // Send last 10 messages for context
         subject: selectedSubject || undefined

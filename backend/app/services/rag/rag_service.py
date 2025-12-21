@@ -21,7 +21,7 @@ class RAGService:
     def __init__(self, 
                  collection_name: str = "nctb_curriculum",
                  persist_directory: str = "./data/chroma_db",
-                 model_name: str = "llama2"):
+                 model_name: str = "llama3.2:1b"):
         """
         Initialize RAG service with ChromaDB and Ollama embeddings
         
