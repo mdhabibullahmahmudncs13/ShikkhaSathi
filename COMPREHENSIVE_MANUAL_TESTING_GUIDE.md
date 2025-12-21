@@ -55,7 +55,7 @@ python add_sample_questions.py
 #### Test Case 1.1.2: Teacher Registration
 1. **Navigate**: Go to `http://localhost:5174/signup`
 2. **Fill Form**:
-   - Email: `teacher1@test.com`
+   - Email: `teacherr@mail.com`
    - Password: `password123`
    - Full Name: `Test Teacher One`
    - Role: `teacherr`
