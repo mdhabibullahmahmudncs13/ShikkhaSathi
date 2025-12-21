@@ -58,7 +58,7 @@ python add_sample_questions.py
    - Email: `teacherr@mail.com`
    - Password: `password123`
    - Full Name: `Test Teacher One`
-   - Role: `teacherr`
+   - Role: `Teacher`
    - Grade: Leave empty
    - Medium: Leave empty
 3. **Submit**: Click "Create Account"
