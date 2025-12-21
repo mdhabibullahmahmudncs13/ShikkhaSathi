@@ -243,7 +243,7 @@ export const quizAPI = {
 
 export const chatAPI = {
   sendMessage: (message: string, sessionId?: string) =>
-    api.post('/chat/message', { message, session_id: sessionId }),
+    api.post('/chat/chat', { message, session_id: sessionId }),
     
   getChatHistory: (sessionId: string) =>
     api.get(`/chat/history/${sessionId}`),

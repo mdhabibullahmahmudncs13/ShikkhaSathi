@@ -147,11 +147,22 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     # Extract validation error details
     validation_errors = []
     for error in exc.errors():
+        # Safely handle input data that might contain bytes
+        input_data = error.get("input")
+        if isinstance(input_data, bytes):
+            input_data = input_data.decode('utf-8', errors='replace')
+        elif input_data is not None:
+            try:
+                # Try to convert to string if it's not JSON serializable
+                json.dumps(input_data)
+            except (TypeError, ValueError):
+                input_data = str(input_data)
+        
         validation_errors.append({
             "field": " -> ".join(str(loc) for loc in error["loc"]),
             "message": error["msg"],
             "type": error["type"],
-            "input": error.get("input")
+            "input": input_data
         })
     
     ErrorHandler.log_error(error_id, exc, request, {
