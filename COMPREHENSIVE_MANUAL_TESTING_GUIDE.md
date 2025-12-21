@@ -69,7 +69,7 @@ python add_sample_questions.py
 2. **Fill Form**:
    - Email: `parent1@mail.com`
    - Password: `password123`
-   - Full Name: `Test Parent One`
+   - Full Name: `teacherr`
    - Role: `Parent`
    - Grade: Leave empty
    - Medium: Leave empty
