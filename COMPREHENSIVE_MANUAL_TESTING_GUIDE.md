@@ -68,7 +68,7 @@ python add_sample_questions.py
 1. **Navigate**: Go to `http://localhost:5174/signup`
 2. **Fill Form**:
    - Email: `parent1@mail.com`
-   - Password: `password123`
+   - Password: `teacherr`
    - Full Name: `teacherr`
    - Role: `Parent`
    - Grade: Leave empty
