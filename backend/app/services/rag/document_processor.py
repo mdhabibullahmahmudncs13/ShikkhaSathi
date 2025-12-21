@@ -1,12 +1,15 @@
 """
 Document Processing Pipeline for NCTB Content
 Handles PDF text extraction, OCR processing, and text chunking
+Enhanced with text file saving functionality
 """
 
 import os
 import logging
+import json
 from typing import List, Dict, Any, Optional
 from pathlib import Path
+from datetime import datetime
 import PyPDF2
 import pytesseract
 from PIL import Image
@@ -49,9 +52,232 @@ class DocumentProcessor:
             separators=["\n\n", "\n", "।", ".", " ", ""]
         )
         
+        # Setup directories for saving extracted text
+        self.extracted_text_dir = Path("data/extracted_text")
+        self.pages_dir = self.extracted_text_dir / "pages"
+        self.chunks_dir = self.extracted_text_dir / "chunks"
+        self.full_docs_dir = self.extracted_text_dir / "full_documents"
+        self.logs_dir = self.extracted_text_dir / "processing_logs"
+        
+        # Create directories if they don't exist
+        for directory in [self.pages_dir, self.chunks_dir, self.full_docs_dir, self.logs_dir]:
+            directory.mkdir(parents=True, exist_ok=True)
+            (directory / "metadata").mkdir(exist_ok=True)
+    
+    def _save_page_text(self, text: str, filename: str, page_number: int, metadata: Dict[str, Any]) -> str:
+        """
+        Save extracted page text to file
+        
+        Args:
+            text: Extracted text content
+            filename: Source filename (without extension)
+            page_number: Page number
+            metadata: Page metadata
+            
+        Returns:
+            Path to saved text file
+        """
+        try:
+            # Create filename for page text
+            page_filename = f"{filename}_page_{page_number:03d}.txt"
+            page_filepath = self.pages_dir / page_filename
+            
+            # Save text content
+            with open(page_filepath, 'w', encoding='utf-8') as f:
+                f.write(f"# Page {page_number} from {filename}\n")
+                f.write(f"# Extracted on: {datetime.now().isoformat()}\n")
+                f.write(f"# Character count: {len(text)}\n")
+                f.write(f"# Language: {metadata.get('language', 'unknown')}\n")
+                f.write("\n" + "="*50 + "\n\n")
+                f.write(text)
+            
+            # Save metadata
+            metadata_filename = f"{filename}_page_{page_number:03d}_metadata.json"
+            metadata_filepath = self.pages_dir / "metadata" / metadata_filename
+            
+            page_metadata = {
+                **metadata,
+                "extraction_timestamp": datetime.now().isoformat(),
+                "character_count": len(text),
+                "word_count": len(text.split()),
+                "line_count": len(text.split('\n')),
+                "text_file_path": str(page_filepath)
+            }
+            
+            with open(metadata_filepath, 'w', encoding='utf-8') as f:
+                json.dump(page_metadata, f, indent=2, ensure_ascii=False)
+            
+            logger.debug(f"Saved page text: {page_filepath}")
+            return str(page_filepath)
+            
+        except Exception as e:
+            logger.error(f"Failed to save page text: {e}")
+            return ""
+    
+    def _save_full_document_text(self, pages_data: List[Dict[str, Any]], filename: str) -> str:
+        """
+        Save complete document text to file
+        
+        Args:
+            pages_data: List of page data dictionaries
+            filename: Source filename (without extension)
+            
+        Returns:
+            Path to saved full document text file
+        """
+        try:
+            # Combine all page texts
+            full_text_parts = []
+            total_chars = 0
+            
+            for page_data in pages_data:
+                page_num = page_data['page_number']
+                text = page_data['text']
+                
+                full_text_parts.append(f"\n{'='*60}")
+                full_text_parts.append(f"PAGE {page_num}")
+                full_text_parts.append('='*60 + "\n")
+                full_text_parts.append(text)
+                full_text_parts.append("\n")
+                
+                total_chars += len(text)
+            
+            full_text = "\n".join(full_text_parts)
+            
+            # Save full document text
+            full_filename = f"{filename}_full.txt"
+            full_filepath = self.full_docs_dir / full_filename
+            
+            with open(full_filepath, 'w', encoding='utf-8') as f:
+                f.write(f"# Complete text from {filename}\n")
+                f.write(f"# Extracted on: {datetime.now().isoformat()}\n")
+                f.write(f"# Total pages: {len(pages_data)}\n")
+                f.write(f"# Total characters: {total_chars}\n")
+                f.write(f"# Total words: {len(full_text.split())}\n")
+                f.write("\n" + "="*80 + "\n")
+                f.write(full_text)
+            
+            # Save document metadata
+            doc_metadata = {
+                "source_file": filename,
+                "extraction_timestamp": datetime.now().isoformat(),
+                "total_pages": len(pages_data),
+                "total_characters": total_chars,
+                "total_words": len(full_text.split()),
+                "total_lines": len(full_text.split('\n')),
+                "text_file_path": str(full_filepath),
+                "pages_processed": [p['page_number'] for p in pages_data]
+            }
+            
+            metadata_filename = f"{filename}_full_metadata.json"
+            metadata_filepath = self.full_docs_dir / "metadata" / metadata_filename
+            
+            with open(metadata_filepath, 'w', encoding='utf-8') as f:
+                json.dump(doc_metadata, f, indent=2, ensure_ascii=False)
+            
+            logger.info(f"Saved full document text: {full_filepath}")
+            return str(full_filepath)
+            
+        except Exception as e:
+            logger.error(f"Failed to save full document text: {e}")
+            return ""
+    
+    def _save_chunk_text(self, chunk: 'ProcessedChunk', filename: str) -> str:
+        """
+        Save text chunk to file
+        
+        Args:
+            chunk: ProcessedChunk object
+            filename: Source filename (without extension)
+            
+        Returns:
+            Path to saved chunk text file
+        """
+        try:
+            # Create filename for chunk
+            chunk_filename = f"{filename}_chunk_{chunk.metadata.chunk_index:03d}.txt"
+            chunk_filepath = self.chunks_dir / chunk_filename
+            
+            # Save chunk content
+            with open(chunk_filepath, 'w', encoding='utf-8') as f:
+                f.write(f"# Chunk {chunk.metadata.chunk_index} from {filename}\n")
+                f.write(f"# Page: {chunk.metadata.page_number}\n")
+                f.write(f"# Subject: {chunk.metadata.subject}\n")
+                f.write(f"# Grade: {chunk.metadata.grade}\n")
+                f.write(f"# Language: {chunk.metadata.language}\n")
+                f.write(f"# Created on: {datetime.now().isoformat()}\n")
+                f.write(f"# Character count: {len(chunk.content)}\n")
+                f.write(f"# Chunk ID: {chunk.chunk_id}\n")
+                f.write("\n" + "="*40 + "\n\n")
+                f.write(chunk.content)
+            
+            # Save chunk metadata
+            metadata_filename = f"{filename}_chunk_{chunk.metadata.chunk_index:03d}_metadata.json"
+            metadata_filepath = self.chunks_dir / "metadata" / metadata_filename
+            
+            chunk_metadata = {
+                **chunk.metadata.dict(),
+                "extraction_timestamp": datetime.now().isoformat(),
+                "character_count": len(chunk.content),
+                "word_count": len(chunk.content.split()),
+                "line_count": len(chunk.content.split('\n')),
+                "text_file_path": str(chunk_filepath),
+                "chunk_id": chunk.chunk_id
+            }
+            
+            with open(metadata_filepath, 'w', encoding='utf-8') as f:
+                json.dump(chunk_metadata, f, indent=2, ensure_ascii=False)
+            
+            logger.debug(f"Saved chunk text: {chunk_filepath}")
+            return str(chunk_filepath)
+            
+        except Exception as e:
+            logger.error(f"Failed to save chunk text: {e}")
+            return ""
+    
+    def _save_processing_log(self, filename: str, processing_stats: Dict[str, Any]) -> str:
+        """
+        Save processing log and statistics
+        
+        Args:
+            filename: Source filename (without extension)
+            processing_stats: Processing statistics
+            
+        Returns:
+            Path to saved log file
+        """
+        try:
+            log_filename = f"{filename}_processing_log.txt"
+            log_filepath = self.logs_dir / log_filename
+            
+            with open(log_filepath, 'w', encoding='utf-8') as f:
+                f.write(f"# Processing Log for {filename}\n")
+                f.write(f"# Processed on: {datetime.now().isoformat()}\n")
+                f.write("\n" + "="*50 + "\n\n")
+                
+                f.write("## Processing Statistics:\n")
+                for key, value in processing_stats.items():
+                    f.write(f"- {key}: {value}\n")
+                
+                f.write(f"\n## File Locations:\n")
+                f.write(f"- Pages directory: {self.pages_dir}\n")
+                f.write(f"- Chunks directory: {self.chunks_dir}\n")
+                f.write(f"- Full document: {self.full_docs_dir}\n")
+                
+                f.write(f"\n## Processing Configuration:\n")
+                f.write(f"- Chunk size: {self.chunk_size}\n")
+                f.write(f"- Chunk overlap: {self.chunk_overlap}\n")
+            
+            logger.info(f"Saved processing log: {log_filepath}")
+            return str(log_filepath)
+            
+        except Exception as e:
+            logger.error(f"Failed to save processing log: {e}")
+            return ""
+        
     def extract_text_from_pdf(self, pdf_path: str) -> List[Dict[str, Any]]:
         """
-        Extract text from PDF file with page-level metadata
+        Extract text from PDF file with page-level metadata and save to text files
         
         Args:
             pdf_path: Path to the PDF file
@@ -61,28 +287,64 @@ class DocumentProcessor:
         """
         try:
             pages_data = []
+            filename = Path(pdf_path).stem  # Get filename without extension
+            
+            logger.info(f"📄 Starting PDF text extraction: {pdf_path}")
             
             with open(pdf_path, 'rb') as file:
                 pdf_reader = PyPDF2.PdfReader(file)
+                total_pages = len(pdf_reader.pages)
+                
+                logger.info(f"📖 Processing {total_pages} pages...")
                 
                 for page_num, page in enumerate(pdf_reader.pages, 1):
                     try:
                         text = page.extract_text()
                         if text.strip():  # Only include pages with text
-                            pages_data.append({
+                            page_data = {
                                 'text': text,
                                 'page_number': page_num,
                                 'source_file': os.path.basename(pdf_path)
-                            })
+                            }
+                            pages_data.append(page_data)
+                            
+                            # 💾 Save individual page text to file
+                            base_metadata = self.extract_metadata_from_filename(pdf_path)
+                            page_metadata = {**base_metadata, **page_data}
+                            page_metadata['language'] = self.detect_language(text)
+                            
+                            self._save_page_text(text, filename, page_num, page_metadata)
+                            
+                            logger.debug(f"✅ Processed page {page_num}/{total_pages}")
+                            
                     except Exception as e:
-                        logger.warning(f"Failed to extract text from page {page_num}: {e}")
+                        logger.warning(f"❌ Failed to extract text from page {page_num}: {e}")
                         continue
+            
+            # 💾 Save complete document text
+            if pages_data:
+                self._save_full_document_text(pages_data, filename)
+                
+                # Save processing statistics
+                processing_stats = {
+                    "source_file": pdf_path,
+                    "total_pages_in_pdf": total_pages,
+                    "pages_with_text": len(pages_data),
+                    "pages_skipped": total_pages - len(pages_data),
+                    "extraction_success_rate": f"{(len(pages_data)/total_pages)*100:.1f}%",
+                    "total_characters": sum(len(p['text']) for p in pages_data),
+                    "average_chars_per_page": sum(len(p['text']) for p in pages_data) // len(pages_data) if pages_data else 0
+                }
+                
+                self._save_processing_log(filename, processing_stats)
                         
-            logger.info(f"Extracted text from {len(pages_data)} pages from {pdf_path}")
+            logger.info(f"✅ Extracted text from {len(pages_data)}/{total_pages} pages from {pdf_path}")
+            logger.info(f"📁 Text files saved in: {self.extracted_text_dir}")
+            
             return pages_data
             
         except Exception as e:
-            logger.error(f"Failed to process PDF {pdf_path}: {e}")
+            logger.error(f"❌ Failed to process PDF {pdf_path}: {e}")
             raise
     
     def process_with_ocr(self, image_path: str, language: str = "ben+eng") -> str:
@@ -176,7 +438,7 @@ class DocumentProcessor:
     
     def chunk_text(self, text: str, metadata: Dict[str, Any]) -> List[ProcessedChunk]:
         """
-        Split text into chunks with metadata preservation
+        Split text into chunks with metadata preservation and save to text files
         
         Args:
             text: Text to chunk
@@ -193,6 +455,10 @@ class DocumentProcessor:
             chunks = self.text_splitter.split_documents([doc])
             
             processed_chunks = []
+            filename = Path(metadata.get('source_file', 'unknown')).stem
+            
+            logger.debug(f"✂️ Chunking text into {len(chunks)} pieces...")
+            
             for i, chunk in enumerate(chunks):
                 # Create chunk metadata
                 chunk_metadata = DocumentMetadata(
@@ -209,12 +475,20 @@ class DocumentProcessor:
                     chunk_id=chunk_id
                 )
                 
+                # 💾 Save chunk text to file
+                self._save_chunk_text(processed_chunk, filename)
+                
                 processed_chunks.append(processed_chunk)
+                
+                logger.debug(f"✅ Processed chunk {i+1}/{len(chunks)}")
+            
+            logger.info(f"✂️ Created {len(processed_chunks)} text chunks")
+            logger.info(f"📁 Chunk files saved in: {self.chunks_dir}")
             
             return processed_chunks
             
         except Exception as e:
-            logger.error(f"Text chunking failed: {e}")
+            logger.error(f"❌ Text chunking failed: {e}")
             raise
     
     def validate_document(self, file_path: str) -> bool:

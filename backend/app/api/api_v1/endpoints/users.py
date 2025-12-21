@@ -37,6 +37,25 @@ async def get_children(
     return []
 
 
+@router.put("/me", response_model=User)
+async def update_current_user(
+    user_update: UserUpdate,
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_user)
+) -> Any:
+    """Update current authenticated user information"""
+    auth_service = AuthService(db)
+    
+    try:
+        updated_user = auth_service.update_user(str(current_user.id), user_update)
+        return updated_user
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+
+
 @router.get("/{user_id}", response_model=User)
 async def get_user(
     user_id: str,

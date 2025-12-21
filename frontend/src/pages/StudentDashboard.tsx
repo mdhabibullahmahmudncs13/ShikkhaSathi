@@ -1,37 +1,19 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Target, Award, Clock, Zap, Play, Brain, RefreshCw, AlertCircle } from 'lucide-react';
 import DashboardLayout from '../components/dashboard/DashboardLayout';
-import { Notification } from '../types/dashboard';
 import { useDashboardData } from '../hooks/useDashboardData';
+import { useUser } from '../contexts/UserContext';
+import { useNotifications } from '../hooks/useNotifications';
 
 const StudentDashboard: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useUser();
   const { studentProgress, loading, error, refetch } = useDashboardData();
-  
-  // Mock notifications for now - will be replaced with real API
-  const [notifications] = useState<Notification[]>([
-    {
-      id: '1',
-      type: 'achievement',
-      title: 'New Achievement Unlocked!',
-      message: 'You\'ve earned the "Week Warrior" badge for maintaining a 7-day streak!',
-      timestamp: new Date('2024-12-18T10:30:00'),
-      read: false
-    },
-    {
-      id: '2',
-      type: 'recommendation',
-      title: 'New Learning Path Available',
-      message: 'Based on your progress, we recommend reviewing Quadratic Equations',
-      timestamp: new Date('2024-12-18T09:15:00'),
-      read: false
-    }
-  ]);
+  const { notifications, markAsRead } = useNotifications(10); // Get 10 most recent notifications
 
   const handleNotificationRead = (id: string) => {
-    // Will be implemented with real API
-    console.log('Mark notification as read:', id);
+    markAsRead(id);
   };
 
   const emptyProgress = {
@@ -98,8 +80,12 @@ const StudentDashboard: React.FC = () => {
       <div className="max-w-6xl mx-auto space-y-8">
         {/* Welcome Header */}
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome back!</h1>
-          <p className="text-gray-600">Continue your learning journey</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Welcome back{user?.full_name ? `, ${user.full_name.split(' ')[0]}` : ''}!
+          </h1>
+          <p className="text-gray-600">
+            {user?.grade ? `Grade ${user.grade} • ` : ''}Continue your learning journey
+          </p>
         </div>
 
         {/* Quick Stats */}

@@ -1,77 +1,101 @@
-import React, { useState } from 'react';
-import { User, Mail, Phone, MapPin, Calendar, BookOpen, Award, Settings, Camera, Save, X } from 'lucide-react';
-
-interface UserData {
-  id: string;
-  fullName: string;
-  email: string;
-  phone?: string;
-  address?: string;
-  dateOfBirth?: string;
-  grade?: number;
-  medium?: 'bangla' | 'english';
-  role: 'student' | 'teacher' | 'parent';
-  profilePicture?: string;
-  bio?: string;
-  subjects?: string[];
-  totalXP: number;
-  currentLevel: number;
-  currentStreak: number;
-  joinedDate: string;
-}
+import React, { useState, useEffect } from 'react';
+import { User, Mail, Phone, MapPin, Calendar, BookOpen, Award, Settings, Camera, Save, X, AlertCircle, CheckCircle } from 'lucide-react';
+import { useUser } from '../contexts/UserContext';
+import { useProfile } from '../hooks/useProfile';
+import { useDashboardData } from '../hooks/useDashboardData';
 
 const UserProfile: React.FC = () => {
+  const { user, loading: userLoading } = useUser();
+  const { studentProgress, loading: progressLoading } = useDashboardData();
+  const { updating, error, updateProfile, clearError } = useProfile();
+  
   const [isEditing, setIsEditing] = useState(false);
-  const [userData, setUserData] = useState<UserData>({
-    id: '123e4567-e89b-12d3-a456-426614174000',
-    fullName: 'রাহুল আহমেদ',
-    email: 'rahul@example.com',
-    phone: '+880 1712-345678',
-    address: 'Dhaka, Bangladesh',
-    dateOfBirth: '2008-05-15',
-    grade: 9,
-    medium: 'bangla',
-    role: 'student',
-    bio: 'Passionate about learning science and mathematics. Love to explore new concepts!',
-    subjects: ['Mathematics', 'Physics', 'Chemistry', 'Biology'],
-    totalXP: 2450,
-    currentLevel: 5,
-    currentStreak: 7,
-    joinedDate: '2024-01-15'
+  const [editedData, setEditedData] = useState({
+    full_name: '',
+    email: '',
+    grade: 6,
+    medium: 'bangla' as 'bangla' | 'english'
   });
+  const [successMessage, setSuccessMessage] = useState('');
 
-  const [editedData, setEditedData] = useState<UserData>(userData);
+  // Initialize form data when user data loads
+  useEffect(() => {
+    if (user) {
+      setEditedData({
+        full_name: user.full_name || '',
+        email: user.email || '',
+        grade: user.grade || 6,
+        medium: user.medium || 'bangla'
+      });
+    }
+  }, [user]);
 
   const handleEdit = () => {
     setIsEditing(true);
-    setEditedData(userData);
+    clearError();
+    setSuccessMessage('');
   };
 
   const handleCancel = () => {
     setIsEditing(false);
-    setEditedData(userData);
+    clearError();
+    setSuccessMessage('');
+    // Reset to original user data
+    if (user) {
+      setEditedData({
+        full_name: user.full_name || '',
+        email: user.email || '',
+        grade: user.grade || 6,
+        medium: user.medium || 'bangla'
+      });
+    }
   };
 
-  const handleSave = () => {
-    setUserData(editedData);
-    setIsEditing(false);
-    // In real app, save to API
-    console.log('Saving user data:', editedData);
+  const handleSave = async () => {
+    clearError();
+    setSuccessMessage('');
+    
+    const success = await updateProfile(editedData);
+    if (success) {
+      setIsEditing(false);
+      setSuccessMessage('Profile updated successfully!');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    }
   };
 
-  const handleChange = (field: keyof UserData, value: any) => {
+  const handleChange = (field: keyof typeof editedData, value: any) => {
     setEditedData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleProfilePictureUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        handleChange('profilePicture', reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
+  if (userLoading) {
+    return (
+      <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-neutral-600">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="h-12 w-12 text-red-600 mx-auto mb-4" />
+          <p className="text-neutral-600">Unable to load profile. Please try again.</p>
+        </div>
+      </div>
+    );
+  }
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(word => word.charAt(0))
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
   };
 
   return (
@@ -96,17 +120,23 @@ const UserProfile: React.FC = () => {
               <div className="flex gap-2">
                 <button
                   onClick={handleCancel}
-                  className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-neutral-100 text-neutral-900 font-medium rounded-lg transition-all shadow-sm"
+                  disabled={updating}
+                  className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-neutral-100 text-neutral-900 font-medium rounded-lg transition-all shadow-sm disabled:opacity-50"
                 >
                   <X className="h-5 w-5" />
                   Cancel
                 </button>
                 <button
                   onClick={handleSave}
-                  className="flex items-center gap-2 px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white font-medium rounded-lg transition-all shadow-sm"
+                  disabled={updating}
+                  className="flex items-center gap-2 px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white font-medium rounded-lg transition-all shadow-sm disabled:opacity-50"
                 >
-                  <Save className="h-5 w-5" />
-                  Save Changes
+                  {updating ? (
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  ) : (
+                    <Save className="h-5 w-5" />
+                  )}
+                  {updating ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
             )}
@@ -115,6 +145,21 @@ const UserProfile: React.FC = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Success/Error Messages */}
+        {successMessage && (
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 text-green-700 rounded-lg flex items-center gap-2">
+            <CheckCircle className="h-5 w-5" />
+            {successMessage}
+          </div>
+        )}
+        
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg flex items-center gap-2">
+            <AlertCircle className="h-5 w-5" />
+            {error}
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Profile Card */}
           <div className="lg:col-span-1">
@@ -123,64 +168,49 @@ const UserProfile: React.FC = () => {
               <div className="flex flex-col items-center mb-6">
                 <div className="relative">
                   <div className="w-32 h-32 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-4xl font-bold text-neutral-900 shadow-lg">
-                    {editedData.profilePicture ? (
-                      <img
-                        src={editedData.profilePicture}
-                        alt="Profile"
-                        className="w-32 h-32 rounded-full object-cover"
-                      />
-                    ) : (
-                      editedData.fullName.charAt(0)
-                    )}
+                    {getInitials(user.full_name)}
                   </div>
-                  {isEditing && (
-                    <label className="absolute bottom-0 right-0 p-2 bg-primary hover:bg-primary-600 rounded-full cursor-pointer shadow-lg transition-all">
-                      <Camera className="h-5 w-5 text-neutral-900" />
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleProfilePictureUpload}
-                        className="hidden"
-                      />
-                    </label>
-                  )}
                 </div>
                 <h2 className="mt-4 text-xl font-bold text-neutral-900 text-center">
-                  {editedData.fullName}
+                  {user.full_name}
                 </h2>
-                <p className="text-sm text-neutral-600 capitalize">{editedData.role}</p>
+                <p className="text-sm text-neutral-600 capitalize">{user.role}</p>
               </div>
 
               {/* Stats */}
               <div className="space-y-4 pt-4 border-t border-neutral-200">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-neutral-600">
-                    <Award className="h-5 w-5 text-primary" />
-                    <span className="text-sm">Level</span>
-                  </div>
-                  <span className="font-bold text-neutral-900">{userData.currentLevel}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-neutral-600">
-                    <Award className="h-5 w-5 text-secondary" />
-                    <span className="text-sm">Total XP</span>
-                  </div>
-                  <span className="font-bold text-neutral-900">{userData.totalXP.toLocaleString()}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-neutral-600">
-                    <Award className="h-5 w-5 text-accent" />
-                    <span className="text-sm">Current Streak</span>
-                  </div>
-                  <span className="font-bold text-neutral-900">{userData.currentStreak} days 🔥</span>
-                </div>
+                {studentProgress && (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-neutral-600">
+                        <Award className="h-5 w-5 text-primary" />
+                        <span className="text-sm">Level</span>
+                      </div>
+                      <span className="font-bold text-neutral-900">{studentProgress.currentLevel}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-neutral-600">
+                        <Award className="h-5 w-5 text-secondary" />
+                        <span className="text-sm">Total XP</span>
+                      </div>
+                      <span className="font-bold text-neutral-900">{studentProgress.totalXP.toLocaleString()}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-neutral-600">
+                        <Award className="h-5 w-5 text-accent" />
+                        <span className="text-sm">Current Streak</span>
+                      </div>
+                      <span className="font-bold text-neutral-900">{studentProgress.currentStreak} days 🔥</span>
+                    </div>
+                  </>
+                )}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-neutral-600">
                     <Calendar className="h-5 w-5 text-neutral-500" />
                     <span className="text-sm">Joined</span>
                   </div>
                   <span className="text-sm text-neutral-900">
-                    {new Date(userData.joinedDate).toLocaleDateString()}
+                    {new Date(user.created_at).toLocaleDateString()}
                   </span>
                 </div>
               </div>
@@ -203,12 +233,12 @@ const UserProfile: React.FC = () => {
                   {isEditing ? (
                     <input
                       type="text"
-                      value={editedData.fullName}
-                      onChange={(e) => handleChange('fullName', e.target.value)}
+                      value={editedData.full_name}
+                      onChange={(e) => handleChange('full_name', e.target.value)}
                       className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     />
                   ) : (
-                    <p className="text-neutral-900">{userData.fullName}</p>
+                    <p className="text-neutral-900">{user.full_name}</p>
                   )}
                 </div>
 
@@ -226,64 +256,7 @@ const UserProfile: React.FC = () => {
                   ) : (
                     <p className="text-neutral-900 flex items-center gap-2">
                       <Mail className="h-4 w-4 text-neutral-500" />
-                      {userData.email}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">
-                    Phone
-                  </label>
-                  {isEditing ? (
-                    <input
-                      type="tel"
-                      value={editedData.phone || ''}
-                      onChange={(e) => handleChange('phone', e.target.value)}
-                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    />
-                  ) : (
-                    <p className="text-neutral-900 flex items-center gap-2">
-                      <Phone className="h-4 w-4 text-neutral-500" />
-                      {userData.phone || 'Not provided'}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">
-                    Date of Birth
-                  </label>
-                  {isEditing ? (
-                    <input
-                      type="date"
-                      value={editedData.dateOfBirth || ''}
-                      onChange={(e) => handleChange('dateOfBirth', e.target.value)}
-                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    />
-                  ) : (
-                    <p className="text-neutral-900 flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-neutral-500" />
-                      {userData.dateOfBirth ? new Date(userData.dateOfBirth).toLocaleDateString() : 'Not provided'}
-                    </p>
-                  )}
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">
-                    Address
-                  </label>
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      value={editedData.address || ''}
-                      onChange={(e) => handleChange('address', e.target.value)}
-                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    />
-                  ) : (
-                    <p className="text-neutral-900 flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-neutral-500" />
-                      {userData.address || 'Not provided'}
+                      {user.email}
                     </p>
                   )}
                 </div>
@@ -291,7 +264,7 @@ const UserProfile: React.FC = () => {
             </div>
 
             {/* Academic Information (for students) */}
-            {userData.role === 'student' && (
+            {user.role === 'student' && (
               <div className="bg-white rounded-xl shadow-sm border border-neutral-200 p-6">
                 <h3 className="text-lg font-bold text-neutral-900 mb-4 flex items-center gap-2">
                   <BookOpen className="h-5 w-5 text-primary" />
@@ -304,7 +277,7 @@ const UserProfile: React.FC = () => {
                     </label>
                     {isEditing ? (
                       <select
-                        value={editedData.grade || ''}
+                        value={editedData.grade}
                         onChange={(e) => handleChange('grade', parseInt(e.target.value))}
                         className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                       >
@@ -313,7 +286,7 @@ const UserProfile: React.FC = () => {
                         ))}
                       </select>
                     ) : (
-                      <p className="text-neutral-900">Class {userData.grade}</p>
+                      <p className="text-neutral-900">Class {user.grade}</p>
                     )}
                   </div>
 
@@ -323,7 +296,7 @@ const UserProfile: React.FC = () => {
                     </label>
                     {isEditing ? (
                       <select
-                        value={editedData.medium || 'bangla'}
+                        value={editedData.medium}
                         onChange={(e) => handleChange('medium', e.target.value)}
                         className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                       >
@@ -331,46 +304,12 @@ const UserProfile: React.FC = () => {
                         <option value="english">English Medium</option>
                       </select>
                     ) : (
-                      <p className="text-neutral-900 capitalize">{userData.medium} Medium</p>
+                      <p className="text-neutral-900 capitalize">{user.medium} Medium</p>
                     )}
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-neutral-700 mb-2">
-                      Subjects
-                    </label>
-                    <div className="flex flex-wrap gap-2">
-                      {userData.subjects?.map(subject => (
-                        <span
-                          key={subject}
-                          className="px-3 py-1 bg-primary/20 text-neutral-900 rounded-full text-sm font-medium"
-                        >
-                          {subject}
-                        </span>
-                      ))}
-                    </div>
                   </div>
                 </div>
               </div>
             )}
-
-            {/* Bio */}
-            <div className="bg-white rounded-xl shadow-sm border border-neutral-200 p-6">
-              <h3 className="text-lg font-bold text-neutral-900 mb-4">
-                About Me
-              </h3>
-              {isEditing ? (
-                <textarea
-                  value={editedData.bio || ''}
-                  onChange={(e) => handleChange('bio', e.target.value)}
-                  rows={4}
-                  className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Tell us about yourself..."
-                />
-              ) : (
-                <p className="text-neutral-700">{userData.bio || 'No bio provided yet.'}</p>
-              )}
-            </div>
 
             {/* Account Security */}
             <div className="bg-white rounded-xl shadow-sm border border-neutral-200 p-6">
@@ -381,7 +320,7 @@ const UserProfile: React.FC = () => {
                 <div className="flex items-center justify-between p-4 bg-neutral-50 rounded-lg">
                   <div>
                     <p className="font-medium text-neutral-900">Password</p>
-                    <p className="text-sm text-neutral-600">Last changed 30 days ago</p>
+                    <p className="text-sm text-neutral-600">Keep your account secure</p>
                   </div>
                   <button className="px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white text-sm font-medium rounded-lg transition-all">
                     Change Password
@@ -389,12 +328,18 @@ const UserProfile: React.FC = () => {
                 </div>
                 <div className="flex items-center justify-between p-4 bg-neutral-50 rounded-lg">
                   <div>
-                    <p className="font-medium text-neutral-900">Two-Factor Authentication</p>
-                    <p className="text-sm text-neutral-600">Add extra security to your account</p>
+                    <p className="font-medium text-neutral-900">Account Status</p>
+                    <p className="text-sm text-neutral-600">
+                      {user.is_active ? 'Active' : 'Inactive'}
+                    </p>
                   </div>
-                  <button className="px-4 py-2 bg-white hover:bg-neutral-100 text-neutral-900 text-sm font-medium rounded-lg border border-neutral-300 transition-all">
-                    Enable
-                  </button>
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    user.is_active 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-red-100 text-red-800'
+                  }`}>
+                    {user.is_active ? 'Active' : 'Inactive'}
+                  </span>
                 </div>
               </div>
             </div>

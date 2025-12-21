@@ -14,6 +14,7 @@ import { GlobalLoadingBar } from './components/common/LoadingIndicator'
 import { ErrorNotificationManager } from './components/common/ErrorNotification'
 import { SystemStatusIndicator } from './components/common/SystemMonitor'
 import { useAuth } from './hooks/useAPI'
+import { UserProvider } from './contexts/UserContext'
 import React from 'react'
 
 const Login = () => {
@@ -261,7 +262,8 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <Router>
+      <UserProvider>
+        <Router>
         <div className="min-h-screen bg-gray-50">
           {/* Global Loading Bar */}
           <GlobalLoadingBar />
@@ -480,6 +482,7 @@ function App() {
           )}
         </div>
       </Router>
+      </UserProvider>
     </ErrorBoundary>
   )
 }

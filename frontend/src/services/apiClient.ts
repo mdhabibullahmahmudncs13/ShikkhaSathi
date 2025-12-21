@@ -165,6 +165,15 @@ export const authAPI = {
     api.post('/auth/refresh', { refresh_token: refreshToken }),
     
   getCurrentUser: () => api.get('/users/me'),
+  updateProfile: (data: any) => api.put('/users/me', data),
+};
+
+export const notificationAPI = {
+  getNotifications: (params?: { limit?: number; offset?: number; unread_only?: boolean }) =>
+    api.get('/notifications', { params }),
+  getUnreadCount: () => api.get('/notifications/unread-count'),
+  markAsRead: (notificationId: string) => api.put(`/notifications/${notificationId}/read`),
+  markAllAsRead: () => api.put('/notifications/mark-all-read'),
 };
 
 export const dashboardAPI = {

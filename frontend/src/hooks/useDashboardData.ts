@@ -93,10 +93,13 @@ export const useDashboardData = (): UseDashboardDataReturn => {
       setError(errorMessage);
       logger.error('Failed to load dashboard data', err);
       
-      // Use mock data as fallback for development
-      if (import.meta.env.DEV) {
-        logger.warn('Using mock data as fallback');
+      // Use mock data as fallback only in development mode
+      if (import.meta.env.DEV && import.meta.env.VITE_USE_MOCK_DATA !== 'false') {
+        logger.warn('Using mock data as fallback in development mode');
         setStudentProgress(getMockData());
+      } else {
+        // In production, don't use mock data - let the error state show
+        logger.error('Dashboard data failed to load in production mode');
       }
     } finally {
       setLoading(false);
