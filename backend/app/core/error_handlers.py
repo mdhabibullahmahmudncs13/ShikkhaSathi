@@ -24,26 +24,46 @@ class ErrorHandler:
     @staticmethod
     def log_error(error_id: str, error: Exception, request: Request, context: Dict[str, Any] = None):
         """Log error with context information"""
-        error_data = {
-            "error_id": error_id,
-            "timestamp": datetime.utcnow().isoformat(),
-            "error_type": type(error).__name__,
-            "error_message": str(error),
-            "request_method": request.method,
-            "request_url": str(request.url),
-            "request_headers": dict(request.headers),
-            "user_agent": request.headers.get("user-agent"),
-            "client_ip": request.client.host if request.client else None,
-            "context": context or {}
-        }
+        try:
+            # Safely convert headers to dict, handling bytes objects
+            headers_dict = {}
+            for key, value in request.headers.items():
+                try:
+                    headers_dict[key] = str(value)
+                except:
+                    headers_dict[key] = "<non-serializable>"
+            
+            error_data = {
+                "error_id": error_id,
+                "timestamp": datetime.utcnow().isoformat(),
+                "error_type": type(error).__name__,
+                "error_message": str(error),
+                "request_method": request.method,
+                "request_url": str(request.url),
+                "request_headers": headers_dict,
+                "user_agent": request.headers.get("user-agent", "unknown"),
+                "client_ip": request.client.host if request.client else None,
+                "context": context or {}
+            }
+            
+            # Add stack trace for debugging
+            if hasattr(error, '__traceback__'):
+                error_data["stack_trace"] = traceback.format_exception(
+                    type(error), error, error.__traceback__
+                )
+            
+            # Use a safe JSON serialization
+            try:
+                logger.error(f"Error {error_id}: {json.dumps(error_data, indent=2, default=str)}")
+            except Exception as json_error:
+                # Fallback logging if JSON serialization fails
+                logger.error(f"Error {error_id}: {error_data['error_type']} - {error_data['error_message']}")
+                logger.error(f"JSON serialization failed: {json_error}")
         
-        # Add stack trace for debugging
-        if hasattr(error, '__traceback__'):
-            error_data["stack_trace"] = traceback.format_exception(
-                type(error), error, error.__traceback__
-            )
-        
-        logger.error(f"Error {error_id}: {json.dumps(error_data, indent=2)}")
+        except Exception as log_error:
+            # Ultimate fallback
+            logger.error(f"Error {error_id}: Failed to log error details - {log_error}")
+            logger.error(f"Original error: {type(error).__name__} - {str(error)}")
         
         # In production, send to external monitoring service
         # Example: send_to_sentry(error_data)

@@ -46,16 +46,23 @@ async def login(
     """Login user and return access token"""
     auth_service = AuthService(db)
     
-    user = auth_service.authenticate_user(user_login.email, user_login.password)
-    if not user:
+    try:
+        user = auth_service.authenticate_user(user_login.email, user_login.password)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect email or password",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        access_token = auth_service.create_session(user)
+        return {"access_token": access_token, "token_type": "bearer"}
+    except Exception as e:
+        print(f"Login error: {e}")  # Debug logging
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
-            headers={"WWW-Authenticate": "Bearer"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Login failed due to server error"
         )
-    
-    access_token = auth_service.create_session(user)
-    return {"access_token": access_token, "token_type": "bearer"}
 
 
 @router.post("/refresh", response_model=Token)
