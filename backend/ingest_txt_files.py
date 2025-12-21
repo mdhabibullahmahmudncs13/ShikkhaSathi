@@ -21,7 +21,7 @@ from typing import List, Dict, Any
 sys.path.append(os.path.join(os.path.dirname(__file__), 'app'))
 
 from app.services.rag.rag_service import rag_service
-from app.services.rag.document_processor import DocumentProcessor, TextChunk
+from app.services.rag.document_processor import DocumentProcessor, ProcessedChunk
 
 # Configure logging
 logging.basicConfig(
@@ -39,7 +39,7 @@ class TextFileIngestionPipeline:
         self.rag_service = rag_service
         
         # Paths
-        self.input_dir = Path("data/nctb_txt")  # 📁 INPUT: TXT files location
+        self.input_dir = Path("data/nctb/nctb_txt")  # 📁 INPUT: TXT files location
         self.vector_db_dir = Path("data/chroma_db")  # 🗄️ OUTPUT: Vector database storage
         
         # Create directories if they don't exist
@@ -54,21 +54,23 @@ class TextFileIngestionPipeline:
         metadata = {
             'source_file': Path(file_path).name,
             'file_type': 'txt',
-            'grade': None,
-            'subject': None,
+            'grade': 9,  # Default grade
+            'subject': 'general',  # Default subject
             'language': 'mixed'  # Will be detected later
         }
         
         # Extract grade from filename
-        if 'class 9' in filename.lower() or 'grade 9' in filename.lower():
+        filename_lower = filename.lower()
+        if 'class 9' in filename_lower or 'grade 9' in filename_lower:
             metadata['grade'] = 9
-        elif 'class 10' in filename.lower() or 'grade 10' in filename.lower():
+        elif 'class 10' in filename_lower or 'grade 10' in filename_lower:
             metadata['grade'] = 10
-        elif '9-10' in filename.lower():
-            metadata['grade'] = '9-10'
+        elif '9-10' in filename_lower:
+            metadata['grade'] = 9  # Default to 9 for 9-10 books
+        else:
+            metadata['grade'] = 9  # Default grade if not detected
         
         # Extract subject from filename
-        filename_lower = filename.lower()
         if 'math' in filename_lower or 'গণিত' in filename_lower:
             metadata['subject'] = 'mathematics'
         elif 'physics' in filename_lower or 'পদার্থ' in filename_lower:
@@ -77,12 +79,23 @@ class TextFileIngestionPipeline:
             metadata['subject'] = 'chemistry'
         elif 'biology' in filename_lower or 'জীববিজ্ঞান' in filename_lower:
             metadata['subject'] = 'biology'
-        elif 'bangla' in filename_lower or 'বাংলা' in filename_lower:
+        elif 'bangla' in filename_lower or 'বাংলা' in filename_lower or 'sahitto' in filename_lower or 'সাহিত্য' in filename_lower or 'সহপাঠ' in filename_lower:
             metadata['subject'] = 'bangla'
         elif 'english' in filename_lower or 'ইংরেজি' in filename_lower:
             metadata['subject'] = 'english'
         elif 'ict' in filename_lower or 'তথ্য' in filename_lower:
             metadata['subject'] = 'ict'
+        
+        # Set textbook name based on subject and filename
+        if metadata['subject'] == 'bangla':
+            if 'sahitto' in filename_lower or 'সাহিত্য' in filename_lower:
+                metadata['textbook_name'] = 'বাংলা সাহিত্য (নবম ও দশম শ্রেণি)'
+            elif 'সহপাঠ' in filename_lower:
+                metadata['textbook_name'] = 'বাংলা সহপাঠ (নবম ও দশম শ্রেণি)'
+            else:
+                metadata['textbook_name'] = f"বাংলা পাঠ্যবই (নবম ও দশম শ্রেণি)"
+        else:
+            metadata['textbook_name'] = f"NCTB {metadata['subject'].title()} (Class {metadata['grade']})"
         
         return metadata
     
@@ -132,8 +145,53 @@ class TextFileIngestionPipeline:
             
             # Store in vector database
             logger.info("🗄️ Storing in ChromaDB...")
-            metadatas = [chunk.metadata.dict() for chunk in chunks]
-            ids = [chunk.chunk_id for chunk in chunks]
+            
+            # Prepare metadata for each chunk
+            metadatas = []
+            ids = []
+            
+            for i, chunk in enumerate(chunks):
+                # Create metadata for this chunk
+                chunk_metadata = {
+                    'source_file': base_metadata['source_file'],
+                    'file_type': base_metadata['file_type'],
+                    'grade': base_metadata['grade'],
+                    'subject': base_metadata['subject'],
+                    'language': base_metadata['language'],
+                    'chunk_index': i,
+                    'page_number': 1,  # Default for text files
+                    'chapter': 1,  # Default
+                    'topic': 'general',  # Default
+                    'textbook_name': base_metadata.get('textbook_name', 'NCTB Textbook')
+                }
+                
+                # Clean metadata - ensure no None values
+                cleaned_metadata = {}
+                for key, value in chunk_metadata.items():
+                    if value is None:
+                        # Provide default values for None fields
+                        if key == 'grade':
+                            cleaned_metadata[key] = 9
+                        elif key == 'subject':
+                            cleaned_metadata[key] = 'general'
+                        elif key == 'chapter':
+                            cleaned_metadata[key] = 1
+                        elif key == 'topic':
+                            cleaned_metadata[key] = 'general'
+                        elif key == 'textbook_name':
+                            cleaned_metadata[key] = 'NCTB Textbook'
+                        elif key == 'page_number':
+                            cleaned_metadata[key] = 1
+                        else:
+                            cleaned_metadata[key] = 'unknown'
+                    else:
+                        cleaned_metadata[key] = str(value)  # Convert all values to strings
+                
+                metadatas.append(cleaned_metadata)
+                
+                # Generate unique ID for this chunk
+                chunk_id = f"{Path(file_path).stem}_{i}"
+                ids.append(chunk_id)
             
             self.rag_service.collection.add(
                 embeddings=embeddings,
