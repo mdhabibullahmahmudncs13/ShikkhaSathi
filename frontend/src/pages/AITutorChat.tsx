@@ -108,7 +108,10 @@ const AITutorChat: React.FC = () => {
     try {
       const response = await apiClient.post<ChatResponse>('/chat/chat', {
         message,
-        conversation_history: messages.slice(-10), // Send last 10 messages for context
+        conversation_history: messages.slice(-10).map(msg => ({
+          role: msg.role,
+          content: msg.content
+        })), // Send last 10 messages for context
         subject: selectedSubject || undefined
       });
 
