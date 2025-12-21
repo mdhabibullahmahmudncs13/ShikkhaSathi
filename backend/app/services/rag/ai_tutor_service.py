@@ -5,8 +5,19 @@ Handles conversation with local LLM using Ollama and RAG context
 
 import logging
 from typing import List, Dict, Any, Optional
-from langchain_ollama import ChatOllama
-from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
+
+# Optional imports for AI features
+try:
+    from langchain_ollama import ChatOllama
+    from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
+    LANGCHAIN_AVAILABLE = True
+except ImportError:
+    ChatOllama = None
+    HumanMessage = None
+    AIMessage = None
+    SystemMessage = None
+    LANGCHAIN_AVAILABLE = False
+
 from .rag_service import rag_service
 
 logger = logging.getLogger(__name__)
@@ -20,6 +31,12 @@ class AITutorService:
             model_name: Ollama model name to use
         """
         self.model_name = model_name
+        
+        if not LANGCHAIN_AVAILABLE:
+            logger.warning("LangChain dependencies not available. AI Tutor will run in limited mode.")
+            self.llm = None
+            return
+            
         self.llm = ChatOllama(model=model_name, temperature=0.7)
         
         # System prompt for the AI tutor

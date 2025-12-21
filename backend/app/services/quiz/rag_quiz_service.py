@@ -154,7 +154,6 @@ class RAGQuizService:
             Quiz results with score and feedback
         """
         try:
-        try:
             logger.info(f"Submitting RAG quiz {quiz_id} for user {user_id}")
             
             # Skip quiz session validation for now
