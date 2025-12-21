@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BookOpen, Clock, Target, Zap } from 'lucide-react';
 import { quizAPI } from '../../services/apiClient';
 import { Quiz, Subject, Topic } from '../../types/quiz';
+import APIDebugger from '../debug/APIDebugger';
 
 interface QuizSelectionProps {
   onQuizStart: (quiz: Quiz) => void;
@@ -178,6 +179,9 @@ const QuizSelection: React.FC<QuizSelectionProps> = ({ onQuizStart }) => {
           {loading ? 'Generating Quiz...' : 'Start Quiz'}
         </button>
       </div>
+      
+      {/* Debug Component - Remove in production */}
+      <APIDebugger />
     </div>
   );
 };

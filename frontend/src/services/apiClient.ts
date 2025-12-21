@@ -192,21 +192,25 @@ export const dashboardAPI = {
 export const quizAPI = {
   // Get available subjects with question counts
   getSubjects: (grade?: number) =>
-    withCache(
-      quizCache,
-      cacheKeys.quizList('subjects', grade),
-      () => api.get('/quiz/subjects', { params: { grade } }),
-      10 * 60 * 1000 // 10 minutes cache
-    ),
+    // Temporarily disable caching for debugging
+    api.get('/quiz/subjects', { params: { grade } }),
+    // withCache(
+    //   quizCache,
+    //   cacheKeys.quizList('subjects', grade),
+    //   () => api.get('/quiz/subjects', { params: { grade } }),
+    //   10 * 60 * 1000 // 10 minutes cache
+    // ),
   
   // Get available topics for a subject
   getTopics: (subject: string, grade?: number) =>
-    withCache(
-      quizCache,
-      cacheKeys.quizList(subject, grade),
-      () => api.get(`/quiz/topics/${subject}`, { params: { grade } }),
-      10 * 60 * 1000 // 10 minutes cache
-    ),
+    // Temporarily disable caching for debugging
+    api.get(`/quiz/topics/${subject}`, { params: { grade } }),
+    // withCache(
+    //   quizCache,
+    //   cacheKeys.quizList(subject, grade),
+    //   () => api.get(`/quiz/topics/${subject}`, { params: { grade } }),
+    //   10 * 60 * 1000 // 10 minutes cache
+    // ),
   
   // Generate a new quiz
   generateQuiz: (params: {
