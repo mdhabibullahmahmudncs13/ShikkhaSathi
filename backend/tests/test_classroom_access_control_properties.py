@@ -302,7 +302,7 @@ class TestClassroomAccessControlProperties:
         student=student_strategy(),
         enrollment=student_class_strategy()
     )
-    def test_teacher_cannot_remove_students_from_other_classes(
+    async def test_teacher_cannot_remove_students_from_other_classes(
         self, 
         teacher1, 
         teacher2, 
@@ -396,7 +396,7 @@ class TestClassroomAccessControlProperties:
         students=st.lists(student_strategy(), min_size=1, max_size=5),
         enrollments=st.lists(student_class_strategy(), min_size=1, max_size=5)
     )
-    def test_teacher_can_only_see_own_students_in_bulk_operations(
+    async def test_teacher_can_only_see_own_students_in_bulk_operations(
         self, 
         teacher, 
         class_data, 

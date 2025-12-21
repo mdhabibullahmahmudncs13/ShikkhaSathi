@@ -392,6 +392,7 @@ export const AssessmentPublisher: React.FC<AssessmentPublisherProps> = ({
         </div>
         <div className="flex items-center space-x-3">
           <button
+            type="button"
             onClick={onCancel}
             className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
             disabled={isLoading}
@@ -399,6 +400,7 @@ export const AssessmentPublisher: React.FC<AssessmentPublisherProps> = ({
             Cancel
           </button>
           <button
+            type="button"
             onClick={handlePublish}
             disabled={isLoading || hasErrors}
             className="flex items-center space-x-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -447,6 +449,7 @@ export const AssessmentPublisher: React.FC<AssessmentPublisherProps> = ({
             { id: 'review', label: 'Review', icon: Eye }
           ].map(({ id, label, icon: Icon }) => (
             <button
+              type="button"
               key={id}
               onClick={() => setActiveTab(id as any)}
               className={`flex items-center space-x-2 py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
@@ -551,6 +554,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
       {/* Classes Section */}
       <div className="bg-white border rounded-lg">
         <button
+          type="button"
           onClick={() => onToggleSection('classes')}
           className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 transition-colors"
         >
@@ -576,6 +580,8 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
               <label key={classData.id} className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
                 <input
                   type="checkbox"
+                  name={`class-${classData.id}`}
+                  aria-label={`${classData.name} ${classData.subject} Grade ${classData.grade}`}
                   checked={publishData.assignedClasses.includes(classData.id)}
                   onChange={(e) => onClassSelection(classData.id, e.target.checked)}
                   className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
@@ -600,6 +606,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
       {/* Individual Students Section */}
       <div className="bg-white border rounded-lg">
         <button
+          type="button"
           onClick={() => onToggleSection('students')}
           className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 transition-colors"
         >
@@ -637,6 +644,8 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
                 <label key={student.id} className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
                   <input
                     type="checkbox"
+                    name={`student-${student.id}`}
+                    aria-label={`${student.name} - Grade ${student.grade}`}
                     checked={publishData.assignedStudents.includes(student.id)}
                     onChange={(e) => onStudentSelection(student.id, e.target.checked)}
                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
@@ -733,10 +742,11 @@ const ScheduleTab: React.FC<ScheduleTabProps> = ({
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="available-from" className="block text-sm font-medium text-gray-700 mb-2">
               Available From (Optional)
             </label>
             <input
+              id="available-from"
               type="datetime-local"
               value={formatDateForInput(publishData.scheduledDate)}
               onChange={(e) => updatePublishData({ scheduledDate: parseInputDate(e.target.value) })}
@@ -748,10 +758,11 @@ const ScheduleTab: React.FC<ScheduleTabProps> = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="due-date" className="block text-sm font-medium text-gray-700 mb-2">
               Due Date (Optional)
             </label>
             <input
+              id="due-date"
               type="datetime-local"
               value={formatDateForInput(publishData.dueDate)}
               onChange={(e) => updatePublishData({ dueDate: parseInputDate(e.target.value) })}
