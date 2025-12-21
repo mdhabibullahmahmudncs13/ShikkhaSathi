@@ -52,6 +52,34 @@ class GradebookExportRequest(BaseModel):
     include_assessments: bool = True
 
 
+class GradebookImportRequest(BaseModel):
+    """Request for importing gradebook data."""
+    format: ExternalGradebookFormat = ExternalGradebookFormat.standard
+    data: List[Dict[str, Any]]
+    validate_only: bool = False
+    overwrite_existing: bool = False
+    class_id: Optional[str] = None
+
+
+class ImportValidationResult(BaseModel):
+    """Result of import validation."""
+    is_valid: bool
+    errors: List[str] = []
+    warnings: List[str] = []
+    valid_entries: int = 0
+    invalid_entries: int = 0
+    details: Optional[Dict[str, Any]] = None
+
+
+class GradeMapping(BaseModel):
+    """Grade mapping configuration."""
+    letter_grade: str
+    min_percentage: float
+    max_percentage: float
+    gpa_value: Optional[float] = None
+    description: Optional[str] = None
+
+
 class GradebookImportResult(BaseModel):
     """Result of gradebook import operation."""
     successful: int

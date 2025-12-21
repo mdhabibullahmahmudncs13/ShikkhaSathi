@@ -200,7 +200,7 @@ class TestClassroomAccessControlProperties:
         student=student_strategy(),
         enrollment=student_class_strategy()
     )
-    def test_teacher_cannot_modify_students_in_other_classes(
+    async def test_teacher_cannot_modify_students_in_other_classes(
         self, 
         teacher1, 
         teacher2, 

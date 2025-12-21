@@ -15,8 +15,8 @@ import pytesseract
 from PIL import Image
 import io
 import re
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.schema import Document
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_core.documents import Document
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)

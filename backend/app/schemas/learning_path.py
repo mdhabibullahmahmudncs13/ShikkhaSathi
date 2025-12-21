@@ -7,7 +7,7 @@ Pydantic models for learning path recommendation system.
 from typing import List, Dict, Optional, Any
 from datetime import datetime
 from enum import Enum
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 
 class DifficultyLevel(str, Enum):
@@ -163,12 +163,13 @@ class PathRecommendationResponse(BaseModel):
     generated_at: datetime = Field(default_factory=datetime.utcnow)
     expires_at: datetime = Field(..., description="When recommendations expire")
     
-    @validator('expires_at', pre=True, always=True)
-    def set_expiry(cls, v, values):
-        if v is None and 'generated_at' in values:
+    @field_validator('expires_at', mode='before')
+    @classmethod
+    def set_expiry(cls, v, info):
+        if v is None and info.data and 'generated_at' in info.data:
             # Recommendations expire after 7 days
             from datetime import timedelta
-            return values['generated_at'] + timedelta(days=7)
+            return info.data['generated_at'] + timedelta(days=7)
         return v
 
 
