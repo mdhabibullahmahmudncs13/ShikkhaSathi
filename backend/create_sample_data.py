@@ -103,12 +103,11 @@ def create_sample_users(db: Session):
             
         user = User(
             email=user_data["email"],
-            hashed_password=hash_password(user_data["password"]),
+            password_hash=hash_password(user_data["password"]),
             full_name=user_data["full_name"],
             role=user_data["role"],
             grade=user_data.get("grade"),
-            is_active=user_data["is_active"],
-            created_at=datetime.utcnow()
+            is_active=user_data["is_active"]
         )
         db.add(user)
         created_users.append(user)
