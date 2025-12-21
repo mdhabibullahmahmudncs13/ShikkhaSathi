@@ -588,3 +588,292 @@ export interface NotificationSettings {
     includeParents: boolean;
   };
 }
+// Report generation system types
+export type ReportType = 
+  | 'individual_student'
+  | 'class_summary'
+  | 'comparative_analysis'
+  | 'progress_overview'
+  | 'performance_trends'
+  | 'subject_analysis'
+  | 'engagement_report';
+
+export type ExportFormat = 'pdf' | 'csv' | 'excel' | 'json';
+
+export interface ReportTemplate {
+  id: string;
+  name: string;
+  description: string;
+  type: ReportType;
+  sections: string[];
+}
+
+export interface ReportRequest {
+  dateFrom?: Date;
+  dateTo?: Date;
+  templateId?: string;
+}
+
+export interface IndividualStudentReportRequest extends ReportRequest {
+  studentId: string;
+}
+
+export interface ClassSummaryReportRequest extends ReportRequest {
+  classId: string;
+}
+
+export interface ComparativeAnalysisReportRequest extends ReportRequest {
+  classIds: string[];
+}
+
+export interface ReportResponse {
+  reportId: string;
+  reportType: ReportType;
+  reportData: any;
+  generatedAt: Date;
+  generationTimeMs: number;
+}
+
+export interface IndividualStudentReport {
+  reportType: ReportType;
+  studentInfo: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  reportPeriod: {
+    startDate: Date;
+    endDate: Date;
+    days: number;
+  };
+  overviewMetrics: {
+    currentLevel: number;
+    totalXp: number;
+    xpGainedPeriod: number;
+    currentStreak: number;
+    totalTimeSpent: number;
+    quizAttempts: number;
+    assessmentAttempts: number;
+    topicsCompleted: number;
+  };
+  performanceMetrics: {
+    averageQuizScore: number;
+    averageAssessmentScore: number;
+    overallAverage: number;
+  };
+  subjectPerformance: Record<string, {
+    averageScore: number;
+    timeSpent: number;
+    topicsCompleted: number;
+    xpEarned: number;
+  }>;
+  strengths: Array<{
+    subject: string;
+    averageScore: number;
+    topicsCompleted: number;
+  }>;
+  weaknesses: Array<{
+    subject: string;
+    averageScore: number;
+    topicsCompleted: number;
+  }>;
+  recommendations: string[];
+  activityTimeline: Array<{
+    date: Date;
+    activity: string;
+    score?: number;
+    xpEarned?: number;
+  }>;
+  generatedAt: Date;
+}
+
+export interface ClassSummaryReport {
+  reportType: ReportType;
+  classInfo: {
+    id: string;
+    name: string;
+    grade: number;
+    subject: string;
+  };
+  reportPeriod: {
+    startDate: Date;
+    endDate: Date;
+    days: number;
+  };
+  overviewMetrics: {
+    totalStudents: number;
+    activeStudents: number;
+    engagementRate: number;
+    classAverage: number;
+    averageQuizScore: number;
+    totalActivities: number;
+    totalQuizAttempts: number;
+  };
+  subjectPerformance: Record<string, {
+    averageScore: number;
+    participationRate: number;
+    totalTimeSpent: number;
+    topicsCompleted: number;
+  }>;
+  performanceDistribution: {
+    excellent: number;
+    good: number;
+    satisfactory: number;
+    needsImprovement: number;
+  };
+  topPerformers: Array<{
+    studentId: string;
+    studentName: string;
+    averageScore: number;
+  }>;
+  atRiskStudents: Array<{
+    studentId: string;
+    studentName: string;
+    averageScore: number;
+  }>;
+  generatedAt: Date;
+}
+
+export interface ComparativeAnalysisReport {
+  reportType: ReportType;
+  reportPeriod: {
+    startDate: Date;
+    endDate: Date;
+    days: number;
+  };
+  classesCompared: number;
+  comparisonMetrics: {
+    totalStudents: number;
+    averageEngagement: number;
+    averagePerformance: number;
+  };
+  classComparisons: Array<{
+    className: string;
+    classId: string;
+    studentCount: number;
+    engagementRate: number;
+    classAverage: number;
+    topPerformerCount: number;
+    atRiskCount: number;
+  }>;
+  subjectComparison: Record<string, {
+    classData: Array<{
+      className: string;
+      averageScore: number;
+      participationRate: number;
+    }>;
+    overallAverage: number;
+  }>;
+  individualClassReports: ClassSummaryReport[];
+  generatedAt: Date;
+}
+
+export interface ReportExportRequest {
+  reportData: any;
+  format: ExportFormat;
+  filename?: string;
+}
+
+export interface ExportFormatInfo {
+  format: ExportFormat;
+  name: string;
+  description: string;
+  mimeType: string;
+}
+
+export interface ReportGenerationState {
+  isGenerating: boolean;
+  progress: number;
+  currentStep: string;
+  estimatedTimeRemaining?: number;
+}
+
+export interface ReportFilter {
+  reportType?: ReportType;
+  dateRange?: {
+    start: Date;
+    end: Date;
+  };
+  classes?: string[];
+  students?: string[];
+  subjects?: string[];
+}
+
+// Classroom management types
+export interface ClassroomStudent {
+  id: string;
+  name: string;
+  email: string;
+  studentId?: string;
+  grade?: number;
+  totalXP?: number;
+  level?: number;
+  currentStreak?: number;
+  lastActive?: Date;
+  isActive: boolean;
+  isAtRisk: boolean;
+  isHighPerformer: boolean;
+  enrolledAt: Date;
+  parentEmail?: string;
+  parentPhone?: string;
+  notes?: string;
+  permissions?: StudentPermissions;
+}
+
+export interface StudentPermissions {
+  canAccessChat: boolean;
+  canTakeQuizzes: boolean;
+  canViewLeaderboard: boolean;
+  contentRestrictions?: string[];
+  timeRestrictions?: {
+    startTime: string;
+    endTime: string;
+    allowedDays: number[];
+  };
+}
+
+export type BulkOperation = 'activate' | 'deactivate' | 'remove' | 'update_permissions' | 'send_message';
+
+export type StudentFilter = 'all' | 'active' | 'inactive' | 'at_risk' | 'high_performer';
+
+export interface ClassroomSettings {
+  id: string;
+  classId: string;
+  allowSelfEnrollment: boolean;
+  requireApproval: boolean;
+  maxStudents?: number;
+  defaultPermissions: StudentPermissions;
+  contentFilters: string[];
+  assessmentSettings: {
+    allowRetakes: boolean;
+    maxAttempts?: number;
+    timeLimit?: number;
+    showCorrectAnswers: boolean;
+  };
+  communicationSettings: {
+    allowStudentMessages: boolean;
+    allowParentNotifications: boolean;
+    autoProgressReports: boolean;
+  };
+  updatedAt: Date;
+}
+
+export interface StudentImportResult {
+  successful: number;
+  failed: number;
+  duplicates: number;
+  errors?: Array<{
+    row: number;
+    error: string;
+    data: any;
+  }>;
+}
+
+export interface BulkOperationResult {
+  successful: number;
+  failed: number;
+  errors?: Array<{
+    studentId: string;
+    error: string;
+  }>;
+}

@@ -166,8 +166,8 @@ class NotificationSettingsUpdate(BaseModel):
     email_notifications: Optional[bool] = None
     push_notifications: Optional[bool] = None
     sms_notifications: Optional[bool] = None
-    quiet_hours_start: Optional[str] = Field(None, regex=r'^([01]?[0-9]|2[0-3]):[0-5][0-9]$')
-    quiet_hours_end: Optional[str] = Field(None, regex=r'^([01]?[0-9]|2[0-3]):[0-5][0-9]$')
+    quiet_hours_start: Optional[str] = Field(None, pattern=r'^([01]?[0-9]|2[0-3]):[0-5][0-9]$')
+    quiet_hours_end: Optional[str] = Field(None, pattern=r'^([01]?[0-9]|2[0-3]):[0-5][0-9]$')
     weekend_notifications: Optional[bool] = None
     direct_messages: Optional[bool] = None
     group_messages: Optional[bool] = None

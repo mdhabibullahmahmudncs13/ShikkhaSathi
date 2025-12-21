@@ -109,3 +109,19 @@ def require_parent(current_user: User = Depends(get_current_active_user)) -> Use
             detail="Parent access required"
         )
     return current_user
+
+
+def get_current_teacher(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_teacher)
+):
+    """Get current teacher profile"""
+    from app.models.teacher import Teacher
+    
+    teacher = db.query(Teacher).filter(Teacher.user_id == current_user.id).first()
+    if not teacher:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Teacher profile not found"
+        )
+    return teacher

@@ -153,6 +153,32 @@ class ClassAnnouncement(Base):
     teacher = relationship("Teacher")
 
 
+class StudentClass(Base):
+    """Student enrollment in a teacher's class with detailed information"""
+    __tablename__ = "student_classes"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    student_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    teacher_class_id = Column(UUID(as_uuid=True), ForeignKey("teacher_classes.id"), nullable=False)
+    
+    # Enrollment details
+    grade = Column(Integer, nullable=True)  # Student's grade level
+    is_active = Column(Boolean, default=True)
+    enrolled_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Additional information
+    notes = Column(Text, nullable=True)  # Teacher notes about the student
+    permissions = Column(JSON, nullable=False, default=dict)  # Student-specific permissions
+    
+    # Metadata
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    student = relationship("User", foreign_keys=[student_id])
+    teacher_class = relationship("TeacherClass")
+
+
 class StudentClassProgress(Base):
     """Track student progress within a specific teacher's class"""
     __tablename__ = "student_class_progress"

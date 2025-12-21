@@ -60,7 +60,7 @@ class Message(Base):
     sent_at = Column(DateTime, nullable=True)
     
     # Message metadata
-    metadata = Column(JSON, nullable=True)  # Additional data like attachments, formatting
+    message_metadata = Column(JSON, nullable=True)  # Additional data like attachments, formatting
     is_draft = Column(Boolean, default=False, nullable=False)
     is_archived = Column(Boolean, default=False, nullable=False)
     

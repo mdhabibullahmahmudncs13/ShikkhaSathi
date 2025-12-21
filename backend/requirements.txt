@@ -47,3 +47,6 @@ soundfile==0.12.1
 # Local Text-to-Speech Dependencies
 TTS==0.22.0
 pydub==0.25.1
+
+# Data Processing Dependencies
+pandas==2.1.4

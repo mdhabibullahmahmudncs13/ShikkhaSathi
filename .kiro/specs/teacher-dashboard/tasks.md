@@ -176,17 +176,17 @@
   - Add classroom settings and configuration
   - _Requirements: 6.1, 6.2, 6.3, 6.4_
 
-- [ ] 8.1 Build ClassroomManagement component
+- [x] 8.1 Build ClassroomManagement component
   - Create student add/remove interface
   - Implement bulk operations for roster management
   - Add student information editing capabilities
   - _Requirements: 6.1, 6.4_
 
-- [ ] 8.2 Write property test for access control enforcement
+- [x] 8.2 Write property test for access control enforcement
   - **Property 7: Access Control Enforcement**
   - **Validates: Requirements 6.1, 6.2**
 
-- [ ] 8.3 Implement permission and settings system
+- [x] 8.3 Implement permission and settings system
   - Create granular permission controls
   - Add content restriction and filtering options
   - Implement assessment parameter configuration
@@ -198,13 +198,13 @@
   - Add external system API connectors
   - _Requirements: 8.1, 8.2, 8.3, 8.4_
 
-- [ ] 9.1 Build gradebook integration system
+- [x] 9.1 Build gradebook integration system
   - Create CSV import/export functionality
   - Implement grade scale mapping and conversion
   - Add data validation and error handling
   - _Requirements: 8.1, 8.2, 8.4_
 
-- [ ] 9.2 Write property test for data format compatibility
+- [x] 9.2 Write property test for data format compatibility
   - **Property 8: Report Data Integrity** (extended for imports)
   - **Validates: Requirements 8.1, 8.2**
 

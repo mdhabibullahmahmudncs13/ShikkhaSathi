@@ -15,7 +15,7 @@ from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_db, get_current_teacher, get_current_user
+from app.core.deps import get_db, get_current_teacher, get_current_user
 from app.models.teacher import Teacher
 from app.models.user import User
 from app.services.learning_path_service import LearningPathService, DifficultyAdjustmentStrategy
