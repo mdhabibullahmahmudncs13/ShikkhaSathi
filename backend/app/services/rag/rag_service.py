@@ -9,9 +9,19 @@ from typing import List, Dict, Any, Optional
 from pathlib import Path
 import chromadb
 from chromadb.config import Settings
-from langchain_ollama import OllamaEmbeddings
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_core.documents import Document
+
+# Optional imports for AI features
+try:
+    from langchain_ollama import OllamaEmbeddings
+    from langchain_text_splitters import RecursiveCharacterTextSplitter
+    from langchain_core.documents import Document
+    LANGCHAIN_AVAILABLE = True
+except ImportError:
+    LANGCHAIN_AVAILABLE = False
+    OllamaEmbeddings = None
+    RecursiveCharacterTextSplitter = None
+    Document = None
+
 import PyPDF2
 from io import BytesIO
 
@@ -33,6 +43,12 @@ class RAGService:
         self.collection_name = collection_name
         self.persist_directory = persist_directory
         self.model_name = model_name
+        
+        if not LANGCHAIN_AVAILABLE:
+            logger.warning("LangChain dependencies not available. RAG service will run in limited mode.")
+            self.embeddings = None
+            self.text_splitter = None
+            return
         
         # Initialize ChromaDB client
         os.makedirs(persist_directory, exist_ok=True)

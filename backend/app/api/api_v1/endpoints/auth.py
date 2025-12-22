@@ -57,11 +57,16 @@ async def login(
         
         access_token = auth_service.create_session(user)
         return {"access_token": access_token, "token_type": "bearer"}
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
     except Exception as e:
-        print(f"Login error: {e}")  # Debug logging
+        print(f"Login error details: {type(e).__name__}: {str(e)}")  # More detailed logging
+        import traceback
+        traceback.print_exc()  # Print full traceback
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Login failed due to server error"
+            detail=f"Login failed due to server error: {str(e)}"
         )
 
 

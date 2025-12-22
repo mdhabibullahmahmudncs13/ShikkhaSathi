@@ -77,24 +77,43 @@ class QuizService:
             # Get available questions
             available_questions = query.all()
             
+            # If no questions in database, use sample questions for demo
             if not available_questions:
-                raise ValueError(f"No questions found for {subject}/{topic} grade {grade}")
+                logger.info(f"No questions in database for {subject}, using sample questions")
+                available_questions = self._get_sample_questions(subject, grade, topic)
+            
+            if not available_questions:
+                raise ValueError(f"No questions available for {subject}/{topic} grade {grade}")
             
             if len(available_questions) < question_count:
                 logger.warning(f"Only {len(available_questions)} questions available, requested {question_count}")
                 question_count = len(available_questions)
             
-            # Select questions (prioritize less-used questions)
-            selected_questions = self._select_questions(
-                available_questions, question_count, user_id
-            )
+            # Select questions (prioritize less-used questions for DB questions, random for samples)
+            if hasattr(available_questions[0], 'id'):  # Database questions
+                selected_questions = self._select_questions(
+                    available_questions, question_count, user_id
+                )
+            else:  # Sample questions (dict format)
+                selected_questions = random.sample(available_questions, min(question_count, len(available_questions)))
             
             # Determine difficulty and bloom level if not specified
-            if not difficulty_level:
-                difficulty_level = self._calculate_average_difficulty(selected_questions)
-            
-            if not bloom_level:
-                bloom_level = self._calculate_average_bloom_level(selected_questions)
+            if hasattr(selected_questions[0], 'difficulty_level'):  # Database questions
+                if not difficulty_level:
+                    difficulty_level = self._calculate_average_difficulty(selected_questions)
+                
+                if not bloom_level:
+                    bloom_level = self._calculate_average_bloom_level(selected_questions)
+                    
+                question_ids = [str(q.id) for q in selected_questions]
+            else:  # Sample questions (dict format)
+                if not difficulty_level:
+                    difficulty_level = sum(q['difficulty_level'] for q in selected_questions) // len(selected_questions)
+                
+                if not bloom_level:
+                    bloom_level = sum(q['bloom_level'] for q in selected_questions) // len(selected_questions)
+                    
+                question_ids = [q['id'] for q in selected_questions]
             
             # Set default time limit if not specified
             if not time_limit_minutes:
@@ -110,7 +129,7 @@ class QuizService:
                 bloom_level=bloom_level,
                 question_count=question_count,
                 time_limit_minutes=time_limit_minutes,
-                question_ids=[str(q.id) for q in selected_questions],
+                question_ids=question_ids,
                 status='active',
                 expires_at=datetime.utcnow() + timedelta(hours=24)
             )
@@ -122,7 +141,17 @@ class QuizService:
             # Format questions for response (without answers)
             questions_data = []
             for question in selected_questions:
-                q_dict = question.to_dict(include_answer=False, language=language)
+                if hasattr(question, 'to_dict'):  # Database question
+                    q_dict = question.to_dict(include_answer=False, language=language)
+                else:  # Sample question (dict format)
+                    q_dict = {
+                        'id': question['id'],
+                        'question_text': question['question_text'],
+                        'options': question['options'],
+                        'difficulty_level': question['difficulty_level'],
+                        'bloom_level': question['bloom_level']
+                        # Note: correct_answer and explanation are excluded for quiz taking
+                    }
                 questions_data.append(q_dict)
             
             logger.info(f"Generated quiz {quiz.id} with {len(questions_data)} questions")
@@ -496,3 +525,130 @@ class QuizService:
             'message': message,
             'recommendations': recommendations
         }
+    
+    def _get_sample_questions(self, subject: str, grade: int, topic: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Generate sample questions for demo purposes when database is empty"""
+        
+        sample_questions = {
+            'Mathematics': [
+                {
+                    'id': str(uuid4()),
+                    'question_text': 'What is the value of 2 + 3 × 4?',
+                    'options': {'A': '20', 'B': '14', 'C': '10', 'D': '24'},
+                    'correct_answer': 'B',
+                    'explanation': 'Following order of operations (PEMDAS), multiplication comes before addition: 2 + (3 × 4) = 2 + 12 = 14',
+                    'difficulty_level': 2,
+                    'bloom_level': 2
+                },
+                {
+                    'id': str(uuid4()),
+                    'question_text': 'If x + 5 = 12, what is the value of x?',
+                    'options': {'A': '7', 'B': '17', 'C': '5', 'D': '12'},
+                    'correct_answer': 'A',
+                    'explanation': 'To solve x + 5 = 12, subtract 5 from both sides: x = 12 - 5 = 7',
+                    'difficulty_level': 2,
+                    'bloom_level': 3
+                },
+                {
+                    'id': str(uuid4()),
+                    'question_text': 'What is the area of a rectangle with length 8 cm and width 5 cm?',
+                    'options': {'A': '13 cm²', 'B': '26 cm²', 'C': '40 cm²', 'D': '80 cm²'},
+                    'correct_answer': 'C',
+                    'explanation': 'Area of rectangle = length × width = 8 × 5 = 40 cm²',
+                    'difficulty_level': 2,
+                    'bloom_level': 2
+                }
+            ],
+            'Physics': [
+                {
+                    'id': str(uuid4()),
+                    'question_text': 'What is the SI unit of force?',
+                    'options': {'A': 'Joule', 'B': 'Newton', 'C': 'Watt', 'D': 'Pascal'},
+                    'correct_answer': 'B',
+                    'explanation': 'The SI unit of force is Newton (N), named after Sir Isaac Newton',
+                    'difficulty_level': 1,
+                    'bloom_level': 1
+                },
+                {
+                    'id': str(uuid4()),
+                    'question_text': 'If an object travels 100 meters in 10 seconds, what is its speed?',
+                    'options': {'A': '10 m/s', 'B': '100 m/s', 'C': '1000 m/s', 'D': '1 m/s'},
+                    'correct_answer': 'A',
+                    'explanation': 'Speed = Distance ÷ Time = 100 m ÷ 10 s = 10 m/s',
+                    'difficulty_level': 2,
+                    'bloom_level': 3
+                }
+            ],
+            'Chemistry': [
+                {
+                    'id': str(uuid4()),
+                    'question_text': 'What is the chemical symbol for water?',
+                    'options': {'A': 'H2O', 'B': 'CO2', 'C': 'NaCl', 'D': 'O2'},
+                    'correct_answer': 'A',
+                    'explanation': 'Water is composed of 2 hydrogen atoms and 1 oxygen atom, so its formula is H2O',
+                    'difficulty_level': 1,
+                    'bloom_level': 1
+                }
+            ],
+            'ICT': [
+                {
+                    'id': str(uuid4()),
+                    'question_text': 'What does CPU stand for?',
+                    'options': {'A': 'Computer Processing Unit', 'B': 'Central Processing Unit', 'C': 'Central Program Unit', 'D': 'Computer Program Unit'},
+                    'correct_answer': 'B',
+                    'explanation': 'CPU stands for Central Processing Unit, which is the main component that executes instructions in a computer',
+                    'difficulty_level': 1,
+                    'bloom_level': 1
+                },
+                {
+                    'id': str(uuid4()),
+                    'question_text': 'Which of the following is an input device?',
+                    'options': {'A': 'Monitor', 'B': 'Printer', 'C': 'Keyboard', 'D': 'Speaker'},
+                    'correct_answer': 'C',
+                    'explanation': 'A keyboard is an input device used to enter data into a computer',
+                    'difficulty_level': 1,
+                    'bloom_level': 2
+                }
+            ],
+            'English': [
+                {
+                    'id': str(uuid4()),
+                    'question_text': 'Which of the following is a noun?',
+                    'options': {'A': 'Run', 'B': 'Beautiful', 'C': 'Book', 'D': 'Quickly'},
+                    'correct_answer': 'C',
+                    'explanation': 'A noun is a word that names a person, place, thing, or idea. "Book" is a thing, so it is a noun',
+                    'difficulty_level': 1,
+                    'bloom_level': 2
+                }
+            ],
+            'Bangla': [
+                {
+                    'id': str(uuid4()),
+                    'question_text': 'বাংলা ভাষার মূল উৎস কী?',
+                    'options': {'A': 'সংস্কৃত', 'B': 'পালি', 'C': 'প্রাকৃত', 'D': 'অপভ্রংশ'},
+                    'correct_answer': 'A',
+                    'explanation': 'বাংলা ভাষার মূল উৎস সংস্কৃত ভাষা',
+                    'difficulty_level': 2,
+                    'bloom_level': 1
+                }
+            ]
+        }
+        
+        # Get questions for the subject
+        questions = sample_questions.get(subject, [])
+        
+        # If no questions for this subject, create a generic one
+        if not questions:
+            questions = [
+                {
+                    'id': str(uuid4()),
+                    'question_text': f'Sample question for {subject}',
+                    'options': {'A': 'Option A', 'B': 'Option B', 'C': 'Option C', 'D': 'Option D'},
+                    'correct_answer': 'A',
+                    'explanation': f'This is a sample question for {subject}. In a real system, this would be replaced with actual curriculum content.',
+                    'difficulty_level': 2,
+                    'bloom_level': 2
+                }
+            ]
+        
+        return questions

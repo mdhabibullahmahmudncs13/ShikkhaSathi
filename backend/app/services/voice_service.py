@@ -13,8 +13,16 @@ import tempfile
 import uuid
 import logging
 from app.core.config import settings
-from .local_whisper_service import local_whisper_service
-from .local_tts_service import local_tts_service
+
+# Optional imports for voice services
+try:
+    from .local_whisper_service import local_whisper_service
+    from .local_tts_service import local_tts_service
+    VOICE_SERVICES_AVAILABLE = True
+except ImportError:
+    local_whisper_service = None
+    local_tts_service = None
+    VOICE_SERVICES_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +30,12 @@ class VoiceService:
     """Service for handling voice input/output operations using local models"""
     
     def __init__(self):
+        if not VOICE_SERVICES_AVAILABLE:
+            logger.warning("Voice services dependencies not available. Voice features will be disabled.")
+            self.local_whisper = None
+            self.local_tts = None
+            return
+            
         # Keep API keys for fallback (optional)
         self.whisper_api_key = getattr(settings, 'OPENAI_API_KEY', None)
         self.elevenlabs_api_key = getattr(settings, 'ELEVENLABS_API_KEY', None)

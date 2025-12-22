@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
-import QuizSelection from '../components/quiz/QuizSelection';
+import SimpleQuizSelection from '../components/quiz/SimpleQuizSelection';
 import QuizInterface from '../components/quiz/QuizInterface';
 import QuizResults from '../components/quiz/QuizResults';
 import { Quiz, QuizResult } from '../types/quiz';
@@ -52,7 +52,7 @@ const QuizPage: React.FC = () => {
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 py-8">
         {stage === 'selection' && (
-          <QuizSelection onQuizStart={handleQuizStart} />
+          <SimpleQuizSelection onQuizStart={handleQuizStart} />
         )}
         
         {stage === 'taking' && currentQuiz && (
