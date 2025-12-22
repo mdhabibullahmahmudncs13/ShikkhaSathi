@@ -32,6 +32,11 @@ from .message import (
     MessagePriority,
     DeliveryStatus
 )
+from .parent_child import (
+    ParentChildRelationship,
+    ParentChildInvitation,
+    RelationshipType
+)
 
 __all__ = [
     "User",
@@ -65,5 +70,8 @@ __all__ = [
     "MessageNotificationSettings",
     "MessageType",
     "MessagePriority",
-    "DeliveryStatus"
+    "DeliveryStatus",
+    "ParentChildRelationship",
+    "ParentChildInvitation",
+    "RelationshipType"
 ]
