@@ -146,7 +146,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Average Score</p>
-                <p className="text-2xl font-bold text-gray-900">{classMetrics.averageScore}%</p>
+                <p className="text-2xl font-bold text-gray-900">{classMetrics?.averageScore || 0}%</p>
               </div>
             </div>
           </div>
@@ -158,7 +158,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Completion Rate</p>
-                <p className="text-2xl font-bold text-gray-900">{classMetrics.completionRate}%</p>
+                <p className="text-2xl font-bold text-gray-900">{classMetrics?.completionRate || 0}%</p>
               </div>
             </div>
           </div>
@@ -171,7 +171,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Active Students</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {classMetrics.engagementMetrics.dailyActiveUsers}
+                  {classMetrics?.engagementMetrics?.dailyActiveUsers || 0}
                 </p>
               </div>
             </div>
@@ -184,7 +184,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">At Risk Students</p>
-                <p className="text-2xl font-bold text-gray-900">{atRiskStudents.length}</p>
+                <p className="text-2xl font-bold text-gray-900">{atRiskStudents?.length || 0}</p>
               </div>
             </div>
           </div>
@@ -192,17 +192,17 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
       )}
 
       {/* At-Risk Students Alert */}
-      {activeView === 'overview' && atRiskStudents.length > 0 && (
+      {activeView === 'overview' && atRiskStudents && atRiskStudents.length > 0 && (
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
           <div className="flex items-center mb-4">
             <AlertTriangle className="h-5 w-5 text-yellow-600 mr-2" />
             <h3 className="text-lg font-semibold text-yellow-900">
-              Students Requiring Attention ({atRiskStudents.length})
+              Students Requiring Attention ({atRiskStudents?.length || 0})
             </h3>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {atRiskStudents.slice(0, 6).map((student) => (
+            {atRiskStudents?.slice(0, 6).map((student) => (
               <div
                 key={student.id}
                 className="bg-white p-4 rounded-lg border cursor-pointer hover:shadow-md transition-shadow"
@@ -221,16 +221,16 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                 <div className="text-sm text-gray-600">
                   <p>Score: {student.averageScore}%</p>
                   <p>Streak: {student.currentStreak} days</p>
-                  <p>Weak areas: {student.weakAreas.length}</p>
+                  <p>Weak areas: {student.weakAreas?.length || 0}</p>
                 </div>
               </div>
             ))}
           </div>
           
-          {atRiskStudents.length > 6 && (
+          {atRiskStudents && atRiskStudents.length > 6 && (
             <div className="mt-4 text-center">
               <button className="text-yellow-700 hover:text-yellow-900 font-medium">
-                View all {atRiskStudents.length} at-risk students →
+                View all {atRiskStudents?.length || 0} at-risk students →
               </button>
             </div>
           )}
@@ -254,14 +254,14 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
       )}
 
       {/* Weakness Patterns Summary */}
-      {activeView === 'overview' && weaknessPatterns.length > 0 && (
+      {activeView === 'overview' && weaknessPatterns && weaknessPatterns.length > 0 && (
         <div className="bg-white rounded-lg shadow-sm border p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
             Key Insights & Recommendations
           </h3>
           
           <div className="space-y-4">
-            {weaknessPatterns.slice(0, 3).map((pattern, index) => (
+            {weaknessPatterns?.slice(0, 3).map((pattern, index) => (
               <div
                 key={index}
                 className={`border rounded-lg p-4 ${

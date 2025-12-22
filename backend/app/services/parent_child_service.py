@@ -13,13 +13,13 @@ import uuid
 
 from app.models.user import User, UserRole
 from app.models.parent_child import ParentChildRelationship, ParentChildInvitation, RelationshipType
-from app.services.notification_service import NotificationService
+from app.services.parent_notification_service import ParentNotificationService
 
 
 class ParentChildService:
     def __init__(self, db: Session):
         self.db = db
-        self.notification_service = NotificationService(db)
+        self.notification_service = ParentNotificationService(db)
 
     def get_parent_children(self, parent_id: str) -> List[Dict[str, Any]]:
         """Get all children linked to a parent"""
