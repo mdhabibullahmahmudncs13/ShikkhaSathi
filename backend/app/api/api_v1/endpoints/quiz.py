@@ -30,7 +30,7 @@ async def generate_quiz(
     db: Session = Depends(get_db)
 ):
     """
-    Generate a quiz using RAG content from NCTB textbooks
+    Generate a quiz using RAG content from NCTB textbooks or fallback to question bank
     
     - **subject**: Subject name (e.g., Mathematics, Physics, ICT, English, Bangla)
     - **topic**: Optional topic filter
@@ -41,32 +41,47 @@ async def generate_quiz(
     - **language**: 'english' or 'bangla'
     """
     try:
-        logger.info(f"Generating RAG quiz for user {current_user.id}: {request.subject}/{request.topic}")
+        logger.info(f"Generating quiz for user {current_user.id}: {request.subject}/{request.topic}")
         
-        # Use RAG quiz service for dynamic question generation
-        rag_service = get_rag_quiz_service(db)
-        
-        quiz_data = await rag_service.generate_quiz(
-            user_id=current_user.id,
-            subject=request.subject,
-            topic=request.topic,
-            grade=request.grade or current_user.grade or 10,
-            difficulty_level=request.difficulty_level,
-            question_count=min(request.question_count, 20),  # Limit to 20 questions
-            time_limit_minutes=request.time_limit_minutes,
-            language=request.language or 'english'
-        )
-        
-        return quiz_data
+        # Try RAG quiz service first, fallback to regular quiz service
+        try:
+            rag_service = get_rag_quiz_service(db)
+            quiz_data = await rag_service.generate_quiz(
+                user_id=current_user.id,
+                subject=request.subject,
+                topic=request.topic,
+                grade=request.grade or current_user.grade or 10,
+                difficulty_level=request.difficulty_level,
+                question_count=min(request.question_count, 20),  # Limit to 20 questions
+                time_limit_minutes=request.time_limit_minutes,
+                language=request.language or 'english'
+            )
+            return quiz_data
+        except Exception as rag_error:
+            logger.warning(f"RAG quiz generation failed, falling back to question bank: {rag_error}")
+            
+            # Fallback to regular quiz service
+            quiz_service = get_quiz_service(db)
+            quiz_data = quiz_service.generate_quiz(
+                user_id=current_user.id,
+                subject=request.subject,
+                topic=request.topic,
+                grade=request.grade or current_user.grade or 10,
+                difficulty_level=request.difficulty_level,
+                question_count=min(request.question_count, 20),
+                time_limit_minutes=request.time_limit_minutes,
+                language=request.language or 'english'
+            )
+            return quiz_data
         
     except ValueError as e:
-        logger.warning(f"RAG quiz generation failed: {e}")
+        logger.warning(f"Quiz generation failed: {e}")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e)
         )
     except Exception as e:
-        logger.error(f"RAG quiz generation error: {e}")
+        logger.error(f"Quiz generation error: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to generate quiz: {str(e)}"
