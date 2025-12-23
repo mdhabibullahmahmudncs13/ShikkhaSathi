@@ -16,24 +16,25 @@ const UserMenu: React.FC = () => {
       .slice(0, 2);
   };
 
-  const displayName = user?.full_name || user?.first_name || 'User';
+  const displayName = user?.full_name || user?.first_name || 'Student Name';
   const initials = getInitials(displayName);
 
   return (
     <div className="relative">
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+        className="flex items-center gap-3 cursor-pointer pl-2"
       >
-        <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-medium text-sm">
+        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-md ring-4 ring-blue-50 dark:ring-slate-800">
           {initials}
         </div>
-        <span className="hidden sm:block text-sm font-medium text-gray-700">
-          {displayName.split(' ')[0]} {/* Show first name only */}
-        </span>
-        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
+        <div className="hidden md:block max-w-[150px]">
+          <p className="text-sm font-bold text-slate-700 truncate">{displayName}</p>
+          <p className="text-xs text-slate-500 truncate">
+            {user?.grade ? `Class ${user.grade} • ` : 'Class 6 • '}Science
+          </p>
+        </div>
+        <span className="material-icons-round text-slate-400 text-sm">expand_more</span>
       </button>
       
       {/* Dropdown Menu */}
@@ -44,26 +45,29 @@ const UserMenu: React.FC = () => {
             className="fixed inset-0 z-40" 
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50">
-            <div className="px-4 py-2 border-b border-gray-200">
-              <p className="text-sm font-medium text-gray-900">{displayName}</p>
-              <p className="text-xs text-gray-500">{user?.email}</p>
+          <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50">
+            <div className="px-4 py-3 border-b border-gray-200">
+              <p className="text-sm font-bold text-gray-900 break-words">{displayName}</p>
+              <p className="text-xs text-gray-500 break-all mt-1">{user?.email}</p>
               {user?.grade && (
-                <p className="text-xs text-gray-500">Grade {user.grade} • {user.medium}</p>
+                <p className="text-xs text-gray-500 mt-1">Grade {user.grade} • {user.medium}</p>
               )}
             </div>
-            <a href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
-              👤 Profile Settings
+            <a href="/profile" className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+              <span className="material-icons-round text-purple-500 mr-3 text-lg">person</span>
+              Profile Settings
             </a>
-            <a href="/settings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
-              ⚙️ Account Settings
+            <a href="/settings" className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+              <span className="material-icons-round text-gray-500 mr-3 text-lg">settings</span>
+              Account Settings
             </a>
-            <div className="border-t border-gray-200 my-2"></div>
+            <div className="border-t border-gray-200 my-1"></div>
             <button 
               onClick={logout}
-              className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+              className="flex items-center w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors"
             >
-              🚪 Sign Out
+              <span className="material-icons-round text-red-500 mr-3 text-lg">logout</span>
+              Sign Out
             </button>
           </div>
         </>
@@ -88,196 +92,264 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
 
+  // Debug function for mobile sidebar
+  const handleSidebarToggle = (action: 'open' | 'close') => {
+    console.log(`Sidebar ${action} clicked`);
+    setSidebarOpen(action === 'open');
+  };
+
   const subjects = [
-    { name: 'Mathematics', icon: '📊', color: 'bg-blue-500' },
-    { name: 'Physics', icon: '⚛️', color: 'bg-purple-500' },
-    { name: 'Chemistry', icon: '🧪', color: 'bg-green-500' },
-    { name: 'Biology', icon: '🧬', color: 'bg-red-500' },
-    { name: 'Bangla', icon: '📚', color: 'bg-yellow-500' },
-    { name: 'English', icon: '🌍', color: 'bg-indigo-500' },
-    { name: 'ICT', icon: '💻', color: 'bg-gray-500' },
+    { name: 'Mathematics', icon: 'bar_chart', color: 'text-blue-500', bgColor: 'bg-blue-500', progress: 35 },
+    { name: 'Physics', icon: 'science', color: 'text-purple-500', bgColor: 'bg-purple-500', progress: 12 },
+    { name: 'Chemistry', icon: 'biotech', color: 'text-teal-500', bgColor: 'bg-teal-500', progress: 5 },
+    { name: 'Biology', icon: 'spa', color: 'text-green-500', bgColor: 'bg-green-500', progress: 0 },
   ];
 
   const unreadNotifications = notifications.filter(n => !n.read);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="flex h-screen overflow-hidden">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div 
           className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
+          onClick={() => handleSidebarToggle('close')}
         />
       )}
 
-      {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
+      {/* Mobile Sidebar */}
+      <div className={`fixed inset-y-0 left-0 w-72 bg-white border-r border-slate-200 flex flex-col shrink-0 overflow-y-auto transition-transform duration-300 ease-in-out shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)] z-50 lg:hidden ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
-        <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 flex-shrink-0">
-          <h1 className="text-xl font-bold text-gray-900 truncate">ShikkhaSathi</h1>
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-600 flex-shrink-0"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+        <div className="p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
+                <span className="material-icons-round text-white text-2xl">local_library</span>
+              </div>
+              <h1 className="text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-indigo-600">Shikshasathi</h1>
+            </div>
+            <button
+              onClick={() => handleSidebarToggle('close')}
+              className="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+            >
+              <span className="material-icons-round">close</span>
+            </button>
+          </div>
         </div>
 
-        <nav className="mt-6 px-3 overflow-y-auto overflow-x-hidden" style={{ maxHeight: 'calc(100vh - 4rem)' }}>
-          {/* Quick Actions */}
-          <div className="mb-8">
-            <h3 className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Quick Actions</h3>
-            <div className="mt-2 space-y-1">
-              <button className="w-full flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100 hover:text-gray-900">
-                <span className="mr-3">🎯</span>
-                Take Quiz
-              </button>
-              <button className="w-full flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100 hover:text-gray-900">
-                <span className="mr-3">💬</span>
-                AI Tutor Chat
-              </button>
-              <button className="w-full flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100 hover:text-gray-900">
-                <span className="mr-3">📖</span>
-                Study Materials
-              </button>
-            </div>
-          </div>
+        <div className="px-6 py-4">
+          <h3 className="px-2 text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Quick Actions</h3>
+          <nav className="space-y-3">
+            <a 
+              onClick={() => handleSidebarToggle('close')}
+              className="flex items-center px-4 py-3 text-sm font-semibold text-rose-700 bg-rose-50 rounded-DEFAULT hover:bg-rose-100 transition-all group shadow-sm hover:shadow-md border border-rose-100 cursor-pointer"
+            >
+              <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center mr-3 shadow-sm">
+                <span className="material-icons-round text-rose-500 text-lg">quiz</span>
+              </div>
+              Take Quiz
+            </a>
+            <a 
+              onClick={() => handleSidebarToggle('close')}
+              className="flex items-center px-4 py-3 text-sm font-semibold text-violet-700 bg-violet-50 rounded-DEFAULT hover:bg-violet-100 transition-all group shadow-sm hover:shadow-md border border-violet-100 cursor-pointer"
+            >
+              <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center mr-3 shadow-sm">
+                <span className="material-icons-round text-violet-500 text-lg">smart_toy</span>
+              </div>
+              AI Tutor Chat
+            </a>
+            <a 
+              onClick={() => handleSidebarToggle('close')}
+              className="flex items-center px-4 py-3 text-sm font-semibold text-emerald-700 bg-emerald-50 rounded-DEFAULT hover:bg-emerald-100 transition-all group shadow-sm hover:shadow-md border border-emerald-100 cursor-pointer"
+            >
+              <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center mr-3 shadow-sm">
+                <span className="material-icons-round text-emerald-500 text-lg">menu_book</span>
+              </div>
+              Study Materials
+            </a>
+          </nav>
+        </div>
 
-          {/* Subjects */}
-          <div>
-            <h3 className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Subjects</h3>
-            <div className="mt-2 space-y-1">
-              {subjects.map((subject) => {
-                const progress = studentProgress.subjectProgress.find(p => p.subject === subject.name);
-                const completionPercentage = progress?.completionPercentage || 0;
-                
-                return (
-                  <div
-                    key={subject.name}
-                    className="w-full px-3 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100 hover:text-gray-900 cursor-pointer"
-                  >
-                    <div className="flex items-start gap-2">
-                      <span className="text-lg flex-shrink-0 mt-0.5">{subject.icon}</span>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2 mb-1.5">
-                          <span className="text-sm font-medium truncate flex-1">{subject.name}</span>
-                          <span className="text-xs text-gray-500 flex-shrink-0 tabular-nums">{Math.round(completionPercentage)}%</span>
-                        </div>
-                        {/* Progress bar with strict width constraints */}
-                        <div 
-                          className="relative h-1.5 bg-gray-200 rounded-full"
-                          style={{ 
-                            width: '100%',
-                            maxWidth: '100%',
-                            overflow: 'hidden'
-                          }}
-                        >
-                          <div 
-                            className={`absolute top-0 left-0 h-full rounded-full transition-all duration-300 ease-out ${subject.color}`}
-                            style={{ 
-                              width: `${Math.min(Math.max(completionPercentage, 0), 100)}%`,
-                              maxWidth: '100%'
-                            }}
-                          />
-                        </div>
-                      </div>
+        <div className="px-6 py-2 flex-1">
+          <h3 className="px-2 text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Subjects</h3>
+          <div className="space-y-2">
+            {subjects.map((subject) => {
+              const progress = studentProgress.subjectProgress.find(p => p.subject === subject.name);
+              const completionPercentage = progress?.completionPercentage || subject.progress;
+              
+              return (
+                <div 
+                  key={subject.name} 
+                  onClick={() => handleSidebarToggle('close')}
+                  className="group cursor-pointer p-2 rounded-lg hover:bg-blue-50 transition-colors"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className={`flex items-center text-sm font-medium text-slate-600 group-hover:text-blue-600`}>
+                      <span className={`material-icons-round mr-3 ${subject.color}`}>{subject.icon}</span>
+                      {subject.name}
                     </div>
+                    <span className={`text-xs font-semibold ${subject.color} bg-blue-100 px-2 py-0.5 rounded-full`}>
+                      {Math.round(completionPercentage)}%
+                    </span>
                   </div>
-                );
-              })}
-            </div>
+                  <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                    <div 
+                      className={`${subject.bgColor} h-2 rounded-full`}
+                      style={{ width: `${completionPercentage}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
           </div>
-        </nav>
+        </div>
       </div>
 
-      {/* Main content */}
-      <div className="lg:pl-64 w-full">
-        {/* Header */}
-        <header className="bg-white shadow-sm border-b border-gray-200">
-          <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center">
-              <button className="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-600">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              </button>
-              <div className="ml-4 lg:ml-0">
-                <h2 className="text-lg font-semibold text-gray-900">Dashboard</h2>
-                <p className="text-sm text-gray-500">Welcome back! Ready to learn?</p>
-              </div>
+      {/* Desktop Sidebar */}
+      <aside className="w-72 bg-white border-r border-slate-200 flex flex-col shrink-0 overflow-y-auto hidden lg:flex transition-colors duration-200 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)] z-20">
+        <div className="p-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
+              <span className="material-icons-round text-white text-2xl">local_library</span>
             </div>
-            <div className="flex items-center space-x-4">
-              {/* XP and Level Display */}
-              <div className="hidden sm:flex items-center space-x-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-full">
-                <span className="text-sm font-medium">Level {studentProgress.currentLevel}</span>
-                <span className="text-xs opacity-75">•</span>
-                <span className="text-sm">{studentProgress.totalXP} XP</span>
+            <h1 className="text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-indigo-600">Shikshasathi</h1>
+          </div>
+        </div>
+
+        <div className="px-6 py-4">
+          <h3 className="px-2 text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Quick Actions</h3>
+          <nav className="space-y-3">
+            <a className="flex items-center px-4 py-3 text-sm font-semibold text-rose-700 bg-rose-50 rounded-DEFAULT hover:bg-rose-100 transition-all group shadow-sm hover:shadow-md border border-rose-100" href="#">
+              <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center mr-3 shadow-sm">
+                <span className="material-icons-round text-rose-500 text-lg">quiz</span>
               </div>
+              Take Quiz
+            </a>
+            <a className="flex items-center px-4 py-3 text-sm font-semibold text-violet-700 bg-violet-50 rounded-DEFAULT hover:bg-violet-100 transition-all group shadow-sm hover:shadow-md border border-violet-100" href="#">
+              <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center mr-3 shadow-sm">
+                <span className="material-icons-round text-violet-500 text-lg">smart_toy</span>
+              </div>
+              AI Tutor Chat
+            </a>
+            <a className="flex items-center px-4 py-3 text-sm font-semibold text-emerald-700 bg-emerald-50 rounded-DEFAULT hover:bg-emerald-100 transition-all group shadow-sm hover:shadow-md border border-emerald-100" href="#">
+              <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center mr-3 shadow-sm">
+                <span className="material-icons-round text-emerald-500 text-lg">menu_book</span>
+              </div>
+              Study Materials
+            </a>
+          </nav>
+        </div>
 
-              {/* Notifications */}
-              <div className="relative">
-                <button
-                  onClick={() => setNotificationsOpen(!notificationsOpen)}
-                  className="p-2 rounded-full text-gray-400 hover:text-gray-600 relative"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM11 19H7a2 2 0 01-2-2V7a2 2 0 012-2h5m4 0v6m0 0l3-3m-3 3l-3-3" />
-                  </svg>
-                  {unreadNotifications.length > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                      {unreadNotifications.length}
-                    </span>
-                  )}
-                </button>
-
-                {/* Notifications dropdown */}
-                {notificationsOpen && (
-                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-50">
-                    <div className="p-4">
-                      <h3 className="text-lg font-medium text-gray-900 mb-3">Notifications</h3>
-                      <div className="space-y-3 max-h-64 overflow-y-auto">
-                        {notifications.slice(0, 5).map((notification) => (
-                          <div
-                            key={notification.id}
-                            className={`p-3 rounded-md cursor-pointer ${
-                              notification.read ? 'bg-gray-50' : 'bg-blue-50 border-l-4 border-blue-500'
-                            }`}
-                            onClick={() => onNotificationRead(notification.id)}
-                          >
-                            <div className="flex items-start">
-                              <div className="flex-1">
-                                <p className="text-sm font-medium text-gray-900">{notification.title}</p>
-                                <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
-                                <p className="text-xs text-gray-400 mt-1">
-                                  {new Date(notification.timestamp).toLocaleDateString()}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                      {notifications.length === 0 && (
-                        <p className="text-sm text-gray-500 text-center py-4">No notifications</p>
-                      )}
+        <div className="px-6 py-2 flex-1">
+          <h3 className="px-2 text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Subjects</h3>
+          <div className="space-y-2">
+            {subjects.map((subject) => {
+              const progress = studentProgress.subjectProgress.find(p => p.subject === subject.name);
+              const completionPercentage = progress?.completionPercentage || subject.progress;
+              
+              return (
+                <div key={subject.name} className="group cursor-pointer p-2 rounded-lg hover:bg-blue-50 transition-colors">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className={`flex items-center text-sm font-medium text-slate-600 group-hover:text-blue-600`}>
+                      <span className={`material-icons-round mr-3 ${subject.color}`}>{subject.icon}</span>
+                      {subject.name}
                     </div>
+                    <span className={`text-xs font-semibold ${subject.color} bg-blue-100 px-2 py-0.5 rounded-full`}>
+                      {Math.round(completionPercentage)}%
+                    </span>
                   </div>
-                )}
-              </div>
+                  <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                    <div 
+                      className={`${subject.bgColor} h-2 rounded-full`}
+                      style={{ width: `${completionPercentage}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </aside>
 
-              {/* User menu */}
+      {/* Main content */}
+      <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-background-light dark:bg-background-dark">
+        {/* Header */}
+        <header className="bg-white border-b border-slate-200 h-20 flex items-center justify-between px-8 shadow-sm z-10 sticky top-0">
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => handleSidebarToggle('open')}
+              className="lg:hidden p-2.5 text-slate-500 hover:text-slate-700 bg-slate-100 rounded-full transition-colors"
+            >
+              <span className="material-icons-round">menu</span>
+            </button>
+            <div className="flex flex-col">
+              <h2 className="text-xl font-bold text-slate-800 leading-tight">Dashboard</h2>
+              <p className="text-sm text-slate-700">Good morning! Ready to learn?</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="hidden sm:flex items-center bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg shadow-orange-500/20">
+              <span className="material-icons-round text-base mr-1">emoji_events</span>
+              <span className="mr-2">Level {studentProgress.currentLevel}</span>
+              <span className="w-1 h-3 bg-white/30 rounded-full mx-1"></span>
+              <span>{studentProgress.totalXP} XP</span>
+            </div>
+            <button 
+              onClick={() => setNotificationsOpen(!notificationsOpen)}
+              className="relative p-2.5 text-slate-500 hover:text-slate-700 bg-slate-100 rounded-full transition-colors"
+            >
+              <span className="material-icons-round">notifications_none</span>
+              {unreadNotifications.length > 0 && (
+                <span className="absolute top-2 right-2.5 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-white"></span>
+              )}
+            </button>
+            <div className="flex items-center gap-3 cursor-pointer pl-2">
               <UserMenu />
             </div>
           </div>
+
+          {/* Notifications dropdown */}
+          {notificationsOpen && (
+            <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-50">
+              <div className="p-4">
+                <h3 className="text-lg font-medium text-gray-900 mb-3">Notifications</h3>
+                <div className="space-y-3 max-h-64 overflow-y-auto">
+                  {notifications.slice(0, 5).map((notification) => (
+                    <div
+                      key={notification.id}
+                      className={`p-3 rounded-md cursor-pointer ${
+                        notification.read ? 'bg-gray-50' : 'bg-blue-50 border-l-4 border-blue-500'
+                      }`}
+                      onClick={() => onNotificationRead(notification.id)}
+                    >
+                      <div className="flex items-start">
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-gray-900">{notification.title}</p>
+                          <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            {new Date(notification.timestamp).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {notifications.length === 0 && (
+                  <p className="text-sm text-gray-500 text-center py-4">No notifications</p>
+                )}
+              </div>
+            </div>
+          )}
         </header>
 
         {/* Main content area */}
-        <main className="p-4 sm:p-6 lg:p-8 w-full max-w-7xl mx-auto">
-          {children}
-        </main>
-      </div>
+        <div className="flex-1 overflow-y-auto p-4 sm:p-8">
+          <div className="max-w-7xl mx-auto">
+            {children}
+          </div>
+        </div>
+      </main>
     </div>
   );
 };

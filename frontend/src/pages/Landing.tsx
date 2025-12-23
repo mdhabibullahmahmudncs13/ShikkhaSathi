@@ -1,13 +1,64 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const Landing = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-primary-50 via-accent-50 to-white pt-20 pb-32 overflow-hidden">
+    <div className="min-h-screen flex flex-col relative overflow-x-hidden">
+      {/* Mesh Gradient Background */}
+      <div className="absolute inset-0 z-0 opacity-70 pointer-events-none" style={{
+        backgroundColor: 'hsla(270, 100%, 98%, 1)',
+        backgroundImage: `
+          radial-gradient(at 40% 20%, hsla(280,100%,90%,1) 0px, transparent 50%),
+          radial-gradient(at 80% 0%, hsla(260,100%,90%,1) 0px, transparent 50%),
+          radial-gradient(at 0% 50%, hsla(300,100%,92%,1) 0px, transparent 50%),
+          radial-gradient(at 80% 50%, hsla(250,100%,92%,1) 0px, transparent 50%),
+          radial-gradient(at 0% 100%, hsla(270,100%,90%,1) 0px, transparent 50%),
+          radial-gradient(at 80% 100%, hsla(290,100%,92%,1) 0px, transparent 50%),
+          radial-gradient(at 0% 0%, hsla(260,100%,95%,1) 0px, transparent 50%)
+        `
+      }}></div>
+
+      {/* Navigation Header */}
+      <nav className="w-full z-50 bg-white/80 backdrop-blur-md border-b border-purple-100 sticky top-0">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16 items-center">
+            <div className="shrink-0 flex items-center gap-2 cursor-pointer">
+              <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+              <span className="font-bold text-xl tracking-tight text-gray-900">ShikkhaSathi</span>
+            </div>
+            <div className="hidden md:flex space-x-8">
+              <a className="text-sm font-medium text-gray-600 hover:text-purple-600 transition-colors" href="#features">Features</a>
+              <a className="text-sm font-medium text-gray-600 hover:text-purple-600 transition-colors" href="#about">About</a>
+              <a className="text-sm font-medium text-gray-600 hover:text-purple-600 transition-colors" href="#pricing">Pricing</a>
+              <a className="text-sm font-medium text-gray-600 hover:text-purple-600 transition-colors" href="#contact">Contact</a>
+            </div>
+            <div className="hidden md:flex items-center space-x-4">
+              <a className="text-sm font-medium text-gray-700 hover:text-purple-600 transition-colors" href="/login">Log In</a>
+              <button 
+                onClick={() => navigate('/signup')}
+                className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-full text-sm font-medium transition-all shadow-lg shadow-purple-500/30"
+              >
+                Get Started
+              </button>
+            </div>
+            <div className="md:hidden flex items-center">
+              <button className="text-gray-500 hover:text-gray-700 focus:outline-none">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* Main Content */}
+      <div className="grow relative z-10">
+        {/* Hero Section */}
+        <section className="relative pt-20 pb-32 overflow-hidden">
         {/* Decorative elements */}
         <div className="absolute top-0 right-0 w-96 h-96 bg-primary-100 rounded-full blur-3xl opacity-30 -z-10"></div>
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-accent-100 rounded-full blur-3xl opacity-30 -z-10"></div>
@@ -70,10 +121,10 @@ const Landing = () => {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-24 bg-neutral-50">
+      <section id="features" className="py-24 bg-white/80 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-20">
-            <span className="inline-block px-4 py-2 bg-primary text-neutral-900 rounded-full text-sm font-bold mb-4 shadow-sm">
+            <span className="inline-block px-4 py-2 bg-purple-600 text-white rounded-full text-sm font-bold mb-4 shadow-sm">
               প্ল্যাটফর্ম বৈশিষ্ট্য
             </span>
             <h2 className="text-5xl font-bold text-neutral-900 mb-6 font-bengali">
@@ -86,9 +137,9 @@ const Landing = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {/* AI Tutor */}
-            <div className="group bg-white rounded-2xl p-8 border-2 border-primary/30 hover:border-primary hover:shadow-neon transition-all">
-              <div className="w-16 h-16 bg-primary rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-sm">
-                <svg className="w-9 h-9 text-neutral-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="group bg-white rounded-2xl p-8 border-2 border-purple-200 hover:border-purple-600 hover:shadow-2xl hover:shadow-purple-200/50 transition-all">
+              <div className="w-16 h-16 bg-purple-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-sm">
+                <svg className="w-9 h-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                 </svg>
               </div>
@@ -98,15 +149,15 @@ const Landing = () => {
               </p>
               <ul className="space-y-3 text-sm text-neutral-700">
                 <li className="flex items-center gap-3">
-                  <span className="flex-shrink-0 w-5 h-5 bg-primary text-neutral-900 rounded-full flex items-center justify-center text-xs font-bold">✓</span>
+                  <span className="shrink-0 w-5 h-5 bg-purple-600 text-white rounded-full flex items-center justify-center text-xs font-bold">✓</span>
                   <span>তাৎক্ষণিক সাহায্য</span>
                 </li>
                 <li className="flex items-center gap-3">
-                  <span className="flex-shrink-0 w-5 h-5 bg-primary text-neutral-900 rounded-full flex items-center justify-center text-xs font-bold">✓</span>
+                  <span className="shrink-0 w-5 h-5 bg-purple-600 text-white rounded-full flex items-center justify-center text-xs font-bold">✓</span>
                   <span>ভয়েস সাপোর্ট</span>
                 </li>
                 <li className="flex items-center gap-3">
-                  <span className="flex-shrink-0 w-5 h-5 bg-primary text-neutral-900 rounded-full flex items-center justify-center text-xs font-bold">✓</span>
+                  <span className="shrink-0 w-5 h-5 bg-purple-600 text-white rounded-full flex items-center justify-center text-xs font-bold">✓</span>
                   <span>বাংলা ও ইংরেজি</span>
                 </li>
               </ul>
@@ -310,6 +361,7 @@ const Landing = () => {
           </button>
         </div>
       </section>
+      </div>
 
       {/* Footer */}
       <footer className="bg-neutral-900 text-neutral-300 py-12">

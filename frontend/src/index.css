@@ -3,6 +3,40 @@
 /* Import Bengali font */
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap');
 
+/* Body styling to match the HTML design */
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #FFFFFF; /* Pure white background like in the image */
+  color: #1e293b; /* slate-800 */
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: color 0.2s, background-color 0.2s;
+  overflow-x: hidden;
+}
+
+body.dark {
+  background-color: #0F172A; /* background-dark */
+  color: #f1f5f9; /* slate-100 */
+}
+
+/* Material Icons styling */
+.material-icons-round {
+  font-family: 'Material Icons Round';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+}
+
 /* Dashboard Layout Fixes */
 
 /* Ensure sidebar stays fixed and doesn't overflow */
@@ -142,4 +176,92 @@ body {
   width: 100%;
   max-width: 100%;
   overflow: hidden;
+}
+
+/* Mobile Touch Improvements */
+@media (max-width: 1023px) {
+  /* Improve touch targets for mobile */
+  .mobile-touch-target {
+    min-height: 44px;
+    min-width: 44px;
+    touch-action: manipulation;
+  }
+  
+  /* Prevent zoom on double tap */
+  button, input, select, textarea {
+    touch-action: manipulation;
+  }
+  
+  /* Improve sidebar touch scrolling */
+  .mobile-sidebar {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  
+  /* Ensure sidebar overlay is properly positioned */
+  .mobile-sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    background-color: rgba(0, 0, 0, 0.5);
+    touch-action: none;
+  }
+  
+  /* Improve button touch feedback */
+  .mobile-button:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease-in-out;
+  }
+  
+  /* Prevent text selection on buttons */
+  .mobile-button {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Ensure proper z-index stacking */
+.sidebar-mobile {
+  z-index: 50;
+}
+
+.sidebar-overlay-mobile {
+  z-index: 40;
+}
+
+/* Desktop Sidebar Improvements */
+@media (min-width: 1024px) {
+  /* Remove mobile-specific styles on desktop */
+  .mobile-button {
+    -webkit-user-select: auto;
+    -moz-user-select: auto;
+    -ms-user-select: auto;
+    user-select: auto;
+    -webkit-tap-highlight-color: initial;
+  }
+  
+  .mobile-button:active {
+    transform: none;
+  }
+  
+  /* Improve desktop sidebar styling */
+  .sidebar-mobile {
+    position: relative;
+    z-index: auto;
+    box-shadow: none;
+    border-right: 1px solid #e5e7eb;
+  }
+  
+  /* Better desktop hover effects */
+  .desktop-sidebar-item:hover {
+    background-color: #f9fafb;
+    transform: translateX(2px);
+    transition: all 0.2s ease-in-out;
+  }
 }
