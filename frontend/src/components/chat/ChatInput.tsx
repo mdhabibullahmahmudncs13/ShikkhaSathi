@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { VoiceRecording } from '../../types/chat';
 import VoiceRecorder from './VoiceRecorder';
-import { VoiceService } from '../../services/voiceService';
+import voiceService from '../../services/voiceService';
 
 interface ChatInputProps {
   onSendMessage: (message: string, isVoice?: boolean) => void;
@@ -22,12 +22,6 @@ const ChatInput: React.FC<ChatInputProps> = ({
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const voiceServiceRef = useRef<VoiceService | null>(null);
-
-  // Initialize voice service
-  useEffect(() => {
-    voiceServiceRef.current = new VoiceService('demo_token'); // In real app, get from auth context
-  }, []);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -61,15 +55,10 @@ const ChatInput: React.FC<ChatInputProps> = ({
   };
 
   const handleRecordingComplete = async (audioBlob: Blob) => {
-    if (!voiceServiceRef.current) {
-      console.error('Voice service not initialized');
-      return;
-    }
-
     setIsTranscribing(true);
     
     try {
-      const result = await voiceServiceRef.current.transcribeAudio(audioBlob);
+      const result = await voiceService.transcribeAudio(audioBlob);
       
       if (result.text.trim()) {
         // Send the transcribed text as a voice message
