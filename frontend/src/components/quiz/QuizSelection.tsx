@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Clock, Target, Zap } from 'lucide-react';
+import { BookOpen, Clock, ArrowRight, ChevronDown } from 'lucide-react';
 import { quizAPI } from '../../services/apiClient';
 import { Quiz, Subject, Topic } from '../../types/quiz';
 
@@ -78,79 +78,74 @@ const QuizSelection: React.FC<QuizSelectionProps> = ({ onQuizStart }) => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <div className="bg-white rounded-lg border p-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Start a Quiz</h1>
-        <p className="text-gray-600 mb-8">
-          Select a subject and topic to begin your practice session
-        </p>
+    <div className="w-full max-w-lg mx-auto">
+      <div className="bg-white rounded-3xl shadow-xl p-8 border border-gray-100">
+        {/* Header with Icon */}
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
+              <BookOpen className="w-5 h-5 text-white" />
+            </div>
+          </div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-3">
+            Start a <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600">Quiz</span>
+          </h1>
+          <p className="text-gray-500 text-base leading-relaxed">
+            Customize your learning journey. Choose a topic and challenge yourself!
+          </p>
+        </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
             {error}
           </div>
         )}
 
         {/* Subject Selection */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            <BookOpen className="w-4 h-4 inline mr-2" />
-            Subject
-          </label>
-          <select
-            value={selectedSubject}
-            onChange={(e) => {
-              setSelectedSubject(e.target.value);
-              setSelectedTopic('');
-            }}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="">Select a subject</option>
-            {subjects.map((subject) => (
-              <option key={subject.subject} value={subject.subject}>
-                {subject.subject} ({subject.total_questions} questions)
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Topic Selection */}
-        {selectedSubject && topics.length > 0 && (
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              <Target className="w-4 h-4 inline mr-2" />
-              Topic (Optional)
+          <div className="flex items-center gap-2 mb-3">
+            <BookOpen className="w-4 h-4 text-purple-600" />
+            <label className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+              Select Subject
             </label>
+          </div>
+          <div className="relative">
             <select
-              value={selectedTopic}
-              onChange={(e) => setSelectedTopic(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              value={selectedSubject}
+              onChange={(e) => {
+                setSelectedSubject(e.target.value);
+                setSelectedTopic('');
+              }}
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent appearance-none bg-white text-gray-700 font-medium"
             >
-              <option value="">All topics</option>
-              {topics.map((topic) => (
-                <option key={topic.topic} value={topic.topic}>
-                  {topic.topic} ({topic.question_count} questions)
+              <option value="">Choose a subject...</option>
+              {subjects.map((subject) => (
+                <option key={subject.subject} value={subject.subject}>
+                  {subject.subject}
                 </option>
               ))}
             </select>
+            <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
           </div>
-        )}
+        </div>
 
         {/* Question Count */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            <Zap className="w-4 h-4 inline mr-2" />
-            Number of Questions
-          </label>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-4 h-4 bg-pink-500 rounded-sm"></div>
+            <label className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+              Questions Count
+            </label>
+          </div>
+          <div className="grid grid-cols-4 gap-3">
             {[5, 10, 15, 20].map((count) => (
               <button
                 key={count}
                 onClick={() => setQuestionCount(count)}
-                className={`flex-1 py-2 px-4 rounded-lg border ${
+                className={`py-3 px-4 rounded-xl border-2 font-semibold transition-all ${
                   questionCount === count
-                    ? 'bg-blue-500 text-white border-blue-500'
-                    : 'bg-white text-gray-700 border-gray-300 hover:border-blue-500'
+                    ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white border-transparent shadow-lg'
+                    : 'bg-white text-gray-700 border-gray-200 hover:border-purple-300'
                 }`}
               >
                 {count}
@@ -160,12 +155,19 @@ const QuizSelection: React.FC<QuizSelectionProps> = ({ onQuizStart }) => {
         </div>
 
         {/* Time Estimate */}
-        <div className="mb-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <div className="flex items-center gap-2 text-blue-700">
-            <Clock className="w-5 h-5" />
-            <span className="font-medium">
-              Estimated time: {questionCount * 2} minutes
-            </span>
+        <div className="mb-8 p-4 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-100 rounded-xl">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+              <Clock className="w-4 h-4 text-blue-600" />
+            </div>
+            <div>
+              <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                Estimated Duration
+              </div>
+              <div className="text-lg font-bold text-gray-900">
+                ~{questionCount * 2} Minutes
+              </div>
+            </div>
           </div>
         </div>
 
@@ -173,9 +175,19 @@ const QuizSelection: React.FC<QuizSelectionProps> = ({ onQuizStart }) => {
         <button
           onClick={handleStartQuiz}
           disabled={!selectedSubject || loading}
-          className="w-full py-3 px-6 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
+          className="w-full py-4 px-6 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-xl font-bold text-lg hover:from-purple-600 hover:to-blue-600 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
         >
-          {loading ? 'Generating Quiz...' : 'Start Quiz'}
+          {loading ? (
+            <>
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              Generating Quiz...
+            </>
+          ) : (
+            <>
+              Start Quiz Now
+              <ArrowRight className="w-5 h-5" />
+            </>
+          )}
         </button>
       </div>
     </div>

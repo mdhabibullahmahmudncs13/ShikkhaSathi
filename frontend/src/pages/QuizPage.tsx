@@ -35,22 +35,26 @@ const QuizPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-purple-100 via-blue-50 to-indigo-100 relative overflow-hidden">
+      {/* Background Decorative Elements */}
+      <div className="absolute top-10 left-10 w-20 h-20 bg-yellow-200 rounded-full opacity-30"></div>
+      <div className="absolute top-32 right-20 w-16 h-16 bg-purple-200 rounded-full opacity-40"></div>
+      <div className="absolute bottom-20 left-20 w-24 h-24 bg-blue-200 rounded-full opacity-30"></div>
+      <div className="absolute bottom-40 right-10 w-12 h-12 bg-pink-200 rounded-full opacity-40"></div>
+      
       {/* Header */}
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <button
-            onClick={handleBackToDashboard}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span>Back to Dashboard</span>
-          </button>
-        </div>
+      <div className="relative z-10 p-6">
+        <button
+          onClick={handleBackToDashboard}
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          <span className="font-medium">Back to Dashboard</span>
+        </button>
       </div>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="relative z-10 flex items-center justify-center min-h-[calc(100vh-120px)] px-4">
         {stage === 'selection' && (
           <QuizSelection onQuizStart={handleQuizStart} />
         )}

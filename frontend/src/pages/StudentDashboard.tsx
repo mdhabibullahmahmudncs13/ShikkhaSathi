@@ -81,7 +81,7 @@ const StudentDashboard: React.FC = () => {
         {/* Welcome Header */}
         <div className="flex flex-col gap-2">
           <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-            Welcome back, <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">Student!</span>
+            Welcome back, <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">Student!</span>
           </h1>
           <div className="flex items-center gap-3">
             <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-full uppercase tracking-wide">Grade 6</span>

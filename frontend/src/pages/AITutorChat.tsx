@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, BookOpen, Lightbulb, HelpCircle, Volume2, Download, Settings } from 'lucide-react';
+import { Send, Bot, User, Lightbulb, HelpCircle, Volume2, Download, Settings, Mic, ChevronDown, Image, Plus, Rocket, Leaf, Calculator, BookText, Beaker, Droplets } from 'lucide-react';
 import apiClient from '../services/apiClient';
-import { VoiceInputButton } from '../components/voice/VoiceInputButton';
 import { VoicePlayer } from '../components/voice/VoicePlayer';
 import { VoiceControls } from '../components/voice/VoiceControls';
 import { ConversationExport } from '../components/chat/ConversationExport';
@@ -33,7 +32,7 @@ const AITutorChat: React.FC = () => {
   ]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedSubject, setSelectedSubject] = useState<string>('');
+  const [selectedSubject] = useState<string>('');
   const [showExportModal, setShowExportModal] = useState(false);
   const [showVoiceSettings, setShowVoiceSettings] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -42,24 +41,11 @@ const AITutorChat: React.FC = () => {
   const {
     state: voiceState,
     settings: voiceSettings,
-    transcribeAudio,
     synthesizeText,
     toggleInput,
     toggleOutput,
-    changeLanguage,
-    clearError
+    changeLanguage
   } = useVoice();
-
-  const subjects = ['Physics', 'Chemistry', 'Mathematics', 'Biology', 'Bangla', 'English'];
-
-  const quickQuestions = [
-    "Explain Newton's laws of motion",
-    "What is photosynthesis?",
-    "How do you solve quadratic equations?",
-    "What are the parts of speech in English?",
-    "Explain the periodic table",
-    "What is the water cycle?"
-  ];
 
   useEffect(() => {
     scrollToBottom();
@@ -69,38 +55,44 @@ const AITutorChat: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // Voice input handlers
-  const handleVoiceInput = async (audioBlob: Blob) => {
-    try {
-      const transcriptionResult = await transcribeAudio(audioBlob);
-      
-      if (transcriptionResult.success && transcriptionResult.text) {
-        const voiceMessage: ChatMessage = {
-          role: 'user',
-          content: transcriptionResult.text,
-          timestamp: new Date().toISOString(),
-          isVoiceMessage: true
-        };
-        
-        setMessages(prev => [...prev, voiceMessage]);
-        
-        // Send the transcribed message to AI
-        await sendMessageToAI(transcriptionResult.text);
-      } else {
-        console.error('Voice transcription failed:', transcriptionResult.error);
-      }
-    } catch (error) {
-      console.error('Error processing voice input:', error);
+  const quickQuestions = [
+    { 
+      title: "Newton's Laws", 
+      description: "Understand the fundamental principles of motion.",
+      icon: Rocket,
+      color: "blue"
+    },
+    { 
+      title: "Photosynthesis", 
+      description: "How plants convert light energy into chemical energy.",
+      icon: Leaf,
+      color: "green"
+    },
+    { 
+      title: "Algebra", 
+      description: "Solving quadratic equations and inequalities.",
+      icon: Calculator,
+      color: "orange"
+    },
+    { 
+      title: "English Grammar", 
+      description: "Master parts of speech and sentence structure.",
+      icon: BookText,
+      color: "pink"
+    },
+    { 
+      title: "Periodic Table", 
+      description: "Elements, atomic numbers, and chemical groups.",
+      icon: Beaker,
+      color: "purple"
+    },
+    { 
+      title: "Water Cycle", 
+      description: "Evaporation, condensation, and precipitation processes.",
+      icon: Droplets,
+      color: "cyan"
     }
-  };
-
-  const handleStartRecording = () => {
-    clearError();
-  };
-
-  const handleStopRecording = () => {
-    // Recording stopped, waiting for audio processing
-  };
+  ];
 
   const sendMessageToAI = async (message: string) => {
     setIsLoading(true);
@@ -166,7 +158,7 @@ const AITutorChat: React.FC = () => {
     await sendMessageToAI(message);
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
@@ -181,267 +173,304 @@ const AITutorChat: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
+    <div className="bg-[#F8F9FB] text-slate-700 font-sans h-screen flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
-              <Bot className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-xl font-semibold text-gray-900">AI Tutor</h1>
-              <p className="text-sm text-gray-500">ShikkhaSathi Learning Assistant</p>
+      <header className="bg-white border-b border-slate-200 py-4 px-6 flex items-center justify-between shrink-0 shadow-sm">
+        <div className="flex items-center gap-4">
+          <div className="relative">
+            <div className="bg-indigo-600 h-10 w-10 rounded-full flex items-center justify-center text-white shadow-md">
+              <Bot className="w-6 h-6" />
             </div>
           </div>
-          
-          <div className="flex items-center space-x-4">
-            {/* Export Button */}
-            <button
+          <div className="flex flex-col">
+            <h1 className="font-bold text-lg text-slate-900 flex items-center gap-2">
+              AI Tutor
+              <span className="px-2 py-0.5 rounded-full bg-indigo-100 text-[10px] font-bold text-indigo-600 border border-indigo-200 uppercase tracking-wider">Beta</span>
+            </h1>
+            <span className="text-xs text-slate-500 font-medium">Shikshasathi Assistant</span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div className="hidden xl:flex items-center gap-2 bg-slate-100 p-1 rounded-lg border border-slate-200">
+            <button 
               onClick={() => setShowExportModal(true)}
               disabled={messages.length <= 1}
-              className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Export Conversation"
+              className="flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-md hover:bg-white hover:shadow-sm transition-all text-slate-600 group disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Download className="w-5 h-5" />
-              <span className="hidden sm:inline">Export</span>
+              <Download className="w-4 h-4 text-slate-400 group-hover:text-indigo-600 transition-colors" />
+              Export
             </button>
-
-            {/* Voice Settings Button */}
-            <button
-              onClick={() => setShowVoiceSettings(!showVoiceSettings)}
-              className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-              title="Voice Settings"
-            >
-              <Settings className="w-5 h-5" />
-              <span className="hidden sm:inline">Voice</span>
+            <div className="w-px h-4 bg-slate-200"></div>
+            <button className="flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-md hover:bg-white hover:shadow-sm transition-all text-slate-600 group">
+              <Settings className="w-4 h-4 text-slate-400 group-hover:text-indigo-600 transition-colors" />
+              History
             </button>
-
-            {/* Voice Controls */}
-            <VoiceControls
-              voiceInputEnabled={voiceState.voiceInputEnabled}
-              voiceOutputEnabled={voiceState.voiceOutputEnabled}
-              selectedLanguage={voiceState.selectedLanguage}
-              onToggleInput={toggleInput}
-              onToggleOutput={toggleOutput}
-              onLanguageChange={changeLanguage}
-              serviceStatus={{
-                whisperAvailable: voiceState.serviceAvailable,
-                ttsAvailable: voiceState.serviceAvailable,
-                processing: voiceState.isProcessing
-              }}
-              className="hidden md:block"
-            />
-            
-            {/* Subject Selector */}
-            <div className="flex items-center space-x-2">
-              <BookOpen className="w-5 h-5 text-gray-400" />
-              <select
-                value={selectedSubject}
-                onChange={(e) => setSelectedSubject(e.target.value)}
-                className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">All Subjects</option>
-                {subjects.map(subject => (
-                  <option key={subject} value={subject}>{subject}</option>
-                ))}
-              </select>
-            </div>
           </div>
-        </div>
 
-        {/* Mobile Voice Controls */}
-        <div className="md:hidden mt-3 pt-3 border-t border-gray-200">
-          <VoiceControls
-            voiceInputEnabled={voiceState.voiceInputEnabled}
-            voiceOutputEnabled={voiceState.voiceOutputEnabled}
-            selectedLanguage={voiceState.selectedLanguage}
-            onToggleInput={toggleInput}
-            onToggleOutput={toggleOutput}
-            onLanguageChange={changeLanguage}
-            serviceStatus={{
-              whisperAvailable: voiceState.serviceAvailable,
-              ttsAvailable: voiceState.serviceAvailable,
-              processing: voiceState.isProcessing
-            }}
-          />
-        </div>
+          <div className="h-6 w-px bg-slate-200 mx-1 hidden lg:block"></div>
 
-        {/* Error Display */}
-        {voiceState.lastError && (
-          <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
-            <div className="flex items-center justify-between">
-              <span className="text-red-700 text-sm">{voiceState.lastError}</span>
-              <button
-                onClick={clearError}
-                className="text-red-500 hover:text-red-700 text-sm"
-              >
-                Dismiss
+          <div className="flex items-center gap-2 bg-white rounded-full border border-slate-200 p-1 shadow-sm">
+            <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-600 border border-indigo-200 transition-all">
+              <Bot className="w-4 h-4" />
+              <span className="hidden sm:inline">Auto-detect</span>
+            </button>
+            <button 
+              onClick={() => toggleInput()}
+              className="p-1.5 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors" 
+              title="Voice Input"
+            >
+              <Mic className="w-4 h-4" />
+            </button>
+            <button 
+              onClick={() => toggleOutput()}
+              className="p-1.5 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors" 
+              title="Voice Output"
+            >
+              <Volume2 className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2 ml-2">
+            <button className="p-2 hover:bg-white rounded-full transition-all text-slate-500 hover:text-indigo-600 hover:shadow-sm border border-transparent hover:border-slate-200">
+              <Settings className="w-5 h-5" />
+            </button>
+            <div className="relative group hidden md:block ml-1">
+              <button className="flex items-center gap-2 border border-slate-200 rounded-lg px-3 py-1.5 hover:border-indigo-300 hover:shadow-sm transition-all bg-white w-36 justify-between text-sm text-slate-600">
+                <span className="truncate font-medium">{selectedSubject || 'All Subjects'}</span>
+                <ChevronDown className="w-4 h-4 text-slate-400" />
               </button>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      </header>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-        {messages.map((message, index) => (
-          <div
-            key={index}
-            className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-          >
-            <div className={`flex max-w-3xl ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-              {/* Avatar */}
-              <div className={`flex-shrink-0 ${message.role === 'user' ? 'ml-3' : 'mr-3'}`}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                  message.role === 'user' 
-                    ? 'bg-green-600' 
-                    : 'bg-blue-600'
-                }`}>
-                  {message.role === 'user' ? (
-                    <User className="w-5 h-5 text-white" />
-                  ) : (
-                    <Bot className="w-5 h-5 text-white" />
-                  )}
+      <main className="flex-grow flex flex-col overflow-y-auto px-4">
+        <div className="w-full max-w-4xl mx-auto py-8 flex-grow flex flex-col">
+          {messages.length === 1 ? (
+            // Welcome Message
+            <div className="flex gap-5 mb-auto group">
+              <div className="shrink-0 mt-1">
+                <div className="h-10 w-10 rounded-full bg-indigo-600 flex items-center justify-center text-white shadow-md">
+                  <Bot className="w-6 h-6" />
                 </div>
               </div>
-
-              {/* Message Content */}
-              <div className={`flex flex-col ${message.role === 'user' ? 'items-end' : 'items-start'}`}>
-                <div className={`rounded-lg px-4 py-2 max-w-full ${
-                  message.role === 'user'
-                    ? 'bg-green-600 text-white'
-                    : 'bg-white text-gray-900 shadow-sm border'
-                }`}>
-                  <div className="flex items-start space-x-2">
-                    <p className="whitespace-pre-wrap flex-1">{message.content}</p>
-                    {message.isVoiceMessage && (
-                      <div title="Voice message">
-                        <Volume2 className="w-4 h-4 text-gray-400 flex-shrink-0 mt-1" />
-                      </div>
-                    )}
+              <div className="max-w-2xl w-full">
+                <div className="bg-white border border-slate-200 rounded-2xl rounded-tl-none p-6 shadow-sm text-slate-700 leading-relaxed">
+                  <h2 className="font-bold text-lg mb-3 text-slate-800 flex items-center gap-2">
+                    Hi there! I'm <span className="text-indigo-600 font-extrabold">Shikshasathi</span>
+                    <span className="text-2xl">👋</span>
+                  </h2>
+                  <p className="text-[15px] text-slate-600 mb-4 leading-7">
+                    I'm your AI tutor here to help you master Physics, Chemistry, Mathematics, Biology, Bangla, and English. What topic shall we explore today?
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <span className="px-2.5 py-1 rounded-md bg-indigo-50 text-indigo-600 text-xs font-semibold border border-indigo-200">#Physics</span>
+                    <span className="px-2.5 py-1 rounded-md bg-purple-50 text-purple-600 text-xs font-semibold border border-purple-200">#Math</span>
+                    <span className="px-2.5 py-1 rounded-md bg-pink-50 text-pink-600 text-xs font-semibold border border-pink-200">#Biology</span>
                   </div>
-                  
-                  {/* Sources */}
-                  {message.sources && message.sources.length > 0 && (
-                    <div className="mt-2 pt-2 border-t border-gray-200">
-                      <p className="text-xs text-gray-500 mb-1">Sources:</p>
-                      <div className="flex flex-wrap gap-1">
-                        {message.sources.map((source, idx) => (
-                          <span
-                            key={idx}
-                            className="inline-block bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded"
-                          >
-                            {source}
-                          </span>
-                        ))}
+                </div>
+                <div className="flex items-center gap-2 mt-2 pl-1 opacity-60">
+                  <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Just now</span>
+                  <span className="h-1 w-1 rounded-full bg-slate-300"></span>
+                  <span className="text-[10px] font-medium text-slate-400">AI Tutor</span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            // Chat Messages
+            <div className="space-y-4">
+              {messages.map((message, index) => (
+                <div
+                  key={index}
+                  className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div className={`flex max-w-3xl ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                    {/* Avatar */}
+                    <div className={`shrink-0 ${message.role === 'user' ? 'ml-3' : 'mr-3'}`}>
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center shadow-md ${
+                        message.role === 'user' 
+                          ? 'bg-green-600' 
+                          : 'bg-indigo-600'
+                      }`}>
+                        {message.role === 'user' ? (
+                          <User className="w-5 h-5 text-white" />
+                        ) : (
+                          <Bot className="w-5 h-5 text-white" />
+                        )}
                       </div>
                     </div>
-                  )}
-                </div>
 
-                {/* Voice Player for AI responses */}
-                {message.role === 'assistant' && message.audioUrl && (
-                  <div className="mt-2 w-full max-w-md">
-                    <VoicePlayer
-                      audioUrl={message.audioUrl}
-                      text={message.content}
-                      autoPlay={voiceSettings.autoPlay}
-                      showControls={true}
-                    />
+                    {/* Message Content */}
+                    <div className={`flex flex-col ${message.role === 'user' ? 'items-end' : 'items-start'}`}>
+                      <div className={`rounded-2xl px-4 py-3 max-w-full shadow-sm ${
+                        message.role === 'user'
+                          ? 'bg-indigo-600 text-white rounded-tr-none'
+                          : 'bg-white text-slate-700 border border-slate-200 rounded-tl-none'
+                      }`}>
+                        <div className="flex items-start space-x-2">
+                          <p className="whitespace-pre-wrap flex-1 text-[15px] leading-relaxed">{message.content}</p>
+                          {message.isVoiceMessage && (
+                            <div title="Voice message">
+                              <Volume2 className="w-4 h-4 text-slate-400 shrink-0 mt-1" />
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Sources */}
+                        {message.sources && message.sources.length > 0 && (
+                          <div className="mt-3 pt-3 border-t border-slate-200">
+                            <p className="text-xs text-slate-500 mb-2 font-medium">Sources:</p>
+                            <div className="flex flex-wrap gap-1">
+                              {message.sources.map((source, idx) => (
+                                <span
+                                  key={idx}
+                                  className="inline-block bg-slate-100 text-slate-600 text-xs px-2 py-1 rounded-md font-medium"
+                                >
+                                  {source}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Voice Player for AI responses */}
+                      {message.role === 'assistant' && message.audioUrl && (
+                        <div className="mt-2 w-full max-w-md">
+                          <VoicePlayer
+                            audioUrl={message.audioUrl}
+                            text={message.content}
+                            autoPlay={voiceSettings.autoPlay}
+                            showControls={true}
+                          />
+                        </div>
+                      )}
+                      
+                      <span className="text-[10px] text-slate-400 mt-2 font-medium">
+                        {formatTimestamp(message.timestamp)}
+                      </span>
+                    </div>
                   </div>
-                )}
-                
-                <span className="text-xs text-gray-500 mt-1">
-                  {formatTimestamp(message.timestamp)}
-                </span>
+                </div>
+              ))}
+
+              {/* Loading indicator */}
+              {isLoading && (
+                <div className="flex justify-start">
+                  <div className="flex mr-3">
+                    <div className="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center shadow-md">
+                      <Bot className="w-5 h-5 text-white" />
+                    </div>
+                  </div>
+                  <div className="bg-white rounded-2xl rounded-tl-none px-4 py-3 shadow-sm border border-slate-200">
+                    <div className="flex space-x-1">
+                      <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                      <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div ref={messagesEndRef} />
+            </div>
+          )}
+
+          {/* Suggested Topics */}
+          {messages.length === 1 && (
+            <div className="mt-8">
+              <div className="flex items-center justify-between mb-5 px-1">
+                <div className="flex items-center gap-2">
+                  <div className="bg-orange-100 p-1.5 rounded-lg text-orange-600 shadow-sm">
+                    <Lightbulb className="w-5 h-5" />
+                  </div>
+                  <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wide">Suggested Topics</h3>
+                </div>
+                <button className="text-xs text-indigo-600 font-medium hover:underline">View all</button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {quickQuestions.map((question, index) => {
+                  const IconComponent = question.icon;
+                  const colorClasses = {
+                    blue: "hover:border-blue-400 hover:shadow-blue-500/10 text-blue-600 bg-blue-50 border-blue-100 hover:text-blue-700",
+                    green: "hover:border-green-400 hover:shadow-green-500/10 text-green-600 bg-green-50 border-green-100 hover:text-green-700",
+                    orange: "hover:border-orange-400 hover:shadow-orange-500/10 text-orange-600 bg-orange-50 border-orange-100 hover:text-orange-700",
+                    pink: "hover:border-pink-400 hover:shadow-pink-500/10 text-pink-600 bg-pink-50 border-pink-100 hover:text-pink-700",
+                    purple: "hover:border-purple-400 hover:shadow-purple-500/10 text-purple-600 bg-purple-50 border-purple-100 hover:text-purple-700",
+                    cyan: "hover:border-cyan-400 hover:shadow-cyan-500/10 text-cyan-600 bg-cyan-50 border-cyan-100 hover:text-cyan-700"
+                  };
+                  
+                  return (
+                    <button
+                      key={index}
+                      onClick={() => sendMessage(`Tell me about ${question.title}`)}
+                      className={`flex flex-col items-start gap-3 p-4 bg-white border border-slate-200 rounded-2xl hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group text-left relative overflow-hidden h-full ${colorClasses[question.color as keyof typeof colorClasses]}`}
+                    >
+                      <div className="flex items-start justify-between w-full">
+                        <div className={`h-10 w-10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shrink-0 border ${colorClasses[question.color as keyof typeof colorClasses]}`}>
+                          <IconComponent className="w-5 h-5" />
+                        </div>
+                        <HelpCircle className="text-slate-300 group-hover:text-slate-400 transition-colors text-lg" />
+                      </div>
+                      <div className="relative z-10 w-full">
+                        <span className="block text-slate-800 font-bold mb-1 text-[15px] transition-colors">
+                          {question.title}
+                        </span>
+                        <p className="text-xs text-slate-500 leading-relaxed">
+                          {question.description}
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
-          </div>
-        ))}
-
-        {/* Loading indicator */}
-        {isLoading && (
-          <div className="flex justify-start">
-            <div className="flex mr-3">
-              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-                <Bot className="w-5 h-5 text-white" />
-              </div>
-            </div>
-            <div className="bg-white rounded-lg px-4 py-2 shadow-sm border">
-              <div className="flex space-x-1">
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div ref={messagesEndRef} />
-      </div>
-
-      {/* Quick Questions */}
-      {messages.length === 1 && (
-        <div className="px-6 py-2">
-          <div className="flex items-center space-x-2 mb-3">
-            <Lightbulb className="w-4 h-4 text-yellow-500" />
-            <span className="text-sm font-medium text-gray-700">Quick Questions:</span>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-            {quickQuestions.map((question, index) => (
-              <button
-                key={index}
-                onClick={() => sendMessage(question)}
-                className="text-left p-3 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-blue-300 transition-colors text-sm"
-              >
-                <HelpCircle className="w-4 h-4 text-blue-500 inline mr-2" />
-                {question}
-              </button>
-            ))}
-          </div>
+          )}
         </div>
-      )}
+      </main>
 
       {/* Input */}
-      <div className="bg-white border-t px-6 py-4">
-        <div className="flex space-x-3">
-          {/* Voice Input Button */}
-          {voiceState.voiceInputEnabled && (
-            <VoiceInputButton
-              onStartRecording={handleStartRecording}
-              onStopRecording={handleStopRecording}
-              onAudioReady={handleVoiceInput}
-              isEnabled={voiceState.serviceAvailable && !isLoading}
-              isProcessing={voiceState.isProcessing}
-              className="flex-shrink-0"
-            />
-          )}
-          
-          <div className="flex-1">
-            <textarea
-              value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder={
-                voiceState.voiceInputEnabled 
-                  ? "Type your message or use voice input..." 
-                  : "Ask me anything about your studies..."
-              }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-              rows={1}
-              disabled={isLoading}
-            />
+      <footer className="bg-white border-t border-slate-200 p-4 shrink-0">
+        <div className="w-full max-w-4xl mx-auto">
+          <div className="relative">
+            <div className="flex items-center bg-white rounded-xl shadow-sm border border-slate-200 focus-within:border-indigo-300 focus-within:ring-2 focus-within:ring-indigo-100 transition-all">
+              <button className="pl-4 pr-2 py-4 text-slate-400 hover:text-indigo-600 transition-colors rounded-l-xl">
+                <Plus className="w-5 h-5" />
+              </button>
+              <textarea
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Ask me anything about your studies..."
+                className="w-full bg-transparent border-none py-4 px-2 text-slate-800 placeholder-slate-400 focus:ring-0 text-[15px] resize-none"
+                rows={1}
+                disabled={isLoading}
+              />
+              <div className="flex items-center gap-1.5 pr-2">
+                <button className="p-2 text-slate-400 hover:text-indigo-600 transition-colors rounded-lg hover:bg-slate-50" title="Upload Image">
+                  <Image className="w-5 h-5" />
+                </button>
+                <div className="h-6 w-px bg-slate-200 mx-1"></div>
+                <button
+                  onClick={() => sendMessage()}
+                  disabled={!inputMessage.trim() || isLoading}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white p-2.5 rounded-lg shadow-md hover:shadow-lg transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Send className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
           </div>
-          <button
-            onClick={() => sendMessage()}
-            disabled={!inputMessage.trim() || isLoading}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            <Send className="w-5 h-5" />
-          </button>
+          <div className="text-center mt-3">
+            <p className="text-[11px] text-slate-400 flex items-center justify-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+              Shikshasathi AI can make mistakes. Verify important info.
+            </p>
+          </div>
         </div>
-      </div>
+      </footer>
 
       {/* Export Modal */}
       <ConversationExport
@@ -453,12 +482,12 @@ const AITutorChat: React.FC = () => {
       {/* Voice Settings Panel */}
       {showVoiceSettings && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-slate-200">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Voice Settings</h3>
+              <h3 className="text-lg font-semibold text-slate-900">Voice Settings</h3>
               <button
                 onClick={() => setShowVoiceSettings(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-slate-400 hover:text-slate-600"
               >
                 <Settings className="w-5 h-5" />
               </button>
@@ -476,11 +505,10 @@ const AITutorChat: React.FC = () => {
                 ttsAvailable: voiceState.serviceAvailable,
                 processing: voiceState.isProcessing
               }}
-              showLabels={true}
             />
 
             {voiceState.lastError && (
-              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
+              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-xl">
                 <p className="text-sm text-red-700">{voiceState.lastError}</p>
               </div>
             )}
@@ -488,7 +516,7 @@ const AITutorChat: React.FC = () => {
             <div className="mt-6 flex justify-end">
               <button
                 onClick={() => setShowVoiceSettings(false)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
               >
                 Done
               </button>

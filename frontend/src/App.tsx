@@ -302,9 +302,9 @@ const AppContent = () => {
   // Type guard for user object
   const typedUser = user as { full_name?: string; role?: string } | null;
 
-  // Check if we're on login, signup, or landing pages to hide navigation
+  // Check if we're on login, signup, landing pages, chat page, profile pages, or quiz page to hide navigation
   const currentPath = window.location.pathname;
-  const hideNavigation = currentPath === '/login' || currentPath === '/signup' || currentPath === '/';
+  const hideNavigation = currentPath === '/login' || currentPath === '/signup' || currentPath === '/' || currentPath === '/chat' || currentPath === '/profile' || currentPath === '/settings' || currentPath === '/quiz';
 
   return (
     <div className="min-h-screen bg-gray-50">
