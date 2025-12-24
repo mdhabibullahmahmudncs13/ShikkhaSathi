@@ -16,8 +16,8 @@ class UserBase(BaseModel):
     @field_validator('grade')
     @classmethod
     def validate_grade(cls, v):
-        if v is not None and (v < 6 or v > 12):
-            raise ValueError('Grade must be between 6 and 12')
+        if v is not None and (v < 9 or v > 10):
+            raise ValueError('Grade must be between 9 and 10')
         return v
 
 
@@ -42,8 +42,8 @@ class UserUpdate(BaseModel):
     @field_validator('grade')
     @classmethod
     def validate_grade(cls, v):
-        if v is not None and (v < 6 or v > 12):
-            raise ValueError('Grade must be between 6 and 12')
+        if v is not None and (v < 9 or v > 10):
+            raise ValueError('Grade must be between 9 and 10')
         return v
 
 

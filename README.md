@@ -1,8 +1,8 @@
-# ShikkhaSathi - AI-Powered Learning Platform for Bangladesh
+# ShikkhaSathi - AI-Powered Learning Platform for Bangladesh (Classes 9 & 10)
 
 **100% Local AI - Zero External API Dependencies**
 
-ShikkhaSathi is an AI-powered adaptive learning platform specifically designed for Bangladesh students (Grades 6-12). The platform provides personalized education experiences with complete privacy and zero API costs.
+ShikkhaSathi is an AI-powered adaptive learning platform specifically designed for Bangladesh students in Classes 9 & 10. The platform provides personalized education experiences with complete privacy and zero API costs, focusing on the critical SSC preparation years.
 
 ## 🎉 Project Highlights
 
@@ -12,6 +12,7 @@ ShikkhaSathi is an AI-powered adaptive learning platform specifically designed f
 - **Adaptive Assessments**: Dynamic quizzes tailored to student performance.
 - **Offline-First Design**: Progressive Web App (PWA) with offline capabilities.
 - **Multi-Stakeholder Support**: Features for students, teachers, and parents.
+- **SSC Focused**: Curriculum-aligned content for Classes 9 & 10 SSC preparation.
 
 ## 🚀 Quick Start
 
@@ -112,9 +113,9 @@ npm run dev
 
 ## 🎯 Target Users
 
-- **Students**: Grades 6-12 (Bangla & English medium).
-- **Teachers**: Assessment creation and analytics.
-- **Parents**: Progress monitoring and notifications.
+- **Students**: Classes 9 & 10 (Bangla & English medium) preparing for SSC
+- **Teachers**: Assessment creation and analytics for secondary education
+- **Parents**: Progress monitoring and notifications for SSC preparation
 
 ## 🛠️ Development Progress
 
@@ -158,5 +159,5 @@ This project is licensed under the MIT License.
 
 ## 🎉 Final Notes
 
-ShikkhaSathi is a groundbreaking platform that combines cutting-edge AI with cultural relevance to empower students in Bangladesh. With its offline capabilities, zero API costs, and bilingual support, it is poised to revolutionize education in the region. Join us in making a difference!
+ShikkhaSathi is a groundbreaking platform that combines cutting-edge AI with curriculum-specific content to empower students in Classes 9 & 10 for their SSC preparation. With its offline capabilities, zero API costs, and bilingual support, it is specifically designed to address the unique challenges of secondary education in Bangladesh. Join us in making SSC preparation more effective and engaging!
 

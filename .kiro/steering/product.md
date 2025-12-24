@@ -1,6 +1,6 @@
 # ShikkhaSathi Product Overview
 
-ShikkhaSathi is an AI-powered adaptive learning platform specifically designed for Bangladesh students. The platform provides personalized education experiences with the following key features:
+ShikkhaSathi is an AI-powered adaptive learning platform specifically designed for Bangladesh students in Classes 9 & 10. The platform provides personalized education experiences focused on SSC preparation with the following key features:
 
 ## Core Features
 - **AI Tutor Chat**: Interactive AI-powered tutoring system with voice support
@@ -11,11 +11,12 @@ ShikkhaSathi is an AI-powered adaptive learning platform specifically designed f
 - **RAG System**: Retrieval-Augmented Generation for contextual learning content
 - **Teacher Analytics**: Comprehensive analytics and assessment creation tools
 - **Parent Portal**: Progress tracking and notification system for parents
+- **SSC Preparation**: Curriculum-aligned content specifically for Classes 9 & 10
 
 ## Target Users
-- **Students**: Grades 6-12 in both Bangla and English medium schools
-- **Teachers**: Assessment creation, analytics, and classroom management
-- **Parents**: Progress monitoring and engagement tracking
+- **Students**: Classes 9 & 10 in both Bangla and English medium schools preparing for SSC
+- **Teachers**: Assessment creation, analytics, and classroom management for secondary education
+- **Parents**: Progress monitoring and engagement tracking for SSC preparation
 
 ## Technical Architecture
 - **Frontend**: React + TypeScript PWA with offline capabilities
@@ -24,4 +25,4 @@ ShikkhaSathi is an AI-powered adaptive learning platform specifically designed f
 - **AI Integration**: OpenAI API, Pinecone vector database, LangChain
 - **Voice Services**: ElevenLabs integration for voice interactions
 
-The platform emphasizes accessibility, offline functionality, and culturally relevant content for the Bangladesh education system.
+The platform emphasizes accessibility, offline functionality, and curriculum-specific content for Classes 9 & 10 in the Bangladesh education system.

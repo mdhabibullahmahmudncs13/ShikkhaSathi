@@ -262,8 +262,9 @@ def create_sample_questions(db: Session):
         }
     ]
     
-    # Chemistry questions
+    # Chemistry questions for Grade 9 & 10
     chemistry_questions = [
+        # Grade 9 Chemistry
         {
             "subject": "chemistry",
             "grade": 9,
@@ -276,11 +277,52 @@ def create_sample_questions(db: Session):
             "difficulty": "easy",
             "explanation": "Carbon has 6 protons, so its atomic number is 6",
             "explanation_bn": "কার্বনে ৬টি প্রোটন আছে, তাই এর পারমাণবিক সংখ্যা ৬"
+        },
+        {
+            "subject": "chemistry",
+            "grade": 9,
+            "topic": "Periodic Table",
+            "question_text": "Which element has the symbol 'Na'?",
+            "question_text_bn": "'Na' প্রতীকটি কোন মৌলের?",
+            "options": ["Nitrogen", "Sodium", "Nickel", "Neon"],
+            "options_bn": ["নাইট্রোজেন", "সোডিয়াম", "নিকেল", "নিয়ন"],
+            "correct_answer": 1,
+            "difficulty": "easy",
+            "explanation": "Na is the chemical symbol for Sodium (from Latin 'natrium')",
+            "explanation_bn": "Na হল সোডিয়ামের রাসায়নিক প্রতীক (ল্যাটিন 'natrium' থেকে)"
+        },
+        # Grade 10 Chemistry
+        {
+            "subject": "chemistry",
+            "grade": 10,
+            "topic": "Acids and Bases",
+            "question_text": "What is the pH of pure water at 25°C?",
+            "question_text_bn": "২৫°সে তাপমাত্রায় বিশুদ্ধ পানির pH কত?",
+            "options": ["6", "7", "8", "9"],
+            "options_bn": ["৬", "৭", "৮", "৯"],
+            "correct_answer": 1,
+            "difficulty": "easy",
+            "explanation": "Pure water has a pH of 7, which is neutral",
+            "explanation_bn": "বিশুদ্ধ পানির pH ৭, যা নিরপেক্ষ"
+        },
+        {
+            "subject": "chemistry",
+            "grade": 10,
+            "topic": "Chemical Bonding",
+            "question_text": "What type of bond is formed between Na and Cl in NaCl?",
+            "question_text_bn": "NaCl-এ Na এবং Cl এর মধ্যে কী ধরনের বন্ধন গঠিত হয়?",
+            "options": ["Covalent bond", "Ionic bond", "Metallic bond", "Hydrogen bond"],
+            "options_bn": ["সমযোজী বন্ধন", "আয়নিক বন্ধন", "ধাতব বন্ধন", "হাইড্রোজেন বন্ধন"],
+            "correct_answer": 1,
+            "difficulty": "medium",
+            "explanation": "NaCl forms an ionic bond due to electron transfer from Na to Cl",
+            "explanation_bn": "Na থেকে Cl-এ ইলেকট্রন স্থানান্তরের কারণে NaCl আয়নিক বন্ধন গঠন করে"
         }
     ]
     
-    # Biology questions
+    # Biology questions for Grade 9 & 10
     biology_questions = [
+        # Grade 9 Biology
         {
             "subject": "biology",
             "grade": 9,
@@ -293,6 +335,46 @@ def create_sample_questions(db: Session):
             "difficulty": "easy",
             "explanation": "Mitochondria produces ATP, the energy currency of the cell",
             "explanation_bn": "মাইটোকন্ড্রিয়া ATP তৈরি করে, যা কোশের শক্তির মুদ্রা"
+        },
+        {
+            "subject": "biology",
+            "grade": 9,
+            "topic": "Photosynthesis",
+            "question_text": "What gas is released during photosynthesis?",
+            "question_text_bn": "সালোকসংশ্লেষণের সময় কোন গ্যাস নির্গত হয়?",
+            "options": ["Carbon dioxide", "Oxygen", "Nitrogen", "Hydrogen"],
+            "options_bn": ["কার্বন ডাইঅক্সাইড", "অক্সিজেন", "নাইট্রোজেন", "হাইড্রোজেন"],
+            "correct_answer": 1,
+            "difficulty": "easy",
+            "explanation": "During photosynthesis, plants release oxygen as a byproduct",
+            "explanation_bn": "সালোকসংশ্লেষণের সময় উদ্ভিদ উপজাত হিসেবে অক্সিজেন নির্গত করে"
+        },
+        # Grade 10 Biology
+        {
+            "subject": "biology",
+            "grade": 10,
+            "topic": "Genetics",
+            "question_text": "What does DNA stand for?",
+            "question_text_bn": "DNA এর পূর্ণরূপ কী?",
+            "options": ["Deoxyribonucleic Acid", "Ribonucleic Acid", "Deoxyribose Acid", "Nucleic Acid"],
+            "options_bn": ["ডিঅক্সিরাইবোনিউক্লিক অ্যাসিড", "রাইবোনিউক্লিক অ্যাসিড", "ডিঅক্সিরাইবোজ অ্যাসিড", "নিউক্লিক অ্যাসিড"],
+            "correct_answer": 0,
+            "difficulty": "easy",
+            "explanation": "DNA stands for Deoxyribonucleic Acid",
+            "explanation_bn": "DNA এর পূর্ণরূপ হল ডিঅক্সিরাইবোনিউক্লিক অ্যাসিড"
+        },
+        {
+            "subject": "biology",
+            "grade": 10,
+            "topic": "Evolution",
+            "question_text": "Who proposed the theory of evolution by natural selection?",
+            "question_text_bn": "প্রাকৃতিক নির্বাচনের মাধ্যমে বিবর্তন তত্ত্ব কে প্রস্তাব করেছিলেন?",
+            "options": ["Gregor Mendel", "Charles Darwin", "Louis Pasteur", "Alexander Fleming"],
+            "options_bn": ["গ্রেগর মেন্ডেল", "চার্লস ডারউইন", "লুই পাস্তুর", "আলেকজান্ডার ফ্লেমিং"],
+            "correct_answer": 1,
+            "difficulty": "easy",
+            "explanation": "Charles Darwin proposed the theory of evolution by natural selection",
+            "explanation_bn": "চার্লস ডারউইন প্রাকৃতিক নির্বাচনের মাধ্যমে বিবর্তন তত্ত্ব প্রস্তাব করেছিলেন"
         }
     ]
     
@@ -428,10 +510,12 @@ def main():
         print(f"Created {len(users)} users")
         print(f"Created {len(questions)} questions")
         print("\n🎯 You can now test the platform with these accounts:")
-        print("Students:")
-        print("  - student1@shikkhasathi.com / student123")
-        print("  - student2@shikkhasathi.com / student123") 
-        print("  - student3@shikkhasathi.com / student123")
+        print("Students (Grade 9 & 10):")
+        print("  - student1@shikkhasathi.com / student123 (Grade 9)")
+        print("  - student2@shikkhasathi.com / student123 (Grade 10)") 
+        print("  - student3@shikkhasathi.com / student123 (Grade 9)")
+        print("  - student4@shikkhasathi.com / student123 (Grade 10)")
+        print("  - student5@shikkhasathi.com / student123 (Grade 10)")
         print("Teachers:")
         print("  - teacher1@shikkhasathi.com / teacher123")
         print("  - teacher2@shikkhasathi.com / teacher123")

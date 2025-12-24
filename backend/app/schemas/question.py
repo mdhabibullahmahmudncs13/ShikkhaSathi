@@ -30,7 +30,7 @@ class QuestionBase(BaseModel):
     subject: str = Field(..., min_length=2, max_length=50)
     topic: str = Field(..., min_length=2, max_length=100)
     subtopic: Optional[str] = Field(None, max_length=100)
-    grade: int = Field(..., ge=6, le=12)
+    grade: int = Field(..., ge=9, le=10)
     
     difficulty_level: int = Field(..., ge=1, le=5)
     bloom_level: int = Field(..., ge=1, le=6)
@@ -68,7 +68,7 @@ class QuestionUpdate(BaseModel):
     subject: Optional[str] = Field(None, min_length=2, max_length=50)
     topic: Optional[str] = Field(None, min_length=2, max_length=100)
     subtopic: Optional[str] = Field(None, max_length=100)
-    grade: Optional[int] = Field(None, ge=6, le=12)
+    grade: Optional[int] = Field(None, ge=9, le=10)
     
     difficulty_level: Optional[int] = Field(None, ge=1, le=5)
     bloom_level: Optional[int] = Field(None, ge=1, le=6)
@@ -123,7 +123,7 @@ class QuizGenerateRequest(BaseModel):
     """Schema for quiz generation request"""
     subject: str = Field(..., min_length=2, max_length=50)
     topic: Optional[str] = Field(None, max_length=100)
-    grade: int = Field(..., ge=6, le=12)
+    grade: int = Field(..., ge=9, le=10)
     difficulty_level: Optional[int] = Field(None, ge=1, le=5)
     bloom_level: Optional[int] = Field(None, ge=1, le=6)
     question_count: int = Field(10, ge=5, le=50)
