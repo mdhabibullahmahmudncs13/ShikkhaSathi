@@ -2,7 +2,7 @@
 
 # Start database services
 echo "Starting database services..."
-docker compose up -d postgres mongodb redis
+docker-compose up -d postgres mongodb redis
 
 # Wait for services to be ready
 echo "Waiting for services to be ready..."
@@ -10,7 +10,7 @@ sleep 10
 
 # Check if services are healthy
 echo "Checking service health..."
-docker compose ps
+docker-compose ps
 
 echo "Development environment is ready!"
 echo "PostgreSQL: localhost:5432"
