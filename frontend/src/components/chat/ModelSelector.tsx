@@ -1,5 +1,5 @@
 import React from 'react';
-import { Brain, Calculator, Globe, BookOpen } from 'lucide-react';
+import { Calculator, Globe, BookOpen } from 'lucide-react';
 
 interface ModelOption {
   id: string;
@@ -53,81 +53,44 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
   const selectedOption = modelOptions.find(option => option.id === selectedModel);
 
   return (
-    <div className={`space-y-3 ${className}`}>
-      <div className="flex items-center space-x-2">
-        <Brain className="w-5 h-5 text-gray-600" />
-        <h3 className="text-sm font-medium text-gray-700">Select AI Model</h3>
+    <div className={`space-y-1 ${className}`}>
+      <div className="flex items-center justify-between">
+        <h3 className="text-xs font-medium text-gray-700">AI Model</h3>
         {selectedOption && (
-          <span className="text-xs text-gray-500">
-            ({selectedOption.name})
+          <span className="text-xs text-green-600 bg-green-50 px-1.5 py-0.5 rounded-full">
+            {selectedOption.name}
           </span>
         )}
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div className="flex flex-wrap gap-1.5">
         {modelOptions.map((option) => (
           <button
             key={option.id}
             onClick={() => onModelChange(option.id)}
             disabled={disabled}
             className={`
-              relative p-4 rounded-lg border-2 transition-all duration-200 text-left
+              flex items-center space-x-1 px-2.5 py-1 rounded-full text-xs transition-all
               ${selectedModel === option.id
-                ? 'border-blue-500 bg-blue-50 shadow-md'
-                : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
+                ? `${option.color} text-white shadow-sm`
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }
               ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
             `}
+            title={option.description}
           >
-            <div className="flex items-start space-x-3">
-              <div className={`
-                p-2 rounded-lg text-white flex-shrink-0
-                ${option.color}
-              `}>
-                {option.icon}
-              </div>
-              
-              <div className="flex-1 min-w-0">
-                <h4 className="font-medium text-gray-900 text-sm">
-                  {option.name}
-                </h4>
-                <p className="text-xs text-gray-600 mt-1 line-clamp-2">
-                  {option.description}
-                </p>
-                
-                <div className="mt-2 flex flex-wrap gap-1">
-                  {option.subjects.slice(0, 2).map((subject, index) => (
-                    <span
-                      key={index}
-                      className="inline-block px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded"
-                    >
-                      {subject}
-                    </span>
-                  ))}
-                  {option.subjects.length > 2 && (
-                    <span className="inline-block px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
-                      +{option.subjects.length - 2} more
-                    </span>
-                  )}
-                </div>
-              </div>
+            <div className="w-3 h-3">
+              {React.cloneElement(option.icon as React.ReactElement, { className: 'w-3 h-3' })}
             </div>
-            
-            {selectedModel === option.id && (
-              <div className="absolute top-2 right-2">
-                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-              </div>
-            )}
+            <span className="font-medium">{option.name}</span>
           </button>
         ))}
       </div>
       
       {!selectedModel && (
-        <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-sm text-yellow-800">
-            <strong>Please select a model</strong> to start chatting. Each model is specialized for different subjects.
-          </p>
-        </div>
+        <p className="text-xs text-yellow-600 bg-yellow-50 px-1.5 py-0.5 rounded">
+          Choose an AI model
+        </p>
       )}
     </div>
   );

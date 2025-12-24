@@ -20,7 +20,8 @@ class ChatRequest(BaseModel):
     message: str
     conversation_history: Optional[List[Dict[str, str]]] = []
     subject: Optional[str] = None
-    model_category: str  # Required: 'bangla', 'math', or 'general'
+    model_category: str = "general"  # Default to 'general' if not provided
+    ai_mode: str = "tutor"  # Default to 'tutor' mode if not provided
 
 class ChatResponse(BaseModel):
     response: str
@@ -62,13 +63,14 @@ async def chat_with_ai_tutor(
     try:
         logger.info(f"Chat request from user {current_user.id} (Grade {current_user.grade}) using {request.model_category} model: {request.message[:100]}...")
         
-        # Call multi-model AI tutor service with user-selected model
+        # Call multi-model AI tutor service with user-selected model and mode
         result = await multi_model_ai_tutor_service.chat(
             message=request.message,
             conversation_history=request.conversation_history,
             subject=request.subject,
             grade=current_user.grade,
-            model_category=request.model_category
+            model_category=request.model_category,
+            ai_mode=request.ai_mode
         )
         
         # Store conversation in MongoDB
@@ -87,7 +89,8 @@ async def chat_with_ai_tutor(
                     "content": request.message,
                     "timestamp": current_time,
                     "subject": request.subject,
-                    "model_category": request.model_category
+                    "model_category": request.model_category,
+                    "ai_mode": request.ai_mode
                 },
                 {
                     "role": "assistant", 

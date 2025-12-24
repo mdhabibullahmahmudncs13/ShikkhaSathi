@@ -146,7 +146,8 @@ SSC পরীক্ষার প্রস্তুতির জন্য:
         message: str,
         context: str = "",
         subject: Optional[str] = None,
-        grade: Optional[int] = None
+        grade: Optional[int] = None,
+        ai_mode: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Process a Bengali language query with educational context
@@ -154,7 +155,7 @@ SSC পরীক্ষার প্রস্তুতির জন্য:
         try:
             # Build educational prompt in Bengali
             educational_prompt = self._build_educational_prompt(
-                message, context, subject, grade
+                message, context, subject, grade, ai_mode
             )
             
             # Generate response using enhanced Bengali processing
@@ -186,15 +187,29 @@ SSC পরীক্ষার প্রস্তুতির জন্য:
         message: str,
         context: str,
         subject: Optional[str],
-        grade: Optional[int]
+        grade: Optional[int],
+        ai_mode: Optional[str] = None
     ) -> str:
         """Build educational prompt for Bengali language processing"""
         
+        # Add AI mode-specific instructions in Bengali
+        mode_instructions = ""
+        if ai_mode:
+            mode_prompts = {
+                "tutor": "ধাপে ধাপে ব্যাখ্যা করুন এবং শিক্ষার্থীকে গাইড করুন।",
+                "quiz": "প্রশ্ন করুন এবং তাৎক্ষণিক ফিডব্যাক দিন।",
+                "explanation": "সংক্ষিপ্ত এবং স্পষ্ট ব্যাখ্যা দিন।",
+                "homework": "সমাধানের পথ দেখান কিন্তু সরাসরি উত্তর দেবেন না।",
+                "exam": "SSC পরীক্ষার প্রস্তুতির জন্য কৌশল এবং অনুশীলন দিন।",
+                "discussion": "আলোচনায় অংশ নিন এবং চিন্তাভাবনা উৎসাহিত করুন।"
+            }
+            mode_instructions = mode_prompts.get(ai_mode, "") + "\n\n"
+        
         # Enhanced prompt building for better Bengali responses
         if context and context != "No relevant context found in the curriculum documents.":
-            return f"শিক্ষামূলক প্রসঙ্গ: {context}\n\nশিক্ষার্থীর প্রশ্ন: {message}"
+            return f"{mode_instructions}শিক্ষামূলক প্রসঙ্গ: {context}\n\nশিক্ষার্থীর প্রশ্ন: {message}"
         else:
-            return message
+            return f"{mode_instructions}{message}"
     
     async def explain_bangla_concept(
         self,
