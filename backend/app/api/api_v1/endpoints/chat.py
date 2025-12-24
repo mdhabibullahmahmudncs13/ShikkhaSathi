@@ -2,7 +2,7 @@ import json
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, HTTPException, Query, UploadFile, File
 from fastapi.responses import Response
 from app.services.websocket_manager import manager
-from app.services.rag.ai_tutor_service import ai_tutor_service
+from app.services.rag.multi_model_ai_tutor_service import multi_model_ai_tutor_service
 from app.core.deps import get_current_user
 from app.models.user import User
 from app.db.mongodb import get_mongodb
@@ -20,12 +20,32 @@ class ChatRequest(BaseModel):
     message: str
     conversation_history: Optional[List[Dict[str, str]]] = []
     subject: Optional[str] = None
+    model_category: str  # Required: 'bangla', 'math', or 'general'
 
 class ChatResponse(BaseModel):
     response: str
     sources: List[str] = []
     context_used: bool = False
-    model: str = "llama2"
+    model: str = "llama3.2:1b"
+    category: str = "general"
+    specialized: bool = True
+    user_selected: bool = True
+
+class ConceptExplanationRequest(BaseModel):
+    concept: str
+    subject: str
+    difficulty_level: str = "basic"
+    model_category: str  # Required: 'bangla', 'math', or 'general'
+
+class ConceptExplanationResponse(BaseModel):
+    explanation: str
+    concept: str
+    subject: str
+    grade: int
+    difficulty_level: str
+    sources: List[str] = []
+    model: str
+    category: str
 
 @router.post("/chat", response_model=ChatResponse)
 async def chat_with_ai_tutor(
@@ -33,18 +53,22 @@ async def chat_with_ai_tutor(
     current_user: User = Depends(get_current_user)
 ) -> ChatResponse:
     """
-    Chat with AI tutor using POST request
-    Simple endpoint for frontend integration
+    Chat with AI tutor using user-selected model
+    - User must select model category before asking questions
+    - Bangla: Uses specialized model for Bengali language and literature
+    - Math: Uses Phi-3-mini model for mathematical precision
+    - General: Uses general model for Physics, Chemistry, Biology, English
     """
     try:
-        logger.info(f"Chat request from user {current_user.id}: {request.message[:100]}...")
+        logger.info(f"Chat request from user {current_user.id} (Grade {current_user.grade}) using {request.model_category} model: {request.message[:100]}...")
         
-        # Call AI tutor service
-        result = await ai_tutor_service.chat(
+        # Call multi-model AI tutor service with user-selected model
+        result = await multi_model_ai_tutor_service.chat(
             message=request.message,
             conversation_history=request.conversation_history,
             subject=request.subject,
-            grade=current_user.grade
+            grade=current_user.grade,
+            model_category=request.model_category
         )
         
         # Store conversation in MongoDB
@@ -61,13 +85,19 @@ async def chat_with_ai_tutor(
                 {
                     "role": "user",
                     "content": request.message,
-                    "timestamp": current_time
+                    "timestamp": current_time,
+                    "subject": request.subject,
+                    "model_category": request.model_category
                 },
                 {
                     "role": "assistant", 
                     "content": result["response"],
                     "timestamp": current_time,
-                    "sources": result.get("sources", [])
+                    "sources": result.get("sources", []),
+                    "model": result.get("model", "unknown"),
+                    "category": result.get("category", "general"),
+                    "specialized": result.get("specialized", False),
+                    "user_selected": result.get("user_selected", True)
                 }
             ]
             
@@ -88,7 +118,10 @@ async def chat_with_ai_tutor(
             response=result["response"],
             sources=result.get("sources", []),
             context_used=result.get("context_used", False),
-            model=result.get("model", "llama2")
+            model=result.get("model", "unknown"),
+            category=result.get("category", "general"),
+            specialized=result.get("specialized", False),
+            user_selected=result.get("user_selected", True)
         )
         
     except Exception as e:
@@ -98,17 +131,73 @@ async def chat_with_ai_tutor(
             detail="I'm sorry, I'm having trouble processing your question right now. Please try again in a moment."
         )
 
-# Pydantic models for request/response
-class ChatRequest(BaseModel):
-    message: str
-    conversation_history: Optional[List[Dict[str, str]]] = []
-    subject: Optional[str] = None
+@router.post("/explain", response_model=ConceptExplanationResponse)
+async def explain_concept(
+    request: ConceptExplanationRequest,
+    current_user: User = Depends(get_current_user)
+) -> ConceptExplanationResponse:
+    """
+    Get detailed explanation of a concept using specialized models
+    - Automatically selects the best model based on subject
+    - Provides structured explanations optimized for SSC preparation
+    """
+    try:
+        logger.info(f"Concept explanation request from user {current_user.id}: {request.concept} in {request.subject}")
+        
+        # Call multi-model AI tutor service for concept explanation
+        result = await multi_model_ai_tutor_service.explain_concept(
+            concept=request.concept,
+            subject=request.subject,
+            grade=current_user.grade or 9,  # Default to grade 9 if not set
+            difficulty_level=request.difficulty_level,
+            model_category=request.model_category
+        )
+        
+        if "error" in result:
+            raise HTTPException(status_code=500, detail=result["error"])
+        
+        return ConceptExplanationResponse(
+            explanation=result["explanation"],
+            concept=result["concept"],
+            subject=result["subject"],
+            grade=result["grade"],
+            difficulty_level=result["difficulty_level"],
+            sources=result.get("sources", []),
+            model=result.get("model", "unknown"),
+            category=result.get("category", "general")
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in concept explanation endpoint: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="I'm sorry, I couldn't generate an explanation right now. Please try again."
+        )
 
-class ChatResponse(BaseModel):
-    response: str
-    sources: List[str] = []
-    context_used: bool = False
-    model: str = "llama2"
+@router.get("/models")
+async def get_model_info(current_user: User = Depends(get_current_user)):
+    """
+    Get information about available specialized models
+    Users must select a model category before asking questions
+    """
+    try:
+        model_info = multi_model_ai_tutor_service.get_model_info()
+        return {
+            "models": model_info,
+            "description": {
+                "bangla": "Specialized for Bengali language, literature, and cultural context using BanglaBERT",
+                "math": "Optimized for mathematical reasoning and step-by-step problem solving using phi3:mini",
+                "general": "Covers Physics, Chemistry, Biology, and English with scientific accuracy using llama3.2:1b"
+            },
+            "selection_required": "Users must select a model category ('bangla', 'math', or 'general') before asking questions",
+            "model_categories": ["bangla", "math", "general"]
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting model info: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve model information")
 
 @router.websocket("/ws/{session_id}")
 async def websocket_endpoint(websocket: WebSocket, session_id: str, token: str = Query(...)):
