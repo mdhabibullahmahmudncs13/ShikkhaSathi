@@ -49,7 +49,23 @@ def create_sample_users(db: Session):
             "password": "student123", 
             "full_name": "তানভীর রহমান",
             "role": UserRole.STUDENT,
-            "grade": 8,
+            "grade": 9,
+            "is_active": True
+        },
+        {
+            "email": "student4@shikkhasathi.com",
+            "password": "student123", 
+            "full_name": "নাফিসা আক্তার",
+            "role": UserRole.STUDENT,
+            "grade": 10,
+            "is_active": True
+        },
+        {
+            "email": "student5@shikkhasathi.com",
+            "password": "student123", 
+            "full_name": "আরিফ হাসান",
+            "role": UserRole.STUDENT,
+            "grade": 10,
             "is_active": True
         }
     ]
@@ -120,8 +136,9 @@ def create_sample_questions(db: Session):
     """Create sample quiz questions"""
     print("Creating sample questions...")
     
-    # Physics questions for Grade 9
+    # Physics questions for Grade 9 & 10
     physics_questions = [
+        # Grade 9 Physics
         {
             "subject": "physics",
             "grade": 9,
@@ -157,11 +174,39 @@ def create_sample_questions(db: Session):
             "difficulty": "medium",
             "explanation": "Using F = ma, Force = 1000 kg × 2 m/s² = 2000 N",
             "explanation_bn": "F = ma সূত্র ব্যবহার করে, বল = ১০০০ কেজি × ২ মি/সে² = ২০০০ নিউটন"
+        },
+        # Grade 10 Physics
+        {
+            "subject": "physics",
+            "grade": 10,
+            "topic": "Light and Optics",
+            "question_text": "What is the speed of light in vacuum?",
+            "question_text_bn": "শূন্যস্থানে আলোর গতি কত?",
+            "options": ["3 × 10⁸ m/s", "3 × 10⁶ m/s", "3 × 10¹⁰ m/s", "3 × 10⁴ m/s"],
+            "options_bn": ["৩ × ১০⁸ মি/সে", "৩ × ১০⁶ মি/সে", "৩ × ১০¹⁰ মি/সে", "৩ × ১০⁴ মি/সে"],
+            "correct_answer": 0,
+            "difficulty": "easy",
+            "explanation": "The speed of light in vacuum is approximately 3 × 10⁸ meters per second.",
+            "explanation_bn": "শূন্যস্থানে আলোর গতি প্রায় ৩ × ১০⁸ মিটার প্রতি সেকেন্ড।"
+        },
+        {
+            "subject": "physics",
+            "grade": 10,
+            "topic": "Electricity",
+            "question_text": "What is Ohm's Law?",
+            "question_text_bn": "ওহমের সূত্র কী?",
+            "options": ["V = IR", "P = VI", "E = mc²", "F = ma"],
+            "options_bn": ["V = IR", "P = VI", "E = mc²", "F = ma"],
+            "correct_answer": 0,
+            "difficulty": "easy",
+            "explanation": "Ohm's Law states that voltage (V) equals current (I) times resistance (R).",
+            "explanation_bn": "ওহমের সূত্র বলে যে ভোল্টেজ (V) = কারেন্ট (I) × রোধ (R)।"
         }
     ]
     
-    # Math questions for Grade 9
+    # Math questions for Grade 9 & 10
     math_questions = [
+        # Grade 9 Math
         {
             "subject": "mathematics",
             "grade": 9,
@@ -182,11 +227,38 @@ def create_sample_questions(db: Session):
             "question_text": "What is the area of a triangle with base 6 cm and height 8 cm?",
             "question_text_bn": "৬ সেমি ভূমি এবং ৮ সেমি উচ্চতাবিশিষ্ট ত্রিভুজের ক্ষেত্রফল কত?",
             "options": ["24 cm²", "48 cm²", "14 cm²", "30 cm²"],
-            "options_bn": ["২৪ বর্গ সেমি", "৪৮ বর্গ সেমি", "১৪ বর্গ সেমি", "৩০ বর্গ সেমি"],
+            "options_bn": ["২৪ বর্গ সেমি", "৪৮ বর্গ সেমি", "১ৄ বর্গ সেমি", "৩০ বর্গ সেমি"],
             "correct_answer": 0,
             "difficulty": "easy",
             "explanation": "Area of triangle = (1/2) × base × height = (1/2) × 6 × 8 = 24 cm²",
             "explanation_bn": "ত্রিভুজের ক্ষেত্রফল = (১/২) × ভূমি × উচ্চতা = (১/২) × ৬ × ৮ = ২৪ বর্গ সেমি"
+        },
+        # Grade 10 Math
+        {
+            "subject": "mathematics",
+            "grade": 10,
+            "topic": "Quadratic Equations",
+            "question_text": "What are the roots of x² - 5x + 6 = 0?",
+            "question_text_bn": "x² - 5x + 6 = 0 সমীকরণের মূল কত?",
+            "options": ["x = 2, 3", "x = 1, 6", "x = -2, -3", "x = 0, 5"],
+            "options_bn": ["x = ২, ৩", "x = ১, ৬", "x = -২, -৩", "x = ০, ৫"],
+            "correct_answer": 0,
+            "difficulty": "medium",
+            "explanation": "Factoring: (x-2)(x-3) = 0, so x = 2 or x = 3",
+            "explanation_bn": "উৎপাদকে বিশ্লেষণ: (x-2)(x-3) = 0, সুতরাং x = 2 অথবা x = 3"
+        },
+        {
+            "subject": "mathematics",
+            "grade": 10,
+            "topic": "Trigonometry",
+            "question_text": "What is sin(30°)?",
+            "question_text_bn": "sin(30°) এর মান কত?",
+            "options": ["1/2", "√3/2", "1", "√2/2"],
+            "options_bn": ["১/২", "√৩/২", "১", "√২/২"],
+            "correct_answer": 0,
+            "difficulty": "easy",
+            "explanation": "sin(30°) = 1/2",
+            "explanation_bn": "sin(30°) = ১/২"
         }
     ]
     
