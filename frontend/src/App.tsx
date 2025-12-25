@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import Landing from './pages/Landing'
-import Signup from './pages/Signup'
+import SignUpPage from './pages/SignUpPage'
 import LoginPage from './pages/LoginPage'
 import StudentDashboard from './pages/StudentDashboard'
 import ParentDashboard from './pages/ParentDashboard'
@@ -214,7 +214,7 @@ function App() {
             <ErrorBoundary>
               <Routes>
                 <Route path="/" element={<Landing />} />
-                <Route path="/signup" element={<Signup />} />
+                <Route path="/signup" element={<SignUpPage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/student" element={<StudentDashboard />} />
                 <Route path="/parent" element={<ParentDashboard />} />

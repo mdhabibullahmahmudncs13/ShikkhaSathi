@@ -1,17 +1,28 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, Mail, Lock, AlertCircle } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, AlertCircle, CheckCircle, Sparkles, ArrowRight } from 'lucide-react';
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
+
+  // Check for success message from registration
+  useEffect(() => {
+    if (location.state?.message) {
+      setSuccessMessage(location.state.message);
+      // Clear the state to prevent showing the message on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -27,17 +38,35 @@ const LoginPage = () => {
     setError('');
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Import the API client
+      const { authAPI } = await import('../services/apiClient');
       
-      // Mock validation
-      if (formData.email === 'test@example.com' && formData.password === 'password') {
-        navigate('/student');
-      } else {
-        setError('ইমেইল বা পাসওয়ার্ড ভুল। আবার চেষ্টা করুন।');
+      // Call the login API
+      const response = await authAPI.login(formData.email, formData.password);
+      
+      // Store the access token
+      localStorage.setItem('access_token', response.access_token);
+      
+      // Get user info to determine redirect
+      const userInfo = await authAPI.getCurrentUser();
+      
+      // Redirect based on user role
+      switch (userInfo.role) {
+        case 'student':
+          navigate('/student');
+          break;
+        case 'teacher':
+          navigate('/teacher');
+          break;
+        case 'parent':
+          navigate('/parent');
+          break;
+        default:
+          navigate('/student');
       }
-    } catch (err) {
-      setError('কিছু ভুল হয়েছে। আবার চেষ্টা করুন।');
+    } catch (err: any) {
+      console.error('Login error:', err);
+      setError(err.message || 'ইমেইল বা পাসওয়ার্ড ভুল। আবার চেষ্টা করুন।');
     } finally {
       setLoading(false);
     }
@@ -49,13 +78,110 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex">
-      {/* Left Side - Login Form */}
+    <div className="min-h-screen flex bg-slate-50">
+      {/* Left Side - Inspiring Visual */}
       <motion.div 
-        className="flex-1 flex items-center justify-center p-8 bg-white lg:max-w-md xl:max-w-lg"
+        className="hidden lg:flex flex-1 relative overflow-hidden"
         initial={{ opacity: 0, x: -50 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
+      >
+        {/* Background Image */}
+        <img
+          src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
+          alt="Students collaborating in modern classroom"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        
+        {/* Enhanced Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-600/80 via-purple-600/70 to-indigo-600/80"></div>
+        
+        {/* Content Overlay */}
+        <div className="relative z-10 flex items-center justify-center p-12">
+          <motion.div 
+            className="text-center text-white max-w-lg"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+          >
+            <motion.div
+              className="mb-8"
+              animate={{ 
+                rotate: [0, 5, -5, 0],
+                scale: [1, 1.05, 1]
+              }}
+              transition={{ 
+                duration: 6,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            >
+              <Sparkles className="w-16 h-16 mx-auto mb-4 text-yellow-300" />
+            </motion.div>
+            
+            <h3 className="text-5xl font-bold mb-6 font-['Hind_Siliguri']">
+              স্বাগতম ফিরে!
+            </h3>
+            <p className="text-xl leading-relaxed mb-8 font-['Hind_Siliguri'] opacity-90">
+              আপনার শিক্ষার যাত্রা অব্যাহত রাখুন। কৃত্রিম বুদ্ধিমত্তার সাহায্যে নতুন উচ্চতায় পৌঁছান।
+            </p>
+            
+            {/* Floating Achievement Cards */}
+            <div className="grid grid-cols-2 gap-4">
+              <motion.div 
+                className="bg-white/20 backdrop-blur-md rounded-3xl p-6 text-center border border-white/30"
+                whileHover={{ scale: 1.05, y: -5 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className="text-3xl font-bold font-['Hind_Siliguri'] mb-2">10K+</div>
+                <div className="text-sm opacity-90 font-['Hind_Siliguri']">সক্রিয় শিক্ষার্থী</div>
+              </motion.div>
+              <motion.div 
+                className="bg-white/20 backdrop-blur-md rounded-3xl p-6 text-center border border-white/30"
+                whileHover={{ scale: 1.05, y: -5 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className="text-3xl font-bold font-['Hind_Siliguri'] mb-2">৯৮%</div>
+                <div className="text-sm opacity-90 font-['Hind_Siliguri']">সফলতার হার</div>
+              </motion.div>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Floating Decorative Elements */}
+        <motion.div
+          className="absolute top-20 left-20 w-20 h-20 bg-white/10 rounded-full blur-xl"
+          animate={{
+            y: [0, -20, 0],
+            scale: [1, 1.2, 1]
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+        <motion.div
+          className="absolute bottom-32 right-16 w-16 h-16 bg-yellow-300/20 rounded-full blur-lg"
+          animate={{
+            y: [0, -15, 0],
+            x: [0, 10, 0]
+          }}
+          transition={{
+            duration: 6,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 2
+          }}
+        />
+      </motion.div>
+
+      {/* Right Side - Login Form */}
+      <motion.div 
+        className="flex-1 flex items-center justify-center p-8 lg:max-w-md xl:max-w-lg bg-white"
+        initial={{ opacity: 0, x: 50 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
       >
         <div className="w-full max-w-md space-y-8">
           {/* Branding */}
@@ -63,20 +189,20 @@ const LoginPage = () => {
             className="text-center"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
           >
-            <div className="flex items-center justify-center gap-3 mb-6">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                <span className="text-white font-bold text-lg">শ</span>
+            <div className="flex items-center justify-center gap-3 mb-8">
+              <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-xl">
+                <span className="text-white font-bold text-xl">শ</span>
               </div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent font-['Hind_Siliguri']">
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent font-['Hind_Siliguri']">
                 শিক্ষাসাথী
               </h1>
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 font-['Hind_Siliguri']">
+            <h2 className="text-3xl font-bold text-gray-900 font-['Hind_Siliguri'] mb-3">
               স্বাগতম!
             </h2>
-            <p className="mt-2 text-gray-600 font-['Hind_Siliguri']">
+            <p className="text-gray-600 font-['Hind_Siliguri'] text-lg">
               আপনার অ্যাকাউন্টে প্রবেশ করুন
             </p>
           </motion.div>
@@ -87,28 +213,41 @@ const LoginPage = () => {
             onSubmit={handleSubmit}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
+            transition={{ duration: 0.6, delay: 0.6 }}
           >
-            {/* Error Message */}
-            {error && (
+            {/* Success Message */}
+            {successMessage && (
               <motion.div 
-                className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm flex items-center gap-2 font-['Hind_Siliguri']"
+                className="bg-green-50 border border-green-200 text-green-700 px-6 py-4 rounded-2xl text-sm flex items-center gap-3 font-['Hind_Siliguri'] shadow-lg"
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.3 }}
               >
-                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                <CheckCircle className="w-5 h-5 flex-shrink-0" />
+                {successMessage}
+              </motion.div>
+            )}
+
+            {/* Error Message */}
+            {error && (
+              <motion.div 
+                className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-2xl text-sm flex items-center gap-3 font-['Hind_Siliguri'] shadow-lg"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3 }}
+              >
+                <AlertCircle className="w-5 h-5 flex-shrink-0" />
                 {error}
               </motion.div>
             )}
 
             {/* Email Field */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2 font-['Hind_Siliguri']">
+              <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-3 font-['Hind_Siliguri']">
                 ইমেইল ঠিকানা
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                   <Mail className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
@@ -120,9 +259,9 @@ const LoginPage = () => {
                   value={formData.email}
                   onChange={handleChange}
                   disabled={loading}
-                  className={`appearance-none relative block w-full pl-10 pr-3 py-3 border ${
+                  className={`appearance-none relative block w-full pl-12 pr-4 py-4 border ${
                     error ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'
-                  } placeholder-gray-400 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-0 transition-all disabled:bg-gray-100 disabled:cursor-not-allowed font-['Hind_Siliguri']`}
+                  } placeholder-gray-400 text-gray-900 rounded-2xl focus:outline-none focus:ring-2 focus:ring-offset-0 transition-all disabled:bg-gray-100 disabled:cursor-not-allowed font-['Hind_Siliguri'] text-lg shadow-sm`}
                   placeholder="আপনার ইমেইল লিখুন"
                 />
               </div>
@@ -130,11 +269,11 @@ const LoginPage = () => {
 
             {/* Password Field */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2 font-['Hind_Siliguri']">
+              <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-3 font-['Hind_Siliguri']">
                 পাসওয়ার্ড
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                   <Lock className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
@@ -146,15 +285,15 @@ const LoginPage = () => {
                   value={formData.password}
                   onChange={handleChange}
                   disabled={loading}
-                  className={`appearance-none relative block w-full pl-10 pr-12 py-3 border ${
+                  className={`appearance-none relative block w-full pl-12 pr-14 py-4 border ${
                     error ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'
-                  } placeholder-gray-400 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-0 transition-all disabled:bg-gray-100 disabled:cursor-not-allowed font-['Hind_Siliguri']`}
+                  } placeholder-gray-400 text-gray-900 rounded-2xl focus:outline-none focus:ring-2 focus:ring-offset-0 transition-all disabled:bg-gray-100 disabled:cursor-not-allowed font-['Hind_Siliguri'] text-lg shadow-sm`}
                   placeholder="আপনার পাসওয়ার্ড লিখুন"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
                 >
                   {showPassword ? (
                     <EyeOff className="h-5 w-5" />
@@ -165,7 +304,7 @@ const LoginPage = () => {
               </div>
             </div>
 
-            {/* Forgot Password Link */}
+            {/* Remember Me & Forgot Password */}
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <input
@@ -174,7 +313,7 @@ const LoginPage = () => {
                   type="checkbox"
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700 font-['Hind_Siliguri']">
+                <label htmlFor="remember-me" className="ml-3 block text-sm text-gray-700 font-['Hind_Siliguri']">
                   মনে রাখুন
                 </label>
               </div>
@@ -190,39 +329,43 @@ const LoginPage = () => {
             <motion.button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-lg font-bold rounded-xl text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed font-['Hind_Siliguri']"
+              className="group relative w-full flex justify-center items-center gap-3 py-4 px-6 border border-transparent text-xl font-bold rounded-2xl text-white bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 hover:from-blue-700 hover:via-purple-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all shadow-xl hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed font-['Hind_Siliguri'] transform hover:-translate-y-1"
               whileHover={{ scale: loading ? 1 : 1.02 }}
               whileTap={{ scale: loading ? 1 : 0.98 }}
             >
               {loading ? (
                 <>
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <svg className="animate-spin -ml-1 mr-3 h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
                   প্রবেশ করা হচ্ছে...
                 </>
               ) : (
-                'প্রবেশ করুন'
+                <>
+                  <Sparkles className="w-5 h-5" />
+                  প্রবেশ করুন
+                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </>
               )}
             </motion.button>
 
             {/* Divider */}
-            <div className="relative">
+            <div className="relative my-8">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-300"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500 font-['Hind_Siliguri']">অথবা</span>
+                <span className="px-4 bg-white text-gray-500 font-['Hind_Siliguri'] font-medium">অথবা</span>
               </div>
             </div>
 
             {/* Social Login Buttons */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-4">
               <motion.button
                 type="button"
                 onClick={() => handleSocialLogin('google')}
-                className="w-full inline-flex justify-center items-center gap-2 py-3 px-4 border border-gray-300 rounded-xl bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all shadow-sm hover:shadow-md font-['Hind_Siliguri']"
+                className="w-full inline-flex justify-center items-center gap-3 py-4 px-4 border border-gray-300 rounded-2xl bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all shadow-sm hover:shadow-md font-['Hind_Siliguri']"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
@@ -238,7 +381,7 @@ const LoginPage = () => {
               <motion.button
                 type="button"
                 onClick={() => handleSocialLogin('facebook')}
-                className="w-full inline-flex justify-center items-center gap-2 py-3 px-4 border border-gray-300 rounded-xl bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all shadow-sm hover:shadow-md font-['Hind_Siliguri']"
+                className="w-full inline-flex justify-center items-center gap-3 py-4 px-4 border border-gray-300 rounded-2xl bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all shadow-sm hover:shadow-md font-['Hind_Siliguri']"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
@@ -261,66 +404,11 @@ const LoginPage = () => {
               নতুন ব্যবহারকারী?{' '}
               <button
                 onClick={() => navigate('/signup')}
-                className="font-medium text-blue-600 hover:text-blue-500 transition-colors"
+                className="font-semibold text-blue-600 hover:text-blue-500 transition-colors"
               >
                 নতুন অ্যাকাউন্ট তৈরি করুন
               </button>
             </p>
-          </motion.div>
-        </div>
-      </motion.div>
-
-      {/* Right Side - Visual */}
-      <motion.div 
-        className="hidden lg:flex flex-1 relative"
-        initial={{ opacity: 0, x: 50 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
-      >
-        {/* Background Image */}
-        <img
-          src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1471&q=80"
-          alt="Students learning together"
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-        
-        {/* Colorful Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 via-purple-600/30 to-purple-600/40"></div>
-        
-        {/* Content Overlay */}
-        <div className="relative z-10 flex items-center justify-center p-12">
-          <motion.div 
-            className="text-center text-white max-w-md"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
-          >
-            <h3 className="text-4xl font-bold mb-4 font-['Hind_Siliguri']">
-              শেখার নতুন যুগে
-            </h3>
-            <p className="text-xl leading-relaxed font-['Hind_Siliguri']">
-              কৃত্রিম বুদ্ধিমত্তার সাহায্যে আপনার শিক্ষার যাত্রা শুরু করুন
-            </p>
-            
-            {/* Floating Stats */}
-            <div className="grid grid-cols-2 gap-4 mt-8">
-              <motion.div 
-                className="bg-white/20 backdrop-blur-md rounded-2xl p-4 text-center"
-                whileHover={{ scale: 1.05 }}
-                transition={{ duration: 0.2 }}
-              >
-                <div className="text-2xl font-bold font-['Hind_Siliguri']">10K+</div>
-                <div className="text-sm opacity-90 font-['Hind_Siliguri']">শিক্ষার্থী</div>
-              </motion.div>
-              <motion.div 
-                className="bg-white/20 backdrop-blur-md rounded-2xl p-4 text-center"
-                whileHover={{ scale: 1.05 }}
-                transition={{ duration: 0.2 }}
-              >
-                <div className="text-2xl font-bold font-['Hind_Siliguri']">৯৮%</div>
-                <div className="text-sm opacity-90 font-['Hind_Siliguri']">সফলতার হার</div>
-              </motion.div>
-            </div>
           </motion.div>
         </div>
       </motion.div>

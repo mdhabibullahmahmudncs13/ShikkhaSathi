@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, Boolean, DateTime, Enum
+from sqlalchemy import Column, String, Integer, Boolean, DateTime, Enum, Date
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
@@ -25,6 +25,10 @@ class User(Base):
     email = Column(String(255), unique=True, nullable=False, index=True)
     password_hash = Column(String(255), nullable=False)
     full_name = Column(String(255), nullable=False)
+    phone = Column(String(20), nullable=True)  # Mobile number
+    date_of_birth = Column(Date, nullable=True)  # Date of birth
+    school = Column(String(255), nullable=True)  # School name
+    district = Column(String(100), nullable=True)  # District/location
     grade = Column(Integer, nullable=True)  # For students, 6-12
     medium = Column(Enum(Medium), nullable=True)
     role = Column(Enum(UserRole), nullable=False, default=UserRole.STUDENT)

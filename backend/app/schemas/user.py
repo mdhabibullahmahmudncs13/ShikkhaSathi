@@ -1,6 +1,6 @@
 from typing import Optional, Union
 from pydantic import BaseModel, EmailStr, field_validator
-from datetime import datetime
+from datetime import datetime, date
 from uuid import UUID
 from app.models.user import UserRole, Medium
 
@@ -8,6 +8,10 @@ from app.models.user import UserRole, Medium
 class UserBase(BaseModel):
     email: EmailStr
     full_name: str
+    phone: Optional[str] = None
+    date_of_birth: Optional[date] = None
+    school: Optional[str] = None
+    district: Optional[str] = None
     grade: Optional[int] = None
     medium: Optional[Medium] = None
     role: UserRole = UserRole.STUDENT
@@ -18,6 +22,16 @@ class UserBase(BaseModel):
     def validate_grade(cls, v):
         if v is not None and (v < 6 or v > 12):
             raise ValueError('Grade must be between 6 and 12')
+        return v
+
+    @field_validator('phone')
+    @classmethod
+    def validate_phone(cls, v):
+        if v is not None and v.strip():
+            # Bangladesh mobile number validation
+            import re
+            if not re.match(r'^(\+88)?01[3-9]\d{8}$', v):
+                raise ValueError('Invalid Bangladesh mobile number format')
         return v
 
 
@@ -35,6 +49,10 @@ class UserCreate(UserBase):
 class UserUpdate(BaseModel):
     email: Optional[EmailStr] = None
     full_name: Optional[str] = None
+    phone: Optional[str] = None
+    date_of_birth: Optional[date] = None
+    school: Optional[str] = None
+    district: Optional[str] = None
     grade: Optional[int] = None
     medium: Optional[Medium] = None
     is_active: Optional[bool] = None
@@ -44,6 +62,16 @@ class UserUpdate(BaseModel):
     def validate_grade(cls, v):
         if v is not None and (v < 6 or v > 12):
             raise ValueError('Grade must be between 6 and 12')
+        return v
+
+    @field_validator('phone')
+    @classmethod
+    def validate_phone(cls, v):
+        if v is not None and v.strip():
+            # Bangladesh mobile number validation
+            import re
+            if not re.match(r'^(\+88)?01[3-9]\d{8}$', v):
+                raise ValueError('Invalid Bangladesh mobile number format')
         return v
 
 

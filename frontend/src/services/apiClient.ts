@@ -154,9 +154,13 @@ export const authAPI = {
     email: string;
     password: string;
     full_name: string;
-    grade: number;
-    medium: string;
-    role: string;
+    phone?: string;
+    date_of_birth?: string;
+    school?: string;
+    district?: string;
+    grade?: number;
+    medium?: string;
+    role?: string;
   }) => api.post('/auth/register', userData),
   
   logout: () => api.post('/auth/logout'),

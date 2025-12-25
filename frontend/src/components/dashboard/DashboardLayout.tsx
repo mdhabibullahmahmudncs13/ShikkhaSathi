@@ -1,6 +1,12 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { 
+  Menu, X, Bell, Home, Target, Brain, BookOpen, 
+  Trophy, Settings, LogOut, Wifi, WifiOff 
+} from 'lucide-react';
 import { Notification, StudentProgress } from '../../types/dashboard';
 import { useUser } from '../../contexts/UserContext';
+import NavItem from './NavItem';
 
 // User Menu Component
 const UserMenu: React.FC = () => {
@@ -85,8 +91,36 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   notifications,
   onNotificationRead
 }) => {
+  const navigate = useNavigate();
+  const { user, logout } = useUser();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(word => word.charAt(0))
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  const displayName = user?.full_name || user?.first_name || 'User';
+
+  // Listen for online/offline status
+  React.useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   const subjects = [
     { name: 'Mathematics', icon: '📊', color: 'bg-blue-500' },
@@ -101,7 +135,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const unreadNotifications = notifications.filter(n => !n.read);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div 
@@ -110,46 +144,96 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         />
       )}
 
-      {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
+      {/* Modern Sidebar */}
+      <div className={`fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-xl transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:flex lg:flex-col ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
+        {/* Sidebar Header */}
         <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 flex-shrink-0">
-          <h1 className="text-xl font-bold text-gray-900 truncate">ShikkhaSathi</h1>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-sm">S</span>
+            </div>
+            <h1 className="text-xl font-bold text-gray-900 font-bengali">ShikkhaSathi</h1>
+          </div>
           <button
             onClick={() => setSidebarOpen(false)}
             className="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-600 flex-shrink-0"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <X className="w-5 h-5" />
           </button>
         </div>
 
-        <nav className="mt-6 px-3 overflow-y-auto overflow-x-hidden" style={{ maxHeight: 'calc(100vh - 4rem)' }}>
-          {/* Quick Actions */}
+        {/* User Profile Section */}
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
+              {getInitials(displayName)}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-gray-900 truncate">{displayName}</p>
+              <p className="text-xs text-gray-500">Level {studentProgress.currentLevel} • {studentProgress.totalXP} XP</p>
+            </div>
+          </div>
+          
+          {/* Quick XP Progress */}
+          <div className="mt-4">
+            <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
+              <span>Level Progress</span>
+              <span>{studentProgress.totalXP % 100}/100 XP</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div 
+                className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-500"
+                style={{ width: `${(studentProgress.totalXP % 100)}%` }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 px-4 py-6 overflow-y-auto">
+          {/* Main Navigation */}
           <div className="mb-8">
-            <h3 className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Quick Actions</h3>
-            <div className="mt-2 space-y-1">
-              <button className="w-full flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100 hover:text-gray-900">
-                <span className="mr-3">🎯</span>
-                Take Quiz
-              </button>
-              <button className="w-full flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100 hover:text-gray-900">
-                <span className="mr-3">💬</span>
-                AI Tutor Chat
-              </button>
-              <button className="w-full flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100 hover:text-gray-900">
-                <span className="mr-3">📖</span>
-                Study Materials
-              </button>
+            <h3 className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Main</h3>
+            <div className="space-y-1">
+              <NavItem
+                icon={Home}
+                label="Dashboard"
+                isActive={true}
+                onClick={() => navigate('/dashboard')}
+              />
+              <NavItem
+                icon={Target}
+                label="Take Quiz"
+                onClick={() => navigate('/quiz')}
+                color="primary"
+              />
+              <NavItem
+                icon={Brain}
+                label="AI Tutor"
+                onClick={() => navigate('/chat')}
+                color="success"
+              />
+              <NavItem
+                icon={BookOpen}
+                label="Study Materials"
+                onClick={() => navigate('/materials')}
+              />
+              <NavItem
+                icon={Trophy}
+                label="Achievements"
+                onClick={() => navigate('/achievements')}
+                badge={studentProgress.achievements.filter(a => a.unlockedAt).length}
+                color="warning"
+              />
             </div>
           </div>
 
           {/* Subjects */}
           <div>
-            <h3 className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Subjects</h3>
-            <div className="mt-2 space-y-1">
+            <h3 className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Subjects</h3>
+            <div className="space-y-2">
               {subjects.map((subject) => {
                 const progress = studentProgress.subjectProgress.find(p => p.subject === subject.name);
                 const completionPercentage = progress?.completionPercentage || 0;
@@ -157,30 +241,21 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                 return (
                   <div
                     key={subject.name}
-                    className="w-full px-3 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100 hover:text-gray-900 cursor-pointer"
+                    className="px-3 py-3 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-100 hover:text-gray-900 cursor-pointer transition-colors"
+                    onClick={() => navigate('/quiz')}
                   >
-                    <div className="flex items-start gap-2">
-                      <span className="text-lg flex-shrink-0 mt-0.5">{subject.icon}</span>
+                    <div className="flex items-start gap-3">
+                      <span className="text-lg flex-shrink-0">{subject.icon}</span>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2 mb-1.5">
-                          <span className="text-sm font-medium truncate flex-1">{subject.name}</span>
-                          <span className="text-xs text-gray-500 flex-shrink-0 tabular-nums">{Math.round(completionPercentage)}%</span>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium truncate">{subject.name}</span>
+                          <span className="text-xs text-gray-500 flex-shrink-0 ml-2">{Math.round(completionPercentage)}%</span>
                         </div>
-                        {/* Progress bar with strict width constraints */}
-                        <div 
-                          className="relative h-1.5 bg-gray-200 rounded-full"
-                          style={{ 
-                            width: '100%',
-                            maxWidth: '100%',
-                            overflow: 'hidden'
-                          }}
-                        >
+                        {/* Progress bar */}
+                        <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
                           <div 
-                            className={`absolute top-0 left-0 h-full rounded-full transition-all duration-300 ease-out ${subject.color}`}
-                            style={{ 
-                              width: `${Math.min(Math.max(completionPercentage, 0), 100)}%`,
-                              maxWidth: '100%'
-                            }}
+                            className={`h-full rounded-full transition-all duration-300 ease-out ${subject.color}`}
+                            style={{ width: `${Math.min(Math.max(completionPercentage, 0), 100)}%` }}
                           />
                         </div>
                       </div>
@@ -191,27 +266,57 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             </div>
           </div>
         </nav>
+
+        {/* Bottom Section */}
+        <div className="p-4 border-t border-gray-200">
+          <div className="space-y-1">
+            <NavItem
+              icon={Settings}
+              label="Settings"
+              onClick={() => navigate('/settings')}
+            />
+            <NavItem
+              icon={LogOut}
+              label="Sign Out"
+              onClick={logout}
+              color="danger"
+            />
+          </div>
+        </div>
       </div>
 
-      {/* Main content */}
-      <div className="lg:pl-64 w-full">
-        {/* Header */}
-        <header className="bg-white shadow-sm border-b border-gray-200">
+      {/* Main content area */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Modern Header */}
+        <header className="bg-white shadow-sm border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center">
-              <button className="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-600">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
+            <div className="flex items-center min-w-0">
+              <button 
+                onClick={() => setSidebarOpen(true)}
+                className="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-600 mr-2"
+              >
+                <Menu className="w-6 h-6" />
               </button>
-              <div className="ml-4 lg:ml-0">
-                <h2 className="text-lg font-semibold text-gray-900">Dashboard</h2>
-                <p className="text-sm text-gray-500">Welcome back! Ready to learn?</p>
+              <div className="min-w-0">
+                <h2 className="text-lg font-semibold text-gray-900 truncate">Dashboard</h2>
+                <p className="text-sm text-gray-500 truncate">Welcome back! Ready to learn?</p>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
+            
+            <div className="flex items-center space-x-4 flex-shrink-0">
+              {/* Online/Offline Indicator */}
+              <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${
+                isOnline 
+                  ? 'bg-green-100 text-green-800' 
+                  : 'bg-red-100 text-red-800'
+              }`}>
+                {isOnline ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
+                {isOnline ? 'Online' : 'Offline'}
+              </div>
+
               {/* XP and Level Display */}
               <div className="hidden sm:flex items-center space-x-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-full">
+                <Trophy className="w-4 h-4" />
                 <span className="text-sm font-medium">Level {studentProgress.currentLevel}</span>
                 <span className="text-xs opacity-75">•</span>
                 <span className="text-sm">{studentProgress.totalXP} XP</span>
@@ -221,49 +326,65 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               <div className="relative">
                 <button
                   onClick={() => setNotificationsOpen(!notificationsOpen)}
-                  className="p-2 rounded-full text-gray-400 hover:text-gray-600 relative"
+                  className="p-2 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 relative transition-colors"
                 >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM11 19H7a2 2 0 01-2-2V7a2 2 0 012-2h5m4 0v6m0 0l3-3m-3 3l-3-3" />
-                  </svg>
+                  <Bell className="w-6 h-6" />
                   {unreadNotifications.length > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                      {unreadNotifications.length}
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
+                      {unreadNotifications.length > 9 ? '9+' : unreadNotifications.length}
                     </span>
                   )}
                 </button>
 
                 {/* Notifications dropdown */}
                 {notificationsOpen && (
-                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-50">
-                    <div className="p-4">
-                      <h3 className="text-lg font-medium text-gray-900 mb-3">Notifications</h3>
-                      <div className="space-y-3 max-h-64 overflow-y-auto">
-                        {notifications.slice(0, 5).map((notification) => (
-                          <div
-                            key={notification.id}
-                            className={`p-3 rounded-md cursor-pointer ${
-                              notification.read ? 'bg-gray-50' : 'bg-blue-50 border-l-4 border-blue-500'
-                            }`}
-                            onClick={() => onNotificationRead(notification.id)}
-                          >
-                            <div className="flex items-start">
-                              <div className="flex-1">
-                                <p className="text-sm font-medium text-gray-900">{notification.title}</p>
-                                <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
-                                <p className="text-xs text-gray-400 mt-1">
-                                  {new Date(notification.timestamp).toLocaleDateString()}
-                                </p>
+                  <>
+                    <div 
+                      className="fixed inset-0 z-40" 
+                      onClick={() => setNotificationsOpen(false)}
+                    />
+                    <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg ring-1 ring-black ring-opacity-5 z-50">
+                      <div className="p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <h3 className="text-lg font-semibold text-gray-900">Notifications</h3>
+                          {unreadNotifications.length > 0 && (
+                            <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded-full">
+                              {unreadNotifications.length} new
+                            </span>
+                          )}
+                        </div>
+                        <div className="space-y-3 max-h-64 overflow-y-auto">
+                          {notifications.slice(0, 5).map((notification) => (
+                            <div
+                              key={notification.id}
+                              className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                                notification.read 
+                                  ? 'bg-gray-50 hover:bg-gray-100' 
+                                  : 'bg-blue-50 border-l-4 border-blue-500 hover:bg-blue-100'
+                              }`}
+                              onClick={() => onNotificationRead(notification.id)}
+                            >
+                              <div className="flex items-start">
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium text-gray-900 truncate">{notification.title}</p>
+                                  <p className="text-sm text-gray-600 mt-1 line-clamp-2">{notification.message}</p>
+                                  <p className="text-xs text-gray-400 mt-1">
+                                    {new Date(notification.timestamp).toLocaleDateString()}
+                                  </p>
+                                </div>
                               </div>
                             </div>
+                          ))}
+                        </div>
+                        {notifications.length === 0 && (
+                          <div className="text-center py-8">
+                            <Bell className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                            <p className="text-sm text-gray-500">No notifications yet</p>
                           </div>
-                        ))}
+                        )}
                       </div>
-                      {notifications.length === 0 && (
-                        <p className="text-sm text-gray-500 text-center py-4">No notifications</p>
-                      )}
                     </div>
-                  </div>
+                  </>
                 )}
               </div>
 
@@ -274,8 +395,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         </header>
 
         {/* Main content area */}
-        <main className="p-4 sm:p-6 lg:p-8 w-full max-w-7xl mx-auto">
-          {children}
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-auto">
+          <div className="max-w-7xl mx-auto">
+            {children}
+          </div>
         </main>
       </div>
     </div>
