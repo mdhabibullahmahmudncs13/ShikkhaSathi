@@ -164,7 +164,7 @@ cd frontend && npm test
 4. Make changes and test: `pytest` (backend), `npm test` (frontend)
 5. Submit pull request
 
-## � SLicense
+## License
 
 MIT License - see [LICENSE](LICENSE) file for details.
 
