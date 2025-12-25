@@ -164,7 +164,32 @@ cd frontend && npm test
 4. Make changes and test: `pytest` (backend), `npm test` (frontend)
 5. Submit pull request
 
-## License
+## 👥 Collaborators
+
+### Core Team
+- **[Your Name]** - Project Lead & Full-Stack Developer
+  - GitHub: [@yourusername](https://github.com/yourusername)
+  - Role: Architecture, AI Integration, Backend Development
+
+### Contributors
+- **[Contributor Name]** - Frontend Developer
+  - GitHub: [@contributor1](https://github.com/contributor1)
+  - Contributions: React components, PWA implementation
+
+- **[Contributor Name]** - AI/ML Engineer
+  - GitHub: [@contributor2](https://github.com/contributor2)
+  - Contributions: RAG system, Voice integration
+
+- **[Contributor Name]** - UI/UX Designer
+  - GitHub: [@contributor3](https://github.com/contributor3)
+  - Contributions: Design system, User experience
+
+### Special Thanks
+- **Open Source Community** - For the amazing tools and libraries
+
+*Want to be listed here? Check out our [Contributing Guidelines](#-contributing) and submit your first PR!*
+
+## 📄 License
 
 MIT License - see [LICENSE](LICENSE) file for details.
 
