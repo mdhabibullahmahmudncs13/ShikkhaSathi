@@ -168,7 +168,7 @@ cd frontend && npm test
 
 ### Core Team
 - **[Your Name]** - Project Lead & Full-Stack Developer
-  - GitHub: [@yourusername](https://github.com/yourusername)
+  - GitHub: [@mdhabibullahmahmudncs13]
   - Role: Architecture, AI Integration, Backend Development
 
 ### Contributors
