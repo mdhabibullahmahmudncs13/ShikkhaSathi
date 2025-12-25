@@ -250,12 +250,12 @@ const ArenaCard: React.FC<ArenaCardProps> = ({ arena, completionPercentage, onCl
                 <div className="flex items-center gap-1">
                   <Clock className="w-4 h-4 text-white/70" />
                   <span className="text-white/70">
-                    {arena.adventures.reduce((acc, adv) => acc + adv.estimatedTime, 0)}m
+                    {(arena.adventures || []).reduce((acc, adv) => acc + (adv.estimatedTime || 0), 0)}m
                   </span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Target className="w-4 h-4 text-white/70" />
-                  <span className="text-white/70">{arena.adventures.length} Adventures</span>
+                  <span className="text-white/70">{(arena.adventures || []).length} Adventures</span>
                 </div>
               </div>
               

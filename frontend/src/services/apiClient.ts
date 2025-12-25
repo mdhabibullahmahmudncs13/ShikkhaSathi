@@ -422,6 +422,15 @@ export const teacherAPI = {
     api.get(`/learning-paths/class/${classId}/assignments`, { params: filters }),
 };
 
+export const learningAPI = {
+  getArenas: () => api.get('/learning/arenas'),
+  getArenaDetail: (arenaId: string) => api.get(`/learning/arena/${arenaId}`),
+  getAdventureDetail: (adventureId: string) => api.get(`/learning/adventure/${adventureId}`),
+  getTopicDetail: (topicId: string) => api.get(`/learning/topic/${topicId}`),
+  submitTopicQuiz: (topicId: string, quizData: any) => 
+    api.post(`/learning/topic/${topicId}/submit-quiz`, quizData),
+};
+
 export const parentAPI = {
   getChildProgress: (childId: string) =>
     api.get(`/parent/child/${childId}/progress`),

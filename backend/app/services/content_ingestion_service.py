@@ -32,7 +32,7 @@ class TextbookContent:
 class NCTBContentIngestionService:
     """Service to ingest and structure NCTB textbook content"""
     
-    def __init__(self, data_path: str = "backend/data/nctb_txt"):
+    def __init__(self, data_path: str = "data/nctb_txt"):
         self.data_path = Path(data_path)
         self.textbooks = {}
         
@@ -124,8 +124,8 @@ class NCTBContentIngestionService:
         # Split content by pages first
         pages = re.split(r'--- Page \d+ ---', content)
         
-        # Find chapter boundaries
-        chapter_pattern = r'Chapter\s+(\w+|One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|\d+)\s*\n\s*([^\n]+)'
+        # Find chapter boundaries - updated pattern to match actual textbook format
+        chapter_pattern = r'Chapter\s+(\d+)\s*\n\s*([^\n]+)'
         chapter_matches = list(re.finditer(chapter_pattern, content, re.IGNORECASE | re.MULTILINE))
         
         for i, match in enumerate(chapter_matches):
@@ -162,17 +162,21 @@ class NCTBContentIngestionService:
     
     def _convert_chapter_number(self, chapter_text: str) -> int:
         """Convert chapter number text to integer"""
-        chapter_text = chapter_text.lower().strip()
+        chapter_text = chapter_text.strip()
         
+        # Handle direct numeric chapters
+        if chapter_text.isdigit():
+            return int(chapter_text)
+        
+        # Handle word-based chapters
         number_map = {
             'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
             'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10
         }
         
-        if chapter_text in number_map:
-            return number_map[chapter_text]
-        elif chapter_text.isdigit():
-            return int(chapter_text)
+        chapter_lower = chapter_text.lower()
+        if chapter_lower in number_map:
+            return number_map[chapter_lower]
         else:
             return 1  # Default
     

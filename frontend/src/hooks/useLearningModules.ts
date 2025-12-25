@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Arena, ArenaProgress, GameModeStats } from '../types/learning';
-import { api } from '../services/apiClient';
+import { learningAPI } from '../services/apiClient';
 import { logger } from '../services/logger';
 
 interface UseLearningModulesReturn {
@@ -25,7 +25,7 @@ export const useLearningModules = (): UseLearningModulesReturn => {
         setError(null);
 
         // Fetch real data from API
-        const response = await api.get('/learning/arenas');
+        const response = await learningAPI.getArenas();
         const data = response;
 
         setArenas(data.arenas || []);
