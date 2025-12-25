@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Target, Award, Clock, Zap, Play, Brain, RefreshCw, AlertCircle, BookOpen, Users, Trophy } from 'lucide-react';
+import { Target, Award, Clock, Zap, Brain, RefreshCw, AlertCircle, BookOpen, Trophy } from 'lucide-react';
 import DashboardLayout from '../components/dashboard/DashboardLayout';
 import StatCard from '../components/dashboard/StatCard';
 import SubjectCard from '../components/dashboard/SubjectCard';
@@ -116,6 +116,25 @@ const StudentDashboard: React.FC = () => {
           studentProgress={studentProgress}
           onContinue={() => navigate('/quiz')}
         />
+
+        {/* Learning Arenas Entry Card */}
+        <div 
+          className="bg-gradient-to-br from-violet-500 to-purple-600 rounded-2xl p-6 text-white cursor-pointer hover:scale-105 transition-all duration-200 shadow-lg"
+          onClick={() => navigate('/learning')}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                <BookOpen className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold">Learning Arenas</h3>
+                <p className="text-violet-100">Explore gamified learning adventures</p>
+              </div>
+            </div>
+            <Trophy className="w-8 h-8 text-violet-200" />
+          </div>
+        </div>
 
         {/* Gamification Stats Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
