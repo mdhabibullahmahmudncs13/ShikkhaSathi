@@ -217,8 +217,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               />
               <NavItem
                 icon={BookOpen}
-                label="Study Materials"
-                onClick={() => navigate('/materials')}
+                label="Learning Arenas"
+                onClick={() => navigate('/learning')}
+                color="primary"
               />
               <NavItem
                 icon={Trophy}
