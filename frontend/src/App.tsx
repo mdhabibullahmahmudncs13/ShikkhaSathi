@@ -1,6 +1,7 @@
-import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import Landing from './pages/Landing'
 import Signup from './pages/Signup'
+import LoginPage from './pages/LoginPage'
 import StudentDashboard from './pages/StudentDashboard'
 import ParentDashboard from './pages/ParentDashboard'
 import TeacherDashboard from './pages/TeacherDashboard'
@@ -18,231 +19,9 @@ import { UserProvider } from './contexts/UserContext'
 import React from 'react'
 
 const Login = () => {
-  const navigate = useNavigate();
-  const [showPassword, setShowPassword] = React.useState(false);
-  const [loading, setLoading] = React.useState(false);
-  const [error, setError] = React.useState('');
-  const [formData, setFormData] = React.useState({
-    email: '',
-    password: ''
-  });
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-    setError(''); // Clear error when user types
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-
-    try {
-      // Import authAPI dynamically to avoid circular dependencies
-      const { authAPI } = await import('./services/apiClient');
-      
-      // Call login API
-      const response = await authAPI.login(formData.email, formData.password);
-      
-      // Store tokens and user info
-      localStorage.setItem('access_token', response.access_token);
-      if (response.refresh_token) {
-        localStorage.setItem('refresh_token', response.refresh_token);
-      }
-      
-      // Get user info
-      const user = await authAPI.getCurrentUser();
-      localStorage.setItem('user_id', user.id);
-      localStorage.setItem('user_role', user.role);
-      
-      // Redirect based on role
-      if (user.role === 'teacher') {
-        navigate('/teacher');
-      } else if (user.role === 'parent') {
-        navigate('/parent');
-      } else {
-        navigate('/student');
-      }
-    } catch (err: any) {
-      console.error('Login error:', err);
-      setError(err.message || 'Invalid email or password. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-neutral-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        {/* Logo/Brand */}
-        <div className="text-center">
-          <h1 className="text-4xl font-bold text-neutral-900 mb-2">
-            ShikkhaSathi
-          </h1>
-          <p className="text-neutral-600 text-sm">
-            শেখার যাত্রা চালিয়ে যান
-          </p>
-        </div>
-
-        {/* Welcome Message */}
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-neutral-900">
-            Let's continue learning
-          </h2>
-          <p className="mt-2 text-sm text-neutral-500">
-            আপনার অ্যাকাউন্টে সাইন ইন করুন
-          </p>
-        </div>
-
-        {/* Login Form */}
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {/* Error Message */}
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-              {error}
-            </div>
-          )}
-          
-          {/* Email Input */}
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-neutral-700 mb-2">
-              Email
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              required
-              value={formData.email}
-              onChange={handleChange}
-              disabled={loading}
-              className="appearance-none relative block w-full px-4 py-3 border border-neutral-300 placeholder-neutral-400 text-neutral-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all disabled:bg-neutral-100 disabled:cursor-not-allowed"
-              placeholder="your@email.com"
-            />
-          </div>
-
-          {/* Password Input */}
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-neutral-700 mb-2">
-              Password
-            </label>
-            <div className="relative">
-              <input
-                id="password"
-                name="password"
-                type={showPassword ? "text" : "password"}
-                autoComplete="current-password"
-                required
-                value={formData.password}
-                onChange={handleChange}
-                disabled={loading}
-                className="appearance-none relative block w-full px-4 py-3 pr-12 border border-neutral-300 placeholder-neutral-400 text-neutral-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all disabled:bg-neutral-100 disabled:cursor-not-allowed"
-                placeholder="Enter your password"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-neutral-400 hover:text-neutral-600"
-              >
-                {showPassword ? (
-                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                ) : (
-                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                  </svg>
-                )}
-              </button>
-            </div>
-          </div>
-
-          {/* Remember Me & Forgot Password */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <input
-                id="remember-me"
-                name="remember-me"
-                type="checkbox"
-                className="h-4 w-4 text-primary focus:ring-primary border-neutral-300 rounded"
-              />
-              <label htmlFor="remember-me" className="ml-2 block text-sm text-neutral-700">
-                Remember me
-              </label>
-            </div>
-            <div className="text-sm">
-              <a href="#" className="font-medium text-neutral-600 hover:text-neutral-900">
-                Forgot password?
-              </a>
-            </div>
-          </div>
-
-          {/* Sign In Button */}
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-base font-bold rounded-xl text-neutral-900 bg-primary hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all shadow-neon hover:shadow-lg transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-            >
-              {loading ? (
-                <>
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-neutral-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Signing in...
-                </>
-              ) : (
-                'Sign in'
-              )}
-            </button>
-          </div>
-
-          {/* Divider */}
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-neutral-300"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-neutral-100 text-neutral-500">Or continue with</span>
-            </div>
-          </div>
-
-          {/* Google Sign In */}
-          <div>
-            <button
-              type="button"
-              className="w-full flex items-center justify-center gap-3 py-3 px-4 border border-neutral-300 rounded-lg text-neutral-700 bg-white hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all"
-            >
-              <svg className="w-5 h-5" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-              </svg>
-              <span className="font-medium">Sign in with Google</span>
-            </button>
-          </div>
-
-          {/* Sign Up Link */}
-          <div className="text-center">
-            <p className="text-sm text-neutral-600">
-              নতুন ব্যবহারকারী?{' '}
-              <a href="/signup" className="font-medium text-neutral-900 hover:text-primary">
-                একটি অ্যাকাউন্ট তৈরি করুন
-              </a>
-            </p>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
+  // This component is now replaced by LoginPage.tsx
+  return null;
+};
 
 function App() {
   // Temporarily disable hooks to debug
@@ -264,77 +43,82 @@ function App() {
     <ErrorBoundary>
       <UserProvider>
         <Router>
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-gradient-to-br from-blue-50/30 via-purple-50/30 to-pink-50/30 relative overflow-hidden">
+          {/* Soft Background Blobs */}
+          <div className="absolute top-20 left-10 w-96 h-96 bg-blue-200 rounded-full blur-3xl opacity-20 -z-10"></div>
+          <div className="absolute top-40 right-20 w-80 h-80 bg-pink-200 rounded-full blur-3xl opacity-25 -z-10"></div>
+          <div className="absolute bottom-20 left-1/3 w-72 h-72 bg-purple-200 rounded-full blur-3xl opacity-20 -z-10"></div>
+          
           {/* Global Loading Bar */}
           <GlobalLoadingBar />
           
           {/* Navigation */}
-          <nav className="bg-white border-b border-neutral-200 sticky top-0 z-50 shadow-sm">
+          <nav className="bg-white/90 backdrop-blur-md border-b border-white/50 sticky top-0 z-50 shadow-lg">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="flex justify-between h-16">
                 {/* Logo and Brand */}
                 <div className="flex items-center gap-8">
-                  <a href="/" className="flex items-center gap-2 group">
-                    <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-sm group-hover:shadow-neon transition-all">
-                      <svg className="w-5 h-5 text-neutral-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                      </svg>
+                  <a href="/" className="flex items-center gap-3 group">
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:scale-105 transition-all duration-300">
+                      <span className="text-white font-bold text-lg">শ</span>
                     </div>
-                    <span className="text-xl font-bold text-neutral-900 font-bengali">শিক্ষাসাথী</span>
+                    <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-purple-800 bg-clip-text text-transparent font-['Hind_Siliguri']">
+                      শিক্ষাসাথী
+                    </span>
                   </a>
                   
                   {/* Public Navigation */}
                   {!isAuthenticated && (
-                    <div className="hidden md:flex items-center space-x-1">
-                      <a href="/#features" className="px-3 py-2 text-sm font-medium text-neutral-700 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors">
-                        Features
+                    <div className="hidden md:flex items-center space-x-2">
+                      <a href="/#features" className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-blue-50/80 rounded-xl transition-all duration-200">
+                        বৈশিষ্ট্য
                       </a>
-                      <a href="/#about" className="px-3 py-2 text-sm font-medium text-neutral-700 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors">
-                        About
+                      <a href="/#about" className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-purple-50/80 rounded-xl transition-all duration-200">
+                        সম্পর্কে
                       </a>
-                      <a href="/#pricing" className="px-3 py-2 text-sm font-medium text-neutral-700 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors">
-                        Pricing
+                      <a href="/#pricing" className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-pink-50/80 rounded-xl transition-all duration-200">
+                        মূল্য
                       </a>
-                      <a href="/#contact" className="px-3 py-2 text-sm font-medium text-neutral-700 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors">
-                        Contact
+                      <a href="/#contact" className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-green-50/80 rounded-xl transition-all duration-200">
+                        যোগাযোগ
                       </a>
                     </div>
                   )}
                   
                   {/* Authenticated Navigation */}
                   {isAuthenticated && (
-                    <div className="hidden md:flex items-center space-x-1">
-                      <a href="/dashboard" className="px-3 py-2 text-sm font-medium text-neutral-700 hover:text-neutral-900 hover:bg-primary/10 rounded-lg transition-colors">
-                        Dashboard
+                    <div className="hidden md:flex items-center space-x-2">
+                      <a href="/dashboard" className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 rounded-xl transition-all duration-200">
+                        ড্যাশবোর্ড
                       </a>
                       {typedUser?.role === 'student' && (
                         <>
-                          <a href="/chat" className="px-3 py-2 text-sm font-medium text-neutral-700 hover:text-neutral-900 hover:bg-primary/10 rounded-lg transition-colors">
-                            AI Tutor
+                          <a href="/chat" className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gradient-to-r hover:from-cyan-50 hover:to-blue-50 rounded-xl transition-all duration-200">
+                            AI টিউটর
                           </a>
-                          <a href="/quiz" className="px-3 py-2 text-sm font-medium text-neutral-700 hover:text-neutral-900 hover:bg-primary/10 rounded-lg transition-colors">
-                            Quiz
+                          <a href="/quiz" className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gradient-to-r hover:from-green-50 hover:to-cyan-50 rounded-xl transition-all duration-200">
+                            কুইজ
                           </a>
-                          <a href="/progress" className="px-3 py-2 text-sm font-medium text-neutral-700 hover:text-neutral-900 hover:bg-primary/10 rounded-lg transition-colors">
-                            Progress
+                          <a href="/progress" className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 rounded-xl transition-all duration-200">
+                            অগ্রগতি
                           </a>
                         </>
                       )}
                       {typedUser?.role === 'parent' && (
-                        <a href="/parent" className="px-3 py-2 text-sm font-medium text-neutral-700 hover:text-neutral-900 hover:bg-primary/10 rounded-lg transition-colors">
-                          Parent Portal
+                        <a href="/parent" className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gradient-to-r hover:from-pink-50 hover:to-rose-50 rounded-xl transition-all duration-200">
+                          অভিভাবক পোর্টাল
                         </a>
                       )}
                       {typedUser?.role === 'teacher' && (
                         <>
-                          <a href="/teacher" className="px-3 py-2 text-sm font-medium text-neutral-700 hover:text-neutral-900 hover:bg-primary/10 rounded-lg transition-colors">
-                            Dashboard
+                          <a href="/teacher" className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gradient-to-r hover:from-orange-50 hover:to-red-50 rounded-xl transition-all duration-200">
+                            ড্যাশবোর্ড
                           </a>
-                          <a href="/teacher/assessments" className="px-3 py-2 text-sm font-medium text-neutral-700 hover:text-neutral-900 hover:bg-primary/10 rounded-lg transition-colors">
-                            Assessments
+                          <a href="/teacher/assessments" className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gradient-to-r hover:from-yellow-50 hover:to-orange-50 rounded-xl transition-all duration-200">
+                            মূল্যায়ন
                           </a>
-                          <a href="/teacher/students" className="px-3 py-2 text-sm font-medium text-neutral-700 hover:text-neutral-900 hover:bg-primary/10 rounded-lg transition-colors">
-                            Students
+                          <a href="/teacher/students" className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 rounded-xl transition-all duration-200">
+                            শিক্ষার্থী
                           </a>
                         </>
                       )}
@@ -347,59 +131,75 @@ function App() {
                   {isAuthenticated ? (
                     <>
                       {/* Notifications */}
-                      <button className="relative p-2 text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors">
+                      <button className="relative p-3 text-gray-600 hover:text-gray-900 hover:bg-white/80 backdrop-blur-sm rounded-xl transition-all duration-200 shadow-sm hover:shadow-md">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                         </svg>
-                        <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full"></span>
+                        <span className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-lg">
+                          3
+                        </span>
                       </button>
                       
                       {/* User Menu */}
                       <div className="relative group">
-                        <button className="flex items-center gap-2 p-2 text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors">
-                          <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                            <span className="text-sm font-bold text-neutral-900">
+                        <button className="flex items-center gap-3 p-2 text-gray-600 hover:text-gray-900 hover:bg-white/80 backdrop-blur-sm rounded-xl transition-all duration-200 shadow-sm hover:shadow-md">
+                          <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                            <span className="text-sm font-bold text-white">
                               {typedUser?.full_name?.charAt(0) || 'U'}
                             </span>
                           </div>
                           {typedUser && (
-                            <span className="hidden sm:block text-sm font-medium text-neutral-900">
+                            <span className="hidden sm:block text-sm font-medium text-gray-900">
                               {typedUser.full_name}
                             </span>
                           )}
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-4 h-4 transition-transform group-hover:rotate-180 duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                           </svg>
                         </button>
                         
                         {/* Dropdown Menu */}
-                        <div className="hidden group-hover:block absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-soft border border-neutral-200 py-2">
-                          <a href="/profile" className="block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100 transition-colors">
-                            Profile Settings
+                        <div className="opacity-0 invisible group-hover:opacity-100 group-hover:visible absolute right-0 mt-2 w-56 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-white/50 py-3 transition-all duration-200 transform scale-95 group-hover:scale-100">
+                          <div className="px-4 py-3 border-b border-gray-100">
+                            <p className="text-sm font-medium text-gray-900">{typedUser?.full_name}</p>
+                            <p className="text-xs text-gray-500 capitalize">{typedUser?.role}</p>
+                          </div>
+                          <a href="/profile" className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-200">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                            প্রোফাইল সেটিংস
                           </a>
-                          <a href="/settings" className="block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100 transition-colors">
-                            Account Settings
+                          <a href="/settings" className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 transition-all duration-200">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            অ্যাকাউন্ট সেটিংস
                           </a>
-                          <div className="border-t border-neutral-200 my-2"></div>
-                          <button className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors">
-                            Sign Out
+                          <div className="border-t border-gray-100 my-2"></div>
+                          <button className="flex items-center gap-3 w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-all duration-200">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                            </svg>
+                            সাইন আউট
                           </button>
                         </div>
                       </div>
                     </>
                   ) : (
                     <>
-                      <a href="/login" className="hidden sm:block px-4 py-2 text-sm font-medium text-neutral-700 hover:text-neutral-900 transition-colors">
-                        Log In
+                      <a href="/login" className="hidden sm:block px-5 py-2.5 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-white/80 backdrop-blur-sm rounded-xl transition-all duration-200 shadow-sm hover:shadow-md">
+                        লগ ইন
                       </a>
-                      <a href="/signup" className="px-4 py-2 text-sm font-bold text-neutral-900 bg-primary hover:bg-primary-600 rounded-lg transition-all shadow-sm hover:shadow-neon">
-                        Get Started
+                      <a href="/signup" className="px-6 py-2.5 text-sm font-bold text-white bg-gray-900 hover:bg-gray-800 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-['Hind_Siliguri']">
+                        শুরু করুন →
                       </a>
                     </>
                   )}
                   
                   {/* Mobile Menu Button */}
-                  <button className="md:hidden p-2 text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors">
+                  <button className="md:hidden p-3 text-gray-600 hover:text-gray-900 hover:bg-white/80 backdrop-blur-sm rounded-xl transition-all duration-200 shadow-sm hover:shadow-md">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                     </svg>
@@ -415,7 +215,7 @@ function App() {
               <Routes>
                 <Route path="/" element={<Landing />} />
                 <Route path="/signup" element={<Signup />} />
-                <Route path="/login" element={<Login />} />
+                <Route path="/login" element={<LoginPage />} />
                 <Route path="/student" element={<StudentDashboard />} />
                 <Route path="/parent" element={<ParentDashboard />} />
                 <Route path="/teacher" element={<TeacherDashboard />} />

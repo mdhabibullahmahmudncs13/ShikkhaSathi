@@ -1,0 +1,338 @@
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { Eye, EyeOff, Mail, Lock, AlertCircle } from 'lucide-react';
+
+const LoginPage = () => {
+  const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+    setError(''); // Clear error when user types
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Mock validation
+      if (formData.email === 'test@example.com' && formData.password === 'password') {
+        navigate('/student');
+      } else {
+        setError('ইমেইল বা পাসওয়ার্ড ভুল। আবার চেষ্টা করুন।');
+      }
+    } catch (err) {
+      setError('কিছু ভুল হয়েছে। আবার চেষ্টা করুন।');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSocialLogin = (provider: string) => {
+    console.log(`Login with ${provider}`);
+    // Implement social login logic here
+  };
+
+  return (
+    <div className="min-h-screen flex">
+      {/* Left Side - Login Form */}
+      <motion.div 
+        className="flex-1 flex items-center justify-center p-8 bg-white lg:max-w-md xl:max-w-lg"
+        initial={{ opacity: 0, x: -50 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+      >
+        <div className="w-full max-w-md space-y-8">
+          {/* Branding */}
+          <motion.div 
+            className="text-center"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            <div className="flex items-center justify-center gap-3 mb-6">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                <span className="text-white font-bold text-lg">শ</span>
+              </div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent font-['Hind_Siliguri']">
+                শিক্ষাসাথী
+              </h1>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 font-['Hind_Siliguri']">
+              স্বাগতম!
+            </h2>
+            <p className="mt-2 text-gray-600 font-['Hind_Siliguri']">
+              আপনার অ্যাকাউন্টে প্রবেশ করুন
+            </p>
+          </motion.div>
+
+          {/* Login Form */}
+          <motion.form 
+            className="space-y-6"
+            onSubmit={handleSubmit}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+          >
+            {/* Error Message */}
+            {error && (
+              <motion.div 
+                className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm flex items-center gap-2 font-['Hind_Siliguri']"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3 }}
+              >
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                {error}
+              </motion.div>
+            )}
+
+            {/* Email Field */}
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2 font-['Hind_Siliguri']">
+                ইমেইল ঠিকানা
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Mail className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  value={formData.email}
+                  onChange={handleChange}
+                  disabled={loading}
+                  className={`appearance-none relative block w-full pl-10 pr-3 py-3 border ${
+                    error ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'
+                  } placeholder-gray-400 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-0 transition-all disabled:bg-gray-100 disabled:cursor-not-allowed font-['Hind_Siliguri']`}
+                  placeholder="আপনার ইমেইল লিখুন"
+                />
+              </div>
+            </div>
+
+            {/* Password Field */}
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2 font-['Hind_Siliguri']">
+                পাসওয়ার্ড
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Lock className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
+                  required
+                  value={formData.password}
+                  onChange={handleChange}
+                  disabled={loading}
+                  className={`appearance-none relative block w-full pl-10 pr-12 py-3 border ${
+                    error ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'
+                  } placeholder-gray-400 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-0 transition-all disabled:bg-gray-100 disabled:cursor-not-allowed font-['Hind_Siliguri']`}
+                  placeholder="আপনার পাসওয়ার্ড লিখুন"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5" />
+                  ) : (
+                    <Eye className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Forgot Password Link */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <input
+                  id="remember-me"
+                  name="remember-me"
+                  type="checkbox"
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700 font-['Hind_Siliguri']">
+                  মনে রাখুন
+                </label>
+              </div>
+              <button
+                type="button"
+                className="text-sm text-blue-600 hover:text-blue-500 font-medium font-['Hind_Siliguri'] transition-colors"
+              >
+                পাসওয়ার্ড ভুলে গেছেন?
+              </button>
+            </div>
+
+            {/* Login Button */}
+            <motion.button
+              type="submit"
+              disabled={loading}
+              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-lg font-bold rounded-xl text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed font-['Hind_Siliguri']"
+              whileHover={{ scale: loading ? 1 : 1.02 }}
+              whileTap={{ scale: loading ? 1 : 0.98 }}
+            >
+              {loading ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  প্রবেশ করা হচ্ছে...
+                </>
+              ) : (
+                'প্রবেশ করুন'
+              )}
+            </motion.button>
+
+            {/* Divider */}
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500 font-['Hind_Siliguri']">অথবা</span>
+              </div>
+            </div>
+
+            {/* Social Login Buttons */}
+            <div className="grid grid-cols-2 gap-3">
+              <motion.button
+                type="button"
+                onClick={() => handleSocialLogin('google')}
+                className="w-full inline-flex justify-center items-center gap-2 py-3 px-4 border border-gray-300 rounded-xl bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all shadow-sm hover:shadow-md font-['Hind_Siliguri']"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                Google
+              </motion.button>
+
+              <motion.button
+                type="button"
+                onClick={() => handleSocialLogin('facebook')}
+                className="w-full inline-flex justify-center items-center gap-2 py-3 px-4 border border-gray-300 rounded-xl bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all shadow-sm hover:shadow-md font-['Hind_Siliguri']"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <svg className="w-5 h-5" fill="#1877F2" viewBox="0 0 24 24">
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                </svg>
+                Facebook
+              </motion.button>
+            </div>
+          </motion.form>
+
+          {/* Sign Up Link */}
+          <motion.div 
+            className="text-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.8 }}
+          >
+            <p className="text-sm text-gray-600 font-['Hind_Siliguri']">
+              নতুন ব্যবহারকারী?{' '}
+              <button
+                onClick={() => navigate('/signup')}
+                className="font-medium text-blue-600 hover:text-blue-500 transition-colors"
+              >
+                নতুন অ্যাকাউন্ট তৈরি করুন
+              </button>
+            </p>
+          </motion.div>
+        </div>
+      </motion.div>
+
+      {/* Right Side - Visual */}
+      <motion.div 
+        className="hidden lg:flex flex-1 relative"
+        initial={{ opacity: 0, x: 50 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
+      >
+        {/* Background Image */}
+        <img
+          src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1471&q=80"
+          alt="Students learning together"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        
+        {/* Colorful Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 via-purple-600/30 to-purple-600/40"></div>
+        
+        {/* Content Overlay */}
+        <div className="relative z-10 flex items-center justify-center p-12">
+          <motion.div 
+            className="text-center text-white max-w-md"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.6 }}
+          >
+            <h3 className="text-4xl font-bold mb-4 font-['Hind_Siliguri']">
+              শেখার নতুন যুগে
+            </h3>
+            <p className="text-xl leading-relaxed font-['Hind_Siliguri']">
+              কৃত্রিম বুদ্ধিমত্তার সাহায্যে আপনার শিক্ষার যাত্রা শুরু করুন
+            </p>
+            
+            {/* Floating Stats */}
+            <div className="grid grid-cols-2 gap-4 mt-8">
+              <motion.div 
+                className="bg-white/20 backdrop-blur-md rounded-2xl p-4 text-center"
+                whileHover={{ scale: 1.05 }}
+                transition={{ duration: 0.2 }}
+              >
+                <div className="text-2xl font-bold font-['Hind_Siliguri']">10K+</div>
+                <div className="text-sm opacity-90 font-['Hind_Siliguri']">শিক্ষার্থী</div>
+              </motion.div>
+              <motion.div 
+                className="bg-white/20 backdrop-blur-md rounded-2xl p-4 text-center"
+                whileHover={{ scale: 1.05 }}
+                transition={{ duration: 0.2 }}
+              >
+                <div className="text-2xl font-bold font-['Hind_Siliguri']">৯৮%</div>
+                <div className="text-sm opacity-90 font-['Hind_Siliguri']">সফলতার হার</div>
+              </motion.div>
+            </div>
+          </motion.div>
+        </div>
+      </motion.div>
+
+      {/* Mobile Background for smaller screens */}
+      <div className="lg:hidden fixed inset-0 -z-10">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50"></div>
+        <div className="absolute top-20 left-10 w-72 h-72 bg-blue-200 rounded-full blur-3xl opacity-20"></div>
+        <div className="absolute bottom-20 right-10 w-80 h-80 bg-purple-200 rounded-full blur-3xl opacity-25"></div>
+      </div>
+    </div>
+  );
+};
+
+export default LoginPage;
