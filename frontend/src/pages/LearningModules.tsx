@@ -1,16 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Sword, Shield, Crown, Star, Lock, Play, Trophy, 
   Clock, Target, Zap, BookOpen, ChevronRight, Award
 } from 'lucide-react';
-import { Arena, GameModeStats, ArenaProgress } from '../types/learning';
+import { Arena, ArenaProgress } from '../types/learning';
 import { useLearningModules } from '../hooks/useLearningModules';
 
 const LearningModules: React.FC = () => {
   const navigate = useNavigate();
   const { arenas, progress, stats, loading, error } = useLearningModules();
-  const [selectedArena, setSelectedArena] = useState<Arena | null>(null);
 
   if (loading) {
     return (
@@ -130,7 +129,7 @@ const LearningModules: React.FC = () => {
         {/* Arenas Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {arenas?.map((arena) => {
-            const arenaProgress = progress?.find(p => p.arenaId === arena.id);
+            const arenaProgress = progress?.find((p: ArenaProgress) => p.arenaId === arena.id);
             const completionPercentage = arena.totalAdventures > 0 
               ? Math.round((arena.completedAdventures / arena.totalAdventures) * 100) 
               : 0;
@@ -154,7 +153,7 @@ const LearningModules: React.FC = () => {
             Coming Soon
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {['History', 'Geography', 'Economics'].map((subject, index) => (
+            {['History', 'Geography', 'Economics'].map((subject) => (
               <div key={subject} className="relative">
                 <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-gray-600/30 rounded-xl p-6 opacity-60">
                   <div className="flex items-center justify-between mb-4">
@@ -187,7 +186,7 @@ interface ArenaCardProps {
   onClick: () => void;
 }
 
-const ArenaCard: React.FC<ArenaCardProps> = ({ arena, progress, completionPercentage, onClick }) => {
+const ArenaCard: React.FC<ArenaCardProps> = ({ arena, completionPercentage, onClick }) => {
   const isLocked = !arena.isUnlocked;
   
   return (

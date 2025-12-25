@@ -8,6 +8,10 @@ import TeacherDashboard from './pages/TeacherDashboard'
 import QuizPage from './pages/QuizPage'
 import AITutorChat from './pages/AITutorChat'
 import UserProfile from './pages/UserProfile'
+import LearningModules from './pages/LearningModules'
+import ArenaDetail from './pages/ArenaDetail'
+import AdventureDetail from './pages/AdventureDetail'
+import TopicLearning from './pages/TopicLearning'
 import { SyncStatusIndicator, SyncProgressModal, ConflictResolutionModal } from './components/sync'
 import { useSyncManager } from './hooks/useSyncManager'
 import ErrorBoundary from './components/common/ErrorBoundary'
@@ -93,6 +97,9 @@ function App() {
                       </a>
                       {typedUser?.role === 'student' && (
                         <>
+                          <a href="/learning" className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 rounded-xl transition-all duration-200">
+                            শেখার অ্যারেনা
+                          </a>
                           <a href="/chat" className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gradient-to-r hover:from-cyan-50 hover:to-blue-50 rounded-xl transition-all duration-200">
                             AI টিউটর
                           </a>
@@ -216,6 +223,7 @@ function App() {
                 <Route path="/" element={<Landing />} />
                 <Route path="/signup" element={<SignUpPage />} />
                 <Route path="/login" element={<LoginPage />} />
+                <Route path="/dashboard" element={<StudentDashboard />} />
                 <Route path="/student" element={<StudentDashboard />} />
                 <Route path="/parent" element={<ParentDashboard />} />
                 <Route path="/teacher" element={<TeacherDashboard />} />
@@ -223,6 +231,12 @@ function App() {
                 <Route path="/quiz" element={<QuizPage />} />
                 <Route path="/profile" element={<UserProfile />} />
                 <Route path="/settings" element={<UserProfile />} />
+                
+                {/* Learning Module Routes */}
+                <Route path="/learning" element={<LearningModules />} />
+                <Route path="/learning/arena/:arenaId" element={<ArenaDetail />} />
+                <Route path="/learning/adventure/:adventureId" element={<AdventureDetail />} />
+                <Route path="/learning/topic/:topicId" element={<TopicLearning />} />
               </Routes>
             </ErrorBoundary>
           </main>

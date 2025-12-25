@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.api_v1.endpoints import auth, users, chat, quiz, progress, gamification, teacher, assessment, parent, voice, messages, announcements, reports, classroom, gradebook, notifications, parent_child
+from app.api.api_v1.endpoints import auth, users, chat, quiz, progress, gamification, teacher, assessment, parent, voice, messages, announcements, reports, classroom, gradebook, notifications, parent_child, learning_content
 from app.api.api_v1 import docs
 
 api_router = APIRouter()
@@ -23,6 +23,7 @@ api_router.include_router(voice.router, prefix="/voice", tags=["voice"])
 api_router.include_router(quiz.router, prefix="/quiz", tags=["quiz"])
 api_router.include_router(progress.router, prefix="/progress", tags=["progress"])
 api_router.include_router(gamification.router, prefix="/gamification", tags=["gamification"])
+api_router.include_router(learning_content.router, prefix="/learning", tags=["learning"])
 api_router.include_router(teacher.router, prefix="/teacher", tags=["teacher"])
 api_router.include_router(assessment.router, prefix="/assessment", tags=["assessment"])
 api_router.include_router(parent.router, prefix="/parent", tags=["parent"])
