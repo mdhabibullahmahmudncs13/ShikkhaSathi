@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ChatMessage } from '../../types/chat';
 import SourceCitationCard from './SourceCitationCard';
 import AudioPlayer from './AudioPlayer';
-import { VoiceService } from '../../services/voiceService';
+import voiceService from '../../services/voiceService';
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -58,7 +58,6 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
 
     setIsGeneratingAudio(true);
     try {
-      const voiceService = new VoiceService('demo_token'); // In real app, get from auth context
       const result = await voiceService.synthesizeSpeech(message.content, 'bn');
       setAudioUrl(result.audioUrl);
     } catch (error) {

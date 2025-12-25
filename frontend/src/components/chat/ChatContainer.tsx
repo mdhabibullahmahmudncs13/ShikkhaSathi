@@ -1,29 +1,33 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ChatMessage, ChatState, QuickAction } from '../../types/chat';
 import MessageBubble from './MessageBubble';
 import ChatInput from './ChatInput';
 import QuickActions from './QuickActions';
 import TypingIndicator from './TypingIndicator';
 import ConnectionStatus from './ConnectionStatus';
-import { useWebSocket } from '../../hooks/useWebSocket';
+import ModelSelector from './ModelSelector';
+import AIModeSelector from './AIModeSelector';
+import { api } from '../../services/apiClient';
 
 interface ChatContainerProps {
   className?: string;
-  userId?: string;
-  sessionId?: string;
-  token?: string;
 }
 
 const ChatContainer: React.FC<ChatContainerProps> = ({ 
-  className = '',
-  userId: _userId = 'demo_user',
-  sessionId = `session_${Date.now()}`,
-  token = 'demo_token'
+  className = ''
 }) => {
   const [chatState, setChatState] = useState<ChatState>({
-    messages: [],
+    messages: [
+      {
+        id: 'welcome',
+        role: 'assistant',
+        content: "Hello! I'm ShikkhaSathi, your AI tutor. I'm here to help you learn Physics, Chemistry, Mathematics, Biology, Bangla, and English. Please select both an AI model and an AI mode below to get started!",
+        timestamp: new Date(),
+        status: 'delivered',
+      }
+    ],
     isTyping: false,
-    connectionStatus: 'disconnected',
+    connectionStatus: 'connected',
     voiceRecording: {
       isRecording: false,
       duration: 0,
@@ -31,49 +35,10 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
     isVoiceMode: false,
   });
 
+  const [selectedModel, setSelectedModel] = useState<string>('');
+  const [selectedAIMode, setSelectedAIMode] = useState<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
-
-  // WebSocket message handlers
-  const handleMessage = useCallback((message: ChatMessage) => {
-    setChatState(prev => ({
-      ...prev,
-      messages: [...prev.messages, message],
-    }));
-  }, []);
-
-  const handleTypingChange = useCallback((isTyping: boolean) => {
-    setChatState(prev => ({
-      ...prev,
-      isTyping,
-    }));
-  }, []);
-
-  const handleMessageStatusUpdate = useCallback((messageId: string, status: string) => {
-    setChatState(prev => ({
-      ...prev,
-      messages: prev.messages.map(msg =>
-        msg.id === messageId ? { ...msg, status: status as any } : msg
-      ),
-    }));
-  }, []);
-
-  // Initialize WebSocket connection
-  const { connectionStatus, sendMessage: wsSendMessage, isConnected } = useWebSocket({
-    sessionId,
-    token,
-    onMessage: handleMessage,
-    onTypingChange: handleTypingChange,
-    onMessageStatusUpdate: handleMessageStatusUpdate,
-  });
-
-  // Update connection status in state
-  useEffect(() => {
-    setChatState(prev => ({
-      ...prev,
-      connectionStatus,
-    }));
-  }, [connectionStatus]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -81,12 +46,12 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
   }, [chatState.messages]);
 
   const handleSendMessage = async (content: string, isVoice: boolean = false) => {
-    if (!isConnected) {
-      // Show error message if not connected
+    if (!selectedModel) {
+      // Show error message if no model is selected
       const errorMessage: ChatMessage = {
         id: `error_${Date.now()}`,
         role: 'assistant',
-        content: 'Unable to send message. Please check your connection and try again.',
+        content: 'Please select an AI model first before asking questions. Each model is specialized for different subjects.',
         timestamp: new Date(),
         status: 'error',
       };
@@ -98,34 +63,12 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
       return;
     }
 
-    try {
-      // Send message via WebSocket
-      const messageId = wsSendMessage(content, isVoice);
-      
-      if (messageId) {
-        // Add user message to local state
-        const newMessage: ChatMessage = {
-          id: messageId,
-          role: 'user',
-          content,
-          timestamp: new Date(),
-          voiceInput: isVoice,
-          status: 'sending',
-        };
-
-        setChatState(prev => ({
-          ...prev,
-          messages: [...prev.messages, newMessage],
-        }));
-      }
-    } catch (error) {
-      console.error('Error sending message:', error);
-      
-      // Show error message
+    if (!selectedAIMode) {
+      // Show error message if no AI mode is selected
       const errorMessage: ChatMessage = {
         id: `error_${Date.now()}`,
         role: 'assistant',
-        content: 'Failed to send message. Please try again.',
+        content: 'Please select an AI mode to customize how I respond to your questions. Each mode offers a different learning experience.',
         timestamp: new Date(),
         status: 'error',
       };
@@ -133,6 +76,124 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
       setChatState(prev => ({
         ...prev,
         messages: [...prev.messages, errorMessage],
+      }));
+      return;
+    }
+
+    // Add user message to local state immediately
+    const userMessage: ChatMessage = {
+      id: `user_${Date.now()}`,
+      role: 'user',
+      content,
+      timestamp: new Date(),
+      voiceInput: isVoice,
+      status: 'sending',
+    };
+
+    setChatState(prev => ({
+      ...prev,
+      messages: [...prev.messages, userMessage],
+      isTyping: true,
+    }));
+
+    try {
+      // Get conversation history for context (last 5 messages)
+      const conversationHistory = chatState.messages
+        .filter(msg => msg.role === 'user' || msg.role === 'assistant')
+        .slice(-5)
+        .map(msg => ({
+          role: msg.role,
+          content: msg.content
+        }));
+
+      // Call the REST API with enhanced error handling
+      const response = await api.post('/chat/chat', {
+        message: content,
+        conversation_history: conversationHistory,
+        model_category: selectedModel,
+        ai_mode: selectedAIMode,
+        subject: null // Let the AI determine the subject
+      });
+
+      // Update user message status
+      setChatState(prev => ({
+        ...prev,
+        messages: prev.messages.map(msg =>
+          msg.id === userMessage.id ? { ...msg, status: 'delivered' } : msg
+        ),
+        isTyping: false,
+      }));
+
+      // Add AI response
+      const aiMessage: ChatMessage = {
+        id: `ai_${Date.now()}`,
+        role: 'assistant',
+        content: response.response,
+        timestamp: new Date(),
+        status: 'delivered',
+        sources: response.sources || [],
+      };
+
+      setChatState(prev => ({
+        ...prev,
+        messages: [...prev.messages, aiMessage],
+      }));
+
+    } catch (error: any) {
+      console.error('Error sending message:', error);
+      
+      // Update user message status to error
+      setChatState(prev => ({
+        ...prev,
+        messages: prev.messages.map(msg =>
+          msg.id === userMessage.id ? { ...msg, status: 'error' } : msg
+        ),
+        isTyping: false,
+      }));
+      
+      // Enhanced error handling with specific error types
+      let errorMessage = 'Sorry, I encountered an error processing your message. Please try again.';
+      let shouldRetry = true;
+      
+      // Check for specific error types
+      if (error?.response?.status === 401) {
+        errorMessage = 'Your session has expired. Please refresh the page and log in again to continue chatting.';
+        shouldRetry = false;
+        // Update connection status
+        setChatState(prev => ({
+          ...prev,
+          connectionStatus: 'disconnected'
+        }));
+      } else if (error?.response?.status === 422) {
+        errorMessage = 'There was an issue with your request format. Please try rephrasing your question.';
+      } else if (error?.response?.status === 429) {
+        errorMessage = 'Too many requests. Please wait a moment before sending another message.';
+      } else if (error?.response?.status === 500) {
+        errorMessage = 'The AI service is temporarily unavailable. Please try again in a moment.';
+      } else if (error?.response?.status === 503) {
+        errorMessage = 'The AI model is currently busy. Please try again in a few seconds.';
+      } else if (error?.code === 'NETWORK_ERROR' || error?.message?.includes('network')) {
+        errorMessage = 'Network connection failed. Please check your internet connection and try again.';
+        // Update connection status
+        setChatState(prev => ({
+          ...prev,
+          connectionStatus: 'connecting'
+        }));
+      } else if (error?.name === 'TimeoutError') {
+        errorMessage = 'Request timed out. The AI is taking longer than usual to respond. Please try again.';
+      }
+      
+      const errorChatMessage: ChatMessage = {
+        id: `error_${Date.now()}`,
+        role: 'assistant',
+        content: errorMessage + (shouldRetry ? ' You can try asking your question again.' : ''),
+        timestamp: new Date(),
+        status: 'error',
+      };
+      
+      setChatState(prev => ({
+        ...prev,
+        messages: [...prev.messages, errorChatMessage],
       }));
     }
   };
@@ -145,6 +206,57 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
     setChatState(prev => ({
       ...prev,
       isVoiceMode: !prev.isVoiceMode,
+    }));
+  };
+
+  const handleAIModeChange = (modeId: string) => {
+    setSelectedAIMode(modeId);
+    
+    // Add a system message when AI mode is changed
+    const modeNames = {
+      'tutor': 'Tutor Mode',
+      'quiz': 'Quiz Mode',
+      'explanation': 'Explanation Mode',
+      'homework': 'Homework Help',
+      'exam': 'Exam Prep',
+      'discussion': 'Discussion Mode'
+    };
+    
+    const systemMessage: ChatMessage = {
+      id: `system_${Date.now()}`,
+      role: 'assistant',
+      content: `Switched to ${modeNames[modeId as keyof typeof modeNames]}. ${selectedModel ? 'Ready to help!' : 'Please select an AI model too.'}`,
+      timestamp: new Date(),
+      status: 'delivered',
+    };
+
+    setChatState(prev => ({
+      ...prev,
+      messages: [...prev.messages, systemMessage],
+    }));
+  };
+
+  const handleModelChange = (modelId: string) => {
+    setSelectedModel(modelId);
+    
+    // Add a system message when model is changed
+    const modelNames = {
+      'bangla': 'বাংলা মডেল',
+      'math': 'Math Model', 
+      'general': 'General Model'
+    };
+    
+    const systemMessage: ChatMessage = {
+      id: `system_${Date.now()}`,
+      role: 'assistant',
+      content: `Switched to ${modelNames[modelId as keyof typeof modelNames]}. ${selectedAIMode ? 'Ready to help!' : 'Please select an AI mode too.'}`,
+      timestamp: new Date(),
+      status: 'delivered',
+    };
+
+    setChatState(prev => ({
+      ...prev,
+      messages: [...prev.messages, systemMessage],
     }));
   };
 
@@ -162,6 +274,21 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
           </div>
         </div>
         <ConnectionStatus status={chatState.connectionStatus} />
+      </div>
+
+      {/* Model and AI Mode Selectors - Compact 25% view */}
+      <div className="px-3 py-2 border-b border-gray-200 bg-gray-50 space-y-2 max-h-[25vh] overflow-y-auto">
+        <ModelSelector
+          selectedModel={selectedModel}
+          onModelChange={handleModelChange}
+          disabled={chatState.isTyping}
+        />
+        
+        <AIModeSelector
+          selectedMode={selectedAIMode}
+          onModeChange={handleAIModeChange}
+          disabled={chatState.isTyping}
+        />
       </div>
 
       {/* Quick Actions */}
@@ -198,7 +325,7 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
         isVoiceMode={chatState.isVoiceMode}
         onToggleVoiceMode={toggleVoiceMode}
         voiceRecording={chatState.voiceRecording}
-        disabled={chatState.connectionStatus === 'disconnected'}
+        disabled={(!selectedModel || !selectedAIMode) || chatState.isTyping}
       />
     </div>
   );
