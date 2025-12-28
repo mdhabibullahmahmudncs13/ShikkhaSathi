@@ -18,256 +18,79 @@ import {
   Clock
 } from 'lucide-react';
 
-// Mock data - in real app this would come from API
-const mockParentData: ParentDashboardData = {
-  parentId: 'parent-1',
-  children: [
-    {
-      id: 'child-1',
-      name: 'রাহুল আহমেদ',
-      email: 'rahul@example.com',
-      grade: 9,
-      medium: 'bangla',
-      totalXP: 2500,
-      currentLevel: 5,
-      currentStreak: 12,
-      longestStreak: 18,
-      averageScore: 85,
-      timeSpentThisWeek: 420, // 7 hours
-      lastActive: new Date('2024-12-19T09:15:00'),
-      subjectProgress: [
-        {
-          subject: 'Physics',
-          completionPercentage: 75,
-          averageScore: 82,
-          timeSpent: 1200,
-          bloomLevelProgress: [
-            { level: 1, mastery: 95, questionsAttempted: 45, successRate: 95 },
-            { level: 2, mastery: 88, questionsAttempted: 32, successRate: 88 },
-            { level: 3, mastery: 75, questionsAttempted: 28, successRate: 75 },
-            { level: 4, mastery: 65, questionsAttempted: 20, successRate: 65 },
-            { level: 5, mastery: 45, questionsAttempted: 15, successRate: 45 },
-            { level: 6, mastery: 25, questionsAttempted: 8, successRate: 25 }
-          ],
-          lastAccessed: new Date('2024-12-19T08:30:00'),
-          topicProgress: [
-            {
-              topic: 'Newton\'s Laws',
-              completionPercentage: 80,
-              averageScore: 78,
-              timeSpent: 180,
-              lastAccessed: new Date('2024-12-19T08:30:00')
-            },
-            {
-              topic: 'Motion',
-              completionPercentage: 90,
-              averageScore: 85,
-              timeSpent: 240,
-              lastAccessed: new Date('2024-12-18T14:20:00')
-            }
-          ]
-        },
-        {
-          subject: 'Mathematics',
-          completionPercentage: 68,
-          averageScore: 88,
-          timeSpent: 900,
-          bloomLevelProgress: [
-            { level: 1, mastery: 98, questionsAttempted: 50, successRate: 98 },
-            { level: 2, mastery: 92, questionsAttempted: 38, successRate: 92 },
-            { level: 3, mastery: 85, questionsAttempted: 30, successRate: 85 },
-            { level: 4, mastery: 78, questionsAttempted: 25, successRate: 78 },
-            { level: 5, mastery: 65, questionsAttempted: 18, successRate: 65 },
-            { level: 6, mastery: 45, questionsAttempted: 12, successRate: 45 }
-          ],
-          lastAccessed: new Date('2024-12-18T16:45:00'),
-          topicProgress: [
-            {
-              topic: 'Algebra',
-              completionPercentage: 85,
-              averageScore: 90,
-              timeSpent: 300,
-              lastAccessed: new Date('2024-12-18T16:45:00')
-            }
-          ]
-        }
-      ],
-      recentAchievements: [
-        {
-          id: 'ach-1',
-          name: 'Physics Master',
-          description: 'Completed 10 physics quizzes with 80%+ score',
-          icon: '🏆',
-          category: 'performance',
-          unlockedAt: new Date('2024-12-18T10:00:00'),
-          xpReward: 200
-        },
-        {
-          id: 'ach-2',
-          name: 'Streak Champion',
-          description: 'Maintained 10-day learning streak',
-          icon: '🔥',
-          category: 'streak',
-          unlockedAt: new Date('2024-12-17T09:00:00'),
-          xpReward: 150
-        }
-      ],
-      weakAreas: [
-        {
-          subject: 'Physics',
-          topic: 'Thermodynamics',
-          bloomLevel: 4,
-          successRate: 45,
-          attemptsCount: 12,
-          recommendedActions: [
-            'Review basic concepts with visual aids',
-            'Practice more application-based problems',
-            'Schedule extra practice sessions'
-          ]
-        }
-      ],
-      riskLevel: 'low',
-      classInfo: {
-        className: 'Physics 9A',
-        teacherName: 'Dr. সালমা খান',
-        classAverage: 78
-      }
-    },
-    {
-      id: 'child-2',
-      name: 'ফাতিমা খান',
-      email: 'fatima@example.com',
-      grade: 7,
-      medium: 'bangla',
-      totalXP: 1200,
-      currentLevel: 3,
-      currentStreak: 3,
-      longestStreak: 8,
-      averageScore: 62,
-      timeSpentThisWeek: 180, // 3 hours
-      lastActive: new Date('2024-12-17T14:20:00'),
-      subjectProgress: [
-        {
-          subject: 'Mathematics',
-          completionPercentage: 45,
-          averageScore: 65,
-          timeSpent: 600,
-          bloomLevelProgress: [
-            { level: 1, mastery: 85, questionsAttempted: 30, successRate: 85 },
-            { level: 2, mastery: 70, questionsAttempted: 25, successRate: 70 },
-            { level: 3, mastery: 55, questionsAttempted: 20, successRate: 55 },
-            { level: 4, mastery: 35, questionsAttempted: 15, successRate: 35 },
-            { level: 5, mastery: 20, questionsAttempted: 8, successRate: 20 },
-            { level: 6, mastery: 10, questionsAttempted: 5, successRate: 10 }
-          ],
-          lastAccessed: new Date('2024-12-17T14:20:00'),
-          topicProgress: [
-            {
-              topic: 'Basic Arithmetic',
-              completionPercentage: 70,
-              averageScore: 68,
-              timeSpent: 200,
-              lastAccessed: new Date('2024-12-17T14:20:00')
-            }
-          ]
-        }
-      ],
-      recentAchievements: [],
-      weakAreas: [
-        {
-          subject: 'Mathematics',
-          topic: 'Fractions',
-          bloomLevel: 2,
-          successRate: 38,
-          attemptsCount: 15,
-          recommendedActions: [
-            'Use visual fraction models',
-            'Practice with real-world examples',
-            'Work with a tutor'
-          ]
-        }
-      ],
-      riskLevel: 'medium',
-      classInfo: {
-        className: 'Math 7B',
-        teacherName: 'রহিম স্যার',
-        classAverage: 70
-      }
-    }
-  ],
-  notifications: [
-    {
-      id: 'notif-1',
-      type: 'achievement',
-      title: 'New Achievement Unlocked!',
-      message: 'রাহুল আহমেদ has unlocked the "Physics Master" achievement',
-      childId: 'child-1',
-      childName: 'রাহুল আহমেদ',
-      priority: 'low',
-      timestamp: new Date('2024-12-18T10:00:00'),
-      read: false,
-      actionRequired: false,
-      relatedData: {
-        achievementId: 'ach-1'
-      }
-    },
-    {
-      id: 'notif-2',
-      type: 'performance_alert',
-      title: 'Performance Alert',
-      message: 'ফাতিমা খান has not been active for 2 days. Consider encouraging study time.',
-      childId: 'child-2',
-      childName: 'ফাতিমা খান',
-      priority: 'high',
-      timestamp: new Date('2024-12-19T08:00:00'),
-      read: false,
-      actionRequired: true
-    },
-    {
-      id: 'notif-3',
-      type: 'weekly_report',
-      title: 'Weekly Report Available',
-      message: 'Your weekly progress report for রাহুল আহমেদ is ready to view',
-      childId: 'child-1',
-      childName: 'রাহুল আহমেদ',
-      priority: 'medium',
-      timestamp: new Date('2024-12-16T09:00:00'),
-      read: true,
-      actionRequired: false,
-      relatedData: {
-        reportId: 'report-1'
-      }
-    }
-  ],
-  weeklyReports: [],
-  notificationPreferences: {
-    achievements: true,
-    weeklyReports: true,
-    performanceAlerts: true,
-    streakMilestones: true,
-    teacherMessages: true,
-    emailNotifications: true,
-    smsNotifications: false,
-    frequency: 'daily',
-    quietHours: {
-      enabled: true,
-      startTime: '22:00',
-      endTime: '07:00'
-    }
-  }
-};
-
 export const ParentDashboard: React.FC = () => {
-  const [parentData, setParentData] = useState<ParentDashboardData>(mockParentData);
-  const [selectedChild, setSelectedChild] = useState<ChildSummary | null>(
-    mockParentData.children[0] || null
-  );
+  const [parentData, setParentData] = useState<ParentDashboardData | null>(null);
+  const [selectedChild, setSelectedChild] = useState<ChildSummary | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [currentView, setCurrentView] = useState<'overview' | 'reports' | 'notifications' | 'settings'>('overview');
 
   useEffect(() => {
-    // In real app, fetch parent data from API
-    // fetchParentData();
+    const fetchParentData = async () => {
+      try {
+        setLoading(true);
+        // TODO: Replace with actual API call
+        const response = await fetch('/api/v1/parent/dashboard', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch parent data');
+        }
+        
+        const data = await response.json();
+        setParentData(data);
+        setSelectedChild(data.children[0] || null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load parent data');
+        console.error('Error fetching parent data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchParentData();
   }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading parent dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-500 text-xl mb-4">⚠️ Error</div>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!parentData) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">No parent data available</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleChildSelect = (child: ChildSummary) => {
     setSelectedChild(child);

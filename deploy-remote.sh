@@ -105,8 +105,8 @@ execute_remote "cd /home/devops/ShikkhaSathi/backend && python3 -m venv .venv &&
 echo "🗃️ Step 11: Running database migrations..."
 execute_remote "cd /home/devops/ShikkhaSathi/backend && source .venv/bin/activate && alembic upgrade head"
 
-echo "📊 Step 12: Creating sample data..."
-execute_remote "cd /home/devops/ShikkhaSathi/backend && source .venv/bin/activate && python create_sample_data.py"
+echo "📊 Step 12: Database setup complete..."
+echo "ℹ️  Skipping sample data creation - production deployment"
 
 echo "🤖 Step 13: Installing AI models..."
 execute_remote "docker exec shikkhasathi-ollama ollama pull llama3.2:1b"

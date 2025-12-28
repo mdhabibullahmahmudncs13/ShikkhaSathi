@@ -243,8 +243,8 @@ cd backend
 source .venv/bin/activate
 alembic upgrade head
 
-# Create sample data
-python create_sample_data.py
+# Database setup complete
+echo "ℹ️  Skipping sample data creation - production deployment"
 ```
 
 ### 6. Build and Deploy Application

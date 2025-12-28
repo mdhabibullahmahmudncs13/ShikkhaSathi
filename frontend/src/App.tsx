@@ -5,6 +5,8 @@ import LoginPage from './pages/LoginPage'
 import StudentDashboard from './pages/StudentDashboard'
 import ParentDashboard from './pages/ParentDashboard'
 import TeacherDashboard from './pages/TeacherDashboard'
+import AdminDashboard from './pages/AdminDashboard'
+import AdminLoginPage from './pages/AdminLoginPage'
 import QuizPage from './pages/QuizPage'
 import AITutorChat from './pages/AITutorChat'
 import UserProfile from './pages/UserProfile'
@@ -129,6 +131,11 @@ function App() {
                           </a>
                         </>
                       )}
+                      {typedUser?.role === 'admin' && (
+                        <a href="/admin" className="px-4 py-2 text-sm font-medium text-red-700 hover:text-red-900 hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 rounded-xl transition-all duration-200 font-semibold">
+                          Admin Panel
+                        </a>
+                      )}
                     </div>
                   )}
                 </div>
@@ -227,6 +234,8 @@ function App() {
                 <Route path="/student" element={<StudentDashboard />} />
                 <Route path="/parent" element={<ParentDashboard />} />
                 <Route path="/teacher" element={<TeacherDashboard />} />
+                <Route path="/admin/login" element={<AdminLoginPage />} />
+                <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/chat" element={<AITutorChat />} />
                 <Route path="/quiz" element={<QuizPage />} />
                 <Route path="/profile" element={<UserProfile />} />
