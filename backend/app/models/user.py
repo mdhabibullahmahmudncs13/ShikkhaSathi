@@ -11,6 +11,7 @@ class UserRole(str, enum.Enum):
     STUDENT = "student"
     TEACHER = "teacher"
     PARENT = "parent"
+    ADMIN = "admin"
 
 
 class Medium(str, enum.Enum):
