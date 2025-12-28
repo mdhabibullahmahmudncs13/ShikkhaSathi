@@ -289,5 +289,16 @@ class RAGService:
             logger.error(f"Error clearing collection: {str(e)}")
             return False
 
-# Global RAG service instance
-rag_service = RAGService()
+# Global RAG service instance - initialized lazily
+rag_service = None
+
+def get_rag_service():
+    """Get or create the RAG service instance"""
+    global rag_service
+    if rag_service is None:
+        try:
+            rag_service = RAGService()
+        except Exception as e:
+            logger.error(f"Failed to initialize RAG service: {e}")
+            rag_service = None
+    return rag_service

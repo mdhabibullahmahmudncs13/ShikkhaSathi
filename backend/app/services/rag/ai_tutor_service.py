@@ -18,7 +18,7 @@ except ImportError:
     SystemMessage = None
     LANGCHAIN_AVAILABLE = False
 
-from .rag_service import rag_service
+from .rag_service import get_rag_service
 
 logger = logging.getLogger(__name__)
 
@@ -79,7 +79,11 @@ Remember: You're here to guide learning, not just give answers. Help students un
         """
         try:
             # Get relevant context from RAG system
-            context = await rag_service.get_context_for_query(message, subject)
+            rag_service = get_rag_service()
+            if rag_service:
+                context = await rag_service.get_context_for_query(message, subject)
+            else:
+                context = ""
             
             # Build conversation messages
             messages = [SystemMessage(content=self._build_system_prompt(subject, grade, context))]
@@ -136,7 +140,11 @@ Remember: You're here to guide learning, not just give answers. Help students un
         """
         try:
             # Get relevant context
-            context = await rag_service.get_context_for_query(f"{concept} {subject}", subject)
+            rag_service = get_rag_service()
+            if rag_service:
+                context = await rag_service.get_context_for_query(f"{concept} {subject}", subject)
+            else:
+                context = ""
             
             # Build specific prompt for concept explanation
             prompt = f"""Explain the concept of "{concept}" in {subject} for a grade {grade} student.
@@ -197,7 +205,11 @@ Make it engaging and easy to understand."""
             List of practice questions
         """
         try:
-            context = await rag_service.get_context_for_query(f"{topic} {subject}", subject)
+            rag_service = get_rag_service()
+            if rag_service:
+                context = await rag_service.get_context_for_query(f"{topic} {subject}", subject)
+            else:
+                context = ""
             
             prompt = f"""Generate {count} practice questions about "{topic}" in {subject} for grade {grade} students.
 

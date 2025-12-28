@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from uuid import UUID, uuid4
 
-from app.services.rag.rag_service import rag_service
+from app.services.rag.rag_service import get_rag_service
 from app.services.rag.ai_tutor_service import ai_tutor_service
 from app.models.quiz_attempt import QuizAttempt
 from app.services.gamification_service import GamificationService
@@ -68,7 +68,11 @@ class RAGQuizService:
             
             # Get relevant content from RAG system
             search_query = self._build_search_query(subject, topic)
-            context = await rag_service.get_context_for_query(search_query, subject)
+            rag_service = get_rag_service()
+            if rag_service:
+                context = await rag_service.get_context_for_query(search_query, subject)
+            else:
+                context = ""
             
             if not context or context == "No relevant context found in the curriculum documents.":
                 raise ValueError(f"No content found for {subject}/{topic} in the curriculum")

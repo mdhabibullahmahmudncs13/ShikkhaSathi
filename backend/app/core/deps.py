@@ -19,6 +19,34 @@ def get_db() -> Generator:
         db.close()
 
 
+def get_current_user_optional(
+    db: Session = Depends(get_db),
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(HTTPBearer(auto_error=False))
+) -> Optional[User]:
+    """Get current authenticated user (optional for development)"""
+    if not credentials:
+        # For development, return a mock user
+        return User(
+            id="dev-user-id",
+            email="dev@example.com",
+            full_name="Development User",
+            role=UserRole.STUDENT,
+            is_active=True
+        )
+    
+    token = credentials.credentials
+    
+    # Verify token format
+    user_id = verify_token(token)
+    if user_id is None:
+        return None
+    
+    # Get user from database
+    auth_service = AuthService(db)
+    user = auth_service.get_user_by_id(user_id)
+    return user if user and user.is_active else None
+
+
 def get_current_user(
     db: Session = Depends(get_db),
     credentials: HTTPAuthorizationCredentials = Depends(security)

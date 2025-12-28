@@ -22,7 +22,7 @@ except ImportError:
     SystemMessage = None
     LANGCHAIN_AVAILABLE = False
 
-from .rag_service import rag_service
+from .rag_service import get_rag_service
 from .banglabert_service import banglabert_service
 
 logger = logging.getLogger(__name__)
