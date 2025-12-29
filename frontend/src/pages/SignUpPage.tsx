@@ -21,17 +21,22 @@ import {
 } from 'lucide-react';
 
 interface FormData {
-  // Step 1: Basic Info
+  // Step 1: Basic Info & Role
+  role: 'student' | 'teacher' | 'parent';
   fullName: string;
   email: string;
   phone: string;
   dateOfBirth: string;
   
-  // Step 2: Student Details
+  // Step 2: Role-specific Details
   grade: string;
   medium: 'bangla' | 'english';
   school: string;
   district: string;
+  subjects?: string; // For teachers
+  experience?: string; // For teachers
+  childName?: string; // For parents
+  childGrade?: string; // For parents
   
   // Step 3: Security
   password: string;
@@ -56,6 +61,7 @@ const SignUpPage = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
   const [formData, setFormData] = useState<FormData>({
+    role: 'student',
     fullName: '',
     email: '',
     phone: '',
@@ -64,6 +70,10 @@ const SignUpPage = () => {
     medium: 'bangla',
     school: '',
     district: '',
+    subjects: '',
+    experience: '',
+    childName: '',
+    childGrade: '',
     password: '',
     confirmPassword: '',
     agreeToTerms: false
@@ -136,8 +146,8 @@ const SignUpPage = () => {
           setError('বৈধ ইমেইল ঠিকানা প্রয়োজন');
           return false;
         }
-        if (!formData.phone.trim() || !/^(\+88)?01[3-9]\d{8}$/.test(formData.phone)) {
-          setError('বৈধ মোবাইল নম্বর প্রয়োজন');
+        if (!formData.phone.trim() || !/^(\+88|88)?01[3-9]\d{8}$/.test(formData.phone)) {
+          setError('বৈধ মোবাইল নম্বর প্রয়োজন (১১ সংখ্যার)');
           return false;
         }
         if (!formData.dateOfBirth) {
@@ -146,17 +156,45 @@ const SignUpPage = () => {
         }
         break;
       case 2:
-        if (!formData.grade) {
-          setError('শ্রেণী নির্বাচন করুন');
-          return false;
-        }
-        if (!formData.school.trim()) {
-          setError('স্কুলের নাম প্রয়োজন');
-          return false;
-        }
-        if (!formData.district) {
-          setError('জেলা নির্বাচন করুন');
-          return false;
+        if (formData.role === 'student') {
+          if (!formData.grade) {
+            setError('শ্রেণী নির্বাচন করুন');
+            return false;
+          }
+          if (!formData.school.trim()) {
+            setError('স্কুলের নাম প্রয়োজন');
+            return false;
+          }
+          if (!formData.district) {
+            setError('জেলা নির্বাচন করুন');
+            return false;
+          }
+        } else if (formData.role === 'teacher') {
+          if (!formData.subjects?.trim()) {
+            setError('বিষয়সমূহ প্রয়োজন');
+            return false;
+          }
+          if (!formData.school.trim()) {
+            setError('স্কুলের নাম প্রয়োজন');
+            return false;
+          }
+          if (!formData.district) {
+            setError('জেলা নির্বাচন করুন');
+            return false;
+          }
+        } else if (formData.role === 'parent') {
+          if (!formData.childName?.trim()) {
+            setError('সন্তানের নাম প্রয়োজন');
+            return false;
+          }
+          if (!formData.childGrade) {
+            setError('সন্তানের শ্রেণী নির্বাচন করুন');
+            return false;
+          }
+          if (!formData.district) {
+            setError('জেলা নির্বাচন করুন');
+            return false;
+          }
         }
         break;
       case 3:
@@ -207,9 +245,9 @@ const SignUpPage = () => {
         date_of_birth: formData.dateOfBirth,
         school: formData.school,
         district: formData.district,
-        grade: parseInt(formData.grade),
+        grade: formData.role === 'student' ? parseInt(formData.grade) : (formData.role === 'parent' ? parseInt(formData.childGrade || '0') : undefined),
         medium: formData.medium,
-        role: 'student' // Default to student for now
+        role: formData.role
       };
 
       // Call the registration API
@@ -302,8 +340,8 @@ const SignUpPage = () => {
               />
             </div>
             <div className="flex justify-between text-xs text-gray-500 mt-2 font-['Hind_Siliguri']">
-              <span>মৌলিক তথ্য</span>
-              <span>শিক্ষার্থী বিবরণ</span>
+              <span>মৌলিক তথ্য ও ভূমিকা</span>
+              <span>{formData.role === 'student' ? 'শিক্ষার্থী বিবরণ' : formData.role === 'teacher' ? 'শিক্ষক বিবরণ' : 'অভিভাবক বিবরণ'}</span>
               <span>নিরাপত্তা</span>
             </div>
           </motion.div>
@@ -338,8 +376,67 @@ const SignUpPage = () => {
                   className="space-y-6"
                 >
                   <div className="text-center mb-6">
-                    <h3 className="text-xl font-bold text-gray-900 font-['Hind_Siliguri']">মৌলিক তথ্য</h3>
-                    <p className="text-gray-600 font-['Hind_Siliguri']">আপনার ব্যক্তিগত তথ্য প্রদান করুন</p>
+                    <h3 className="text-xl font-bold text-gray-900 font-['Hind_Siliguri']">মৌলিক তথ্য ও ভূমিকা</h3>
+                    <p className="text-gray-600 font-['Hind_Siliguri']">আপনার ব্যক্তিগত তথ্য ও ভূমিকা নির্বাচন করুন</p>
+                  </div>
+
+                  {/* Role Selection */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-4 font-['Hind_Siliguri']">
+                      আপনার ভূমিকা নির্বাচন করুন
+                    </label>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                      {[
+                        { 
+                          value: 'student', 
+                          label: 'শিক্ষার্থী', 
+                          icon: '🎓', 
+                          description: 'আমি একজন শিক্ষার্থী',
+                          color: 'from-blue-500 to-cyan-500'
+                        },
+                        { 
+                          value: 'teacher', 
+                          label: 'শিক্ষক', 
+                          icon: '👨‍🏫', 
+                          description: 'আমি একজন শিক্ষক',
+                          color: 'from-green-500 to-emerald-500'
+                        },
+                        { 
+                          value: 'parent', 
+                          label: 'অভিভাবক', 
+                          icon: '👨‍👩‍👧‍👦', 
+                          description: 'আমি একজন অভিভাবক',
+                          color: 'from-purple-500 to-pink-500'
+                        }
+                      ].map((role) => (
+                        <motion.button
+                          key={role.value}
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, role: role.value as 'student' | 'teacher' | 'parent' }))}
+                          className={`relative p-6 rounded-xl text-center font-bold transition-all duration-300 ${
+                            formData.role === role.value
+                              ? `bg-gradient-to-r ${role.color} text-white shadow-lg scale-105`
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
+                          whileHover={{ scale: formData.role === role.value ? 1.05 : 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          <div className="text-3xl mb-2">{role.icon}</div>
+                          <div className="font-['Hind_Siliguri'] text-lg font-bold">{role.label}</div>
+                          <div className="font-['Hind_Siliguri'] text-sm opacity-80">{role.description}</div>
+                          {formData.role === role.value && (
+                            <motion.div
+                              className="absolute -top-2 -right-2 w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-lg"
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              transition={{ duration: 0.2 }}
+                            >
+                              <CheckCircle className="w-4 h-4 text-green-500" />
+                            </motion.div>
+                          )}
+                        </motion.button>
+                      ))}
+                    </div>
                   </div>
 
                   {/* Full Name */}
@@ -434,7 +531,7 @@ const SignUpPage = () => {
                 </motion.div>
               )}
 
-              {/* Step 2: Student Details */}
+              {/* Step 2: Role-specific Details */}
               {currentStep === 2 && (
                 <motion.div
                   key="step2"
@@ -445,101 +542,215 @@ const SignUpPage = () => {
                   className="space-y-6"
                 >
                   <div className="text-center mb-6">
-                    <h3 className="text-xl font-bold text-gray-900 font-['Hind_Siliguri']">শিক্ষার্থী বিবরণ</h3>
-                    <p className="text-gray-600 font-['Hind_Siliguri']">আপনার শিক্ষা সংক্রান্ত তথ্য প্রদান করুন</p>
+                    <h3 className="text-xl font-bold text-gray-900 font-['Hind_Siliguri']">
+                      {formData.role === 'student' ? 'শিক্ষার্থী বিবরণ' : 
+                       formData.role === 'teacher' ? 'শিক্ষক বিবরণ' : 'অভিভাবক বিবরণ'}
+                    </h3>
+                    <p className="text-gray-600 font-['Hind_Siliguri']">
+                      {formData.role === 'student' ? 'আপনার শিক্ষা সংক্রান্ত তথ্য প্রদান করুন' : 
+                       formData.role === 'teacher' ? 'আপনার শিক্ষকতা সংক্রান্ত তথ্য প্রদান করুন' : 
+                       'আপনার সন্তানের তথ্য প্রদান করুন'}
+                    </p>
                   </div>
 
-                  {/* Grade Selection with Colorful Pills */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-4 font-['Hind_Siliguri']">
-                      শ্রেণী নির্বাচন করুন
-                    </label>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                      {gradeOptions.map((grade) => (
-                        <motion.button
-                          key={grade.value}
-                          type="button"
-                          onClick={() => setFormData(prev => ({ ...prev, grade: grade.value }))}
-                          className={`relative p-4 rounded-xl text-center font-bold text-sm transition-all duration-300 ${
-                            formData.grade === grade.value
-                              ? `bg-gradient-to-r ${grade.color} text-white shadow-lg scale-105`
-                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                          }`}
-                          whileHover={{ scale: formData.grade === grade.value ? 1.05 : 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                        >
-                          <span className="font-['Hind_Siliguri']">{grade.label}</span>
-                          {formData.grade === grade.value && (
-                            <motion.div
-                              className="absolute -top-2 -right-2 w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-lg"
-                              initial={{ scale: 0 }}
-                              animate={{ scale: 1 }}
-                              transition={{ duration: 0.2 }}
+                  {/* Student Form */}
+                  {formData.role === 'student' && (
+                    <>
+                      {/* Grade Selection with Colorful Pills */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-4 font-['Hind_Siliguri']">
+                          শ্রেণী নির্বাচন করুন
+                        </label>
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                          {gradeOptions.map((grade) => (
+                            <motion.button
+                              key={grade.value}
+                              type="button"
+                              onClick={() => setFormData(prev => ({ ...prev, grade: grade.value }))}
+                              className={`relative p-4 rounded-xl text-center font-bold text-sm transition-all duration-300 ${
+                                formData.grade === grade.value
+                                  ? `bg-gradient-to-r ${grade.color} text-white shadow-lg scale-105`
+                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                              }`}
+                              whileHover={{ scale: formData.grade === grade.value ? 1.05 : 1.02 }}
+                              whileTap={{ scale: 0.98 }}
                             >
-                              <CheckCircle className="w-4 h-4 text-green-500" />
-                            </motion.div>
-                          )}
-                        </motion.button>
-                      ))}
-                    </div>
-                  </div>
+                              <span className="font-['Hind_Siliguri']">{grade.label}</span>
+                              {formData.grade === grade.value && (
+                                <motion.div
+                                  className="absolute -top-2 -right-2 w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-lg"
+                                  initial={{ scale: 0 }}
+                                  animate={{ scale: 1 }}
+                                  transition={{ duration: 0.2 }}
+                                >
+                                  <CheckCircle className="w-4 h-4 text-green-500" />
+                                </motion.div>
+                              )}
+                            </motion.button>
+                          ))}
+                        </div>
+                      </div>
 
-                  {/* Medium Selection */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-3 font-['Hind_Siliguri']">
-                      শিক্ষার মাধ্যম
-                    </label>
-                    <div className="grid grid-cols-2 gap-4">
-                      <motion.button
-                        type="button"
-                        onClick={() => setFormData(prev => ({ ...prev, medium: 'bangla' }))}
-                        className={`p-4 rounded-xl border-2 text-center font-bold transition-all duration-300 ${
-                          formData.medium === 'bangla'
-                            ? 'border-blue-500 bg-blue-50 text-blue-700'
-                            : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
-                        }`}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                      >
-                        <span className="font-['Hind_Siliguri']">বাংলা মাধ্যম</span>
-                      </motion.button>
-                      <motion.button
-                        type="button"
-                        onClick={() => setFormData(prev => ({ ...prev, medium: 'english' }))}
-                        className={`p-4 rounded-xl border-2 text-center font-bold transition-all duration-300 ${
-                          formData.medium === 'english'
-                            ? 'border-purple-500 bg-purple-50 text-purple-700'
-                            : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
-                        }`}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                      >
-                        <span className="font-['Hind_Siliguri']">ইংরেজি মাধ্যম</span>
-                      </motion.button>
-                    </div>
-                  </div>
+                      {/* Medium Selection */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-3 font-['Hind_Siliguri']">
+                          শিক্ষার মাধ্যম
+                        </label>
+                        <div className="grid grid-cols-2 gap-4">
+                          <motion.button
+                            type="button"
+                            onClick={() => setFormData(prev => ({ ...prev, medium: 'bangla' }))}
+                            className={`p-4 rounded-xl border-2 text-center font-bold transition-all duration-300 ${
+                              formData.medium === 'bangla'
+                                ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                            }`}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            <span className="font-['Hind_Siliguri']">বাংলা মাধ্যম</span>
+                          </motion.button>
+                          <motion.button
+                            type="button"
+                            onClick={() => setFormData(prev => ({ ...prev, medium: 'english' }))}
+                            className={`p-4 rounded-xl border-2 text-center font-bold transition-all duration-300 ${
+                              formData.medium === 'english'
+                                ? 'border-purple-500 bg-purple-50 text-purple-700'
+                                : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                            }`}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            <span className="font-['Hind_Siliguri']">ইংরেজি মাধ্যম</span>
+                          </motion.button>
+                        </div>
+                      </div>
+                    </>
+                  )}
 
-                  {/* School and District - Grid */}
+                  {/* Teacher Form */}
+                  {formData.role === 'teacher' && (
+                    <>
+                      {/* Subjects */}
+                      <div>
+                        <label htmlFor="subjects" className="block text-sm font-medium text-gray-700 mb-2 font-['Hind_Siliguri']">
+                          শিক্ষাদানের বিষয়সমূহ
+                        </label>
+                        <input
+                          id="subjects"
+                          name="subjects"
+                          type="text"
+                          required
+                          value={formData.subjects || ''}
+                          onChange={handleChange}
+                          className="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-400 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-['Hind_Siliguri']"
+                          placeholder="যেমন: গণিত, পদার্থবিজ্ঞান, রসায়ন"
+                        />
+                      </div>
+
+                      {/* Experience */}
+                      <div>
+                        <label htmlFor="experience" className="block text-sm font-medium text-gray-700 mb-2 font-['Hind_Siliguri']">
+                          শিক্ষকতার অভিজ্ঞতা (বছর)
+                        </label>
+                        <select
+                          id="experience"
+                          name="experience"
+                          value={formData.experience || ''}
+                          onChange={handleChange}
+                          className="appearance-none relative block w-full px-3 py-3 border border-gray-300 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-['Hind_Siliguri']"
+                        >
+                          <option value="">অভিজ্ঞতা নির্বাচন করুন</option>
+                          <option value="0-1">০-১ বছর</option>
+                          <option value="2-5">২-৫ বছর</option>
+                          <option value="6-10">৬-১০ বছর</option>
+                          <option value="11-15">১১-১৫ বছর</option>
+                          <option value="15+">১৫+ বছর</option>
+                        </select>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Parent Form */}
+                  {formData.role === 'parent' && (
+                    <>
+                      {/* Child Name */}
+                      <div>
+                        <label htmlFor="childName" className="block text-sm font-medium text-gray-700 mb-2 font-['Hind_Siliguri']">
+                          সন্তানের নাম
+                        </label>
+                        <input
+                          id="childName"
+                          name="childName"
+                          type="text"
+                          required
+                          value={formData.childName || ''}
+                          onChange={handleChange}
+                          className="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-400 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-['Hind_Siliguri']"
+                          placeholder="আপনার সন্তানের নাম"
+                        />
+                      </div>
+
+                      {/* Child Grade */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-4 font-['Hind_Siliguri']">
+                          সন্তানের শ্রেণী
+                        </label>
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                          {gradeOptions.map((grade) => (
+                            <motion.button
+                              key={grade.value}
+                              type="button"
+                              onClick={() => setFormData(prev => ({ ...prev, childGrade: grade.value }))}
+                              className={`relative p-4 rounded-xl text-center font-bold text-sm transition-all duration-300 ${
+                                formData.childGrade === grade.value
+                                  ? `bg-gradient-to-r ${grade.color} text-white shadow-lg scale-105`
+                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                              }`}
+                              whileHover={{ scale: formData.childGrade === grade.value ? 1.05 : 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                            >
+                              <span className="font-['Hind_Siliguri']">{grade.label}</span>
+                              {formData.childGrade === grade.value && (
+                                <motion.div
+                                  className="absolute -top-2 -right-2 w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-lg"
+                                  initial={{ scale: 0 }}
+                                  animate={{ scale: 1 }}
+                                  transition={{ duration: 0.2 }}
+                                >
+                                  <CheckCircle className="w-4 h-4 text-green-500" />
+                                </motion.div>
+                              )}
+                            </motion.button>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Common Fields for All Roles */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* School */}
-                    <div>
-                      <label htmlFor="school" className="block text-sm font-medium text-gray-700 mb-2 font-['Hind_Siliguri']">
-                        স্কুলের নাম
-                      </label>
-                      <input
-                        id="school"
-                        name="school"
-                        type="text"
-                        required
-                        value={formData.school}
-                        onChange={handleChange}
-                        className="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-400 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-['Hind_Siliguri']"
-                        placeholder="আপনার স্কুলের নাম"
-                      />
-                    </div>
+                    {/* School (for students and teachers) or District (for parents) */}
+                    {(formData.role === 'student' || formData.role === 'teacher') && (
+                      <div>
+                        <label htmlFor="school" className="block text-sm font-medium text-gray-700 mb-2 font-['Hind_Siliguri']">
+                          স্কুলের নাম
+                        </label>
+                        <input
+                          id="school"
+                          name="school"
+                          type="text"
+                          required
+                          value={formData.school}
+                          onChange={handleChange}
+                          className="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-400 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-['Hind_Siliguri']"
+                          placeholder="আপনার স্কুলের নাম"
+                        />
+                      </div>
+                    )}
 
                     {/* District */}
-                    <div>
+                    <div className={formData.role === 'parent' ? 'md:col-span-2' : ''}>
                       <label htmlFor="district" className="block text-sm font-medium text-gray-700 mb-2 font-['Hind_Siliguri']">
                         জেলা
                       </label>

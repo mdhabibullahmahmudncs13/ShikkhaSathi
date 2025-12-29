@@ -132,7 +132,8 @@ def require_parent(current_user: User = Depends(get_current_active_user)) -> Use
 
 def get_current_admin_user(current_user: User = Depends(get_current_active_user)) -> User:
     """Require admin role for admin panel access"""
-    if current_user.role != UserRole.ADMIN:
+    # Handle both 'admin' and 'ADMIN' for backward compatibility
+    if current_user.role not in [UserRole.ADMIN, 'admin']:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Admin access required"
