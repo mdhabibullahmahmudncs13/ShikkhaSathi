@@ -46,94 +46,37 @@ export const LearningAnalytics: React.FC<LearningAnalyticsProps> = ({
   const [sessions, setSessions] = useState<LearningSession[]>([]);
   const [subjectPerformance, setSubjectPerformance] = useState<SubjectPerformance[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Mock data - in real app this would come from API
   useEffect(() => {
-    const mockSessions: LearningSession[] = [
-      {
-        date: '2024-12-20',
-        subject: 'Physics',
-        timeSpent: 45,
-        questionsAnswered: 12,
-        correctAnswers: 10,
-        xpGained: 150
-      },
-      {
-        date: '2024-12-20',
-        subject: 'Mathematics',
-        timeSpent: 30,
-        questionsAnswered: 8,
-        correctAnswers: 7,
-        xpGained: 120
-      },
-      {
-        date: '2024-12-19',
-        subject: 'Chemistry',
-        timeSpent: 60,
-        questionsAnswered: 15,
-        correctAnswers: 12,
-        xpGained: 200
-      },
-      {
-        date: '2024-12-19',
-        subject: 'Physics',
-        timeSpent: 40,
-        questionsAnswered: 10,
-        correctAnswers: 9,
-        xpGained: 140
-      },
-      {
-        date: '2024-12-18',
-        subject: 'Mathematics',
-        timeSpent: 35,
-        questionsAnswered: 9,
-        correctAnswers: 8,
-        xpGained: 130
+    const fetchLearningAnalytics = async () => {
+      try {
+        setIsLoading(true);
+        // TODO: Replace with actual API call
+        const response = await fetch(`/api/v1/student/${userId}/learning-analytics?timeRange=${timeRange}`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch learning analytics');
+        }
+        
+        const data = await response.json();
+        setSessions(data.sessions || []);
+        setSubjectPerformance(data.subjectPerformance || []);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load analytics');
+        console.error('Error fetching learning analytics:', err);
+      } finally {
+        setIsLoading(false);
       }
-    ];
+    };
 
-    const mockSubjectPerformance: SubjectPerformance[] = [
-      {
-        subject: 'Physics',
-        averageScore: 85,
-        totalTime: 180,
-        questionsAnswered: 45,
-        improvement: 12,
-        lastWeekScore: 78,
-        currentWeekScore: 85
-      },
-      {
-        subject: 'Mathematics',
-        averageScore: 88,
-        totalTime: 150,
-        questionsAnswered: 38,
-        improvement: 8,
-        lastWeekScore: 82,
-        currentWeekScore: 88
-      },
-      {
-        subject: 'Chemistry',
-        averageScore: 82,
-        totalTime: 120,
-        questionsAnswered: 32,
-        improvement: -3,
-        lastWeekScore: 85,
-        currentWeekScore: 82
-      },
-      {
-        subject: 'Biology',
-        averageScore: 79,
-        totalTime: 90,
-        questionsAnswered: 28,
-        improvement: 15,
-        lastWeekScore: 70,
-        currentWeekScore: 79
-      }
-    ];
-
-    setSessions(mockSessions);
-    setSubjectPerformance(mockSubjectPerformance);
-    setIsLoading(false);
+    if (userId) {
+      fetchLearningAnalytics();
+    }
   }, [userId, timeRange]);
 
   const getTotalStats = () => {

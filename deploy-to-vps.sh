@@ -289,8 +289,8 @@ pip install -r requirements.txt
 print_status "Running database migrations..."
 alembic upgrade head
 
-print_status "Creating sample data..."
-python create_sample_data.py
+print_status "Database setup complete..."
+echo "ℹ️  Skipping sample data creation - production deployment"
 
 print_step "12. Installing Ollama models"
 print_status "Pulling Ollama model (this may take a few minutes)..."

@@ -96,7 +96,7 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({
     
     setIsSearching(true);
     try {
-      // Mock search - in real app, this would search existing students
+      // TODO: Replace with actual API call to search students
       const response = await fetch(`/api/v1/users/search?q=${encodeURIComponent(searchQuery)}&role=student`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`

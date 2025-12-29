@@ -23,20 +23,11 @@ def get_current_user_optional(
     db: Session = Depends(get_db),
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(HTTPBearer(auto_error=False))
 ) -> Optional[User]:
-    """Get current authenticated user (optional for development)"""
+    """Get current authenticated user (optional)"""
     if not credentials:
-        # For development, return a mock user
-        return User(
-            id="dev-user-id",
-            email="dev@example.com",
-            full_name="Development User",
-            role=UserRole.STUDENT,
-            is_active=True
-        )
+        return None
     
     token = credentials.credentials
-    
-    # Verify token format
     user_id = verify_token(token)
     if user_id is None:
         return None
@@ -141,7 +132,8 @@ def require_parent(current_user: User = Depends(get_current_active_user)) -> Use
 
 def get_current_admin_user(current_user: User = Depends(get_current_active_user)) -> User:
     """Require admin role for admin panel access"""
-    if current_user.role != UserRole.ADMIN:
+    # Handle both 'admin' and 'ADMIN' for backward compatibility
+    if current_user.role not in [UserRole.ADMIN, 'admin']:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Admin access required"

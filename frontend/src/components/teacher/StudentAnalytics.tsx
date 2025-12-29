@@ -96,56 +96,18 @@ export const StudentAnalytics: React.FC<StudentAnalyticsProps> = ({
     );
   }
 
-  // Use real analytics data if available, otherwise fall back to mock data
-  const analytics = studentAnalytics || {
-  performanceHistory: [
-    { date: '2024-12-01', score: 75, timeSpent: 45 },
-    { date: '2024-12-02', score: 78, timeSpent: 52 },
-    { date: '2024-12-03', score: 72, timeSpent: 38 },
-    { date: '2024-12-04', score: 80, timeSpent: 60 },
-    { date: '2024-12-05', score: 85, timeSpent: 55 },
-    { date: '2024-12-06', score: 82, timeSpent: 48 },
-    { date: '2024-12-07', score: 79, timeSpent: 42 }
-  ],
-  subjectBreakdown: [
-    { subject: 'Physics', averageScore: 78, timeSpent: 180, completedLessons: 12, totalLessons: 15 },
-    { subject: 'Chemistry', averageScore: 85, timeSpent: 150, completedLessons: 10, totalLessons: 12 },
-    { subject: 'Mathematics', averageScore: 72, timeSpent: 200, completedLessons: 8, totalLessons: 14 }
-  ],
-  bloomLevelProgress: {
-    level1: 95, // Remember
-    level2: 88, // Understand
-    level3: 75, // Apply
-    level4: 65, // Analyze
-    level5: 45, // Evaluate
-    level6: 30  // Create
-  },
-  interventionRecommendations: [
-    {
-      id: 'int-1',
-      studentId: 'student-1',
-      studentName: 'রাহুল আহমেদ',
-      type: 'additional_practice' as const,
-      priority: 'medium',
-      description: 'Student struggles with higher-order thinking skills (Bloom levels 5-6)',
-      suggestedActions: [
-        'Assign creative problem-solving exercises',
-        'Provide peer tutoring opportunities',
-        'Schedule one-on-one discussion sessions'
-      ],
-      estimatedImpact: 'high',
-      timeframe: '2-3 weeks',
-      resources: [
-        {
-          type: 'lesson',
-          title: 'Critical Thinking in Physics',
-          url: '/lessons/critical-thinking-physics',
-          description: 'Advanced problem-solving techniques'
-        }
-      ]
-    }
-  ]
-};
+  // Use real analytics data from props, with proper error handling
+  const analytics = studentAnalytics;
+
+  if (!analytics) {
+    return (
+      <div className="bg-white rounded-lg shadow p-6">
+        <div className="text-center text-gray-500">
+          <p>No analytics data available for this student</p>
+        </div>
+      </div>
+    );
+  }
 
 
 

@@ -30,8 +30,9 @@ class UserBase(BaseModel):
         if v is not None and v.strip():
             # Bangladesh mobile number validation
             import re
-            if not re.match(r'^(\+88)?01[3-9]\d{8}$', v):
-                raise ValueError('Invalid Bangladesh mobile number format')
+            # Allow formats: 01XXXXXXXXX, +8801XXXXXXXXX, 8801XXXXXXXXX
+            if not re.match(r'^(\+88|88)?01[3-9]\d{8}$', v):
+                raise ValueError('Invalid Bangladesh mobile number format. Use format: 01XXXXXXXXX (11 digits)')
         return v
 
 
@@ -70,8 +71,9 @@ class UserUpdate(BaseModel):
         if v is not None and v.strip():
             # Bangladesh mobile number validation
             import re
-            if not re.match(r'^(\+88)?01[3-9]\d{8}$', v):
-                raise ValueError('Invalid Bangladesh mobile number format')
+            # Allow formats: 01XXXXXXXXX, +8801XXXXXXXXX, 8801XXXXXXXXX
+            if not re.match(r'^(\+88|88)?01[3-9]\d{8}$', v):
+                raise ValueError('Invalid Bangladesh mobile number format. Use format: 01XXXXXXXXX (11 digits)')
         return v
 
 

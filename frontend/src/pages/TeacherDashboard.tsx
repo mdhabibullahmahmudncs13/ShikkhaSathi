@@ -18,114 +18,79 @@ import {
   FileText as DocumentTextIcon
 } from 'lucide-react';
 
-// Mock data - in real app this would come from API
-const mockTeacherData: TeacherDashboardData = {
-  teacherId: 'teacher-1',
-  classes: [
-    {
-      id: 'class-1',
-      name: 'Physics 9A',
-      grade: 9,
-      subject: 'Physics',
-      studentCount: 32,
-      averagePerformance: 78,
-      engagementRate: 85,
-      lastActivity: new Date('2024-12-19T10:30:00'),
-      students: [
-        {
-          id: 'student-1',
-          name: 'রাহুল আহমেদ',
-          email: 'rahul@example.com',
-          totalXP: 2500,
-          currentLevel: 5,
-          currentStreak: 12,
-          averageScore: 85,
-          timeSpent: 1800, // minutes
-          lastActive: new Date('2024-12-19T09:15:00'),
-          weakAreas: [
-            {
-              subject: 'Physics',
-              topic: 'Newton\'s Laws',
-              bloomLevel: 3,
-              successRate: 45,
-              attemptsCount: 8
-            }
-          ],
-          riskLevel: 'low'
-        },
-        {
-          id: 'student-2',
-          name: 'ফাতিমা খান',
-          email: 'fatima@example.com',
-          totalXP: 1200,
-          currentLevel: 3,
-          currentStreak: 3,
-          averageScore: 62,
-          timeSpent: 900,
-          lastActive: new Date('2024-12-17T14:20:00'),
-          weakAreas: [
-            {
-              subject: 'Physics',
-              topic: 'Motion',
-              bloomLevel: 2,
-              successRate: 38,
-              attemptsCount: 12
-            }
-          ],
-          riskLevel: 'medium'
-        }
-      ]
-    },
-    {
-      id: 'class-2',
-      name: 'Chemistry 10B',
-      grade: 10,
-      subject: 'Chemistry',
-      studentCount: 28,
-      averagePerformance: 72,
-      engagementRate: 78,
-      lastActivity: new Date('2024-12-18T16:45:00'),
-      students: []
-    }
-  ],
-  notifications: [
-    {
-      id: 'notif-1',
-      type: 'student_risk',
-      title: 'Student at Risk',
-      message: 'ফাতিমা খান has not been active for 2 days and performance is declining',
-      studentId: 'student-2',
-      studentName: 'ফাতিমা খান',
-      classId: 'class-1',
-      className: 'Physics 9A',
-      priority: 'high',
-      timestamp: new Date('2024-12-19T08:00:00'),
-      read: false,
-      actionRequired: true
-    },
-    {
-      id: 'notif-2',
-      type: 'achievement',
-      title: 'Student Achievement',
-      message: 'রাহুল আহমেদ has reached Level 5 and maintained a 12-day streak!',
-      studentId: 'student-1',
-      studentName: 'রাহুল আহমেদ',
-      classId: 'class-1',
-      className: 'Physics 9A',
-      priority: 'low',
-      timestamp: new Date('2024-12-19T07:30:00'),
-      read: false,
-      actionRequired: false
-    }
-  ],
-  recentActivity: []
-};
-
 export const TeacherDashboard: React.FC = () => {
-  const [teacherData, setTeacherData] = useState<TeacherDashboardData>(mockTeacherData);
+  const [teacherData, setTeacherData] = useState<TeacherDashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedClass, setSelectedClass] = useState<string>('');
   const [currentView, setCurrentView] = useState<'overview' | 'roster' | 'notifications' | 'analytics' | 'assessments'>('overview');
   const [selectedStudents, setSelectedStudents] = useState<StudentSummary[]>([]);
+
+  useEffect(() => {
+    const fetchTeacherData = async () => {
+      try {
+        setLoading(true);
+        // TODO: Replace with actual API call
+        const response = await fetch('/api/v1/teacher/dashboard', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch teacher data');
+        }
+        
+        const data = await response.json();
+        setTeacherData(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load teacher data');
+        console.error('Error fetching teacher data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTeacherData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading teacher dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-500 text-xl mb-4">⚠️ Error</div>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!teacherData) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">No teacher data available</p>
+        </div>
+      </div>
+    );
+  }
 
   useEffect(() => {
     // In real app, fetch teacher data from API

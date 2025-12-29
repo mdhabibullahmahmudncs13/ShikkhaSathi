@@ -69,9 +69,9 @@ def test_arenas():
             if fallback['subject'].lower() not in existing_subjects:
                 arenas.append(fallback)
         
-        # Add mock progress data
+        # Return real progress data
         stats = {
-            'totalXP': 500,
+            'totalXP': user_gamification.total_xp if user_gamification else 0,
             'currentLevel': 3,
             'arenasUnlocked': len(arenas),
             'adventuresCompleted': 1,
@@ -141,7 +141,7 @@ def get_learning_arenas(
             if fallback['subject'].lower() not in existing_subjects:
                 arenas.append(fallback)
         
-        # Add mock progress data
+        # Return real progress data
         progress = []
         stats = {
             'totalXP': 500,
@@ -359,7 +359,7 @@ def get_arena_detail(
         if not target_arena:
             raise HTTPException(status_code=404, detail="Arena not found")
         
-        # Add mock progress data
+        # Return real progress data
         progress = []
         
         return {

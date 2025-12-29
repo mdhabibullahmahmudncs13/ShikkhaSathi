@@ -78,108 +78,38 @@ export const AdvancedAnalytics: React.FC<AdvancedAnalyticsProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [showExportModal, setShowExportModal] = useState(false);
 
-  // Mock data - in real app this would come from API
+  // TODO: Replace with actual API call
   useEffect(() => {
-    const mockAnalytics: ClassAnalytics = {
-      classId: selectedClass || 'class-1',
-      className: 'Physics 9A',
-      totalStudents: 32,
-      activeStudents: 28,
-      averageScore: 78.5,
-      totalTimeSpent: 2400, // minutes
-      completionRate: 85.2,
-      riskStudents: 4,
-      topPerformers: [
-        {
-          id: 'student-1',
-          name: 'রাহুল আহমেদ',
-          averageScore: 92,
-          timeSpent: 180,
-          questionsAnswered: 45,
-          streakDays: 12,
-          riskLevel: 'low',
-          lastActive: '2024-12-20T09:15:00',
-          subjectScores: { Physics: 92, Math: 88, Chemistry: 90 },
-          weeklyProgress: [
-            { week: 'Week 1', score: 85, timeSpent: 120 },
-            { week: 'Week 2', score: 88, timeSpent: 140 },
-            { week: 'Week 3', score: 90, timeSpent: 160 },
-            { week: 'Week 4', score: 92, timeSpent: 180 }
-          ]
-        },
-        {
-          id: 'student-2',
-          name: 'সারা খান',
-          averageScore: 89,
-          timeSpent: 165,
-          questionsAnswered: 42,
-          streakDays: 8,
-          riskLevel: 'low',
-          lastActive: '2024-12-20T08:30:00',
-          subjectScores: { Physics: 89, Math: 91, Chemistry: 87 },
-          weeklyProgress: [
-            { week: 'Week 1', score: 82, timeSpent: 110 },
-            { week: 'Week 2', score: 85, timeSpent: 130 },
-            { week: 'Week 3', score: 87, timeSpent: 150 },
-            { week: 'Week 4', score: 89, timeSpent: 165 }
-          ]
+    const fetchAdvancedAnalytics = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch(`/api/v1/teacher/analytics/advanced?classId=${selectedClass}&timeRange=${timeRange}`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch analytics');
         }
-      ],
-      strugglingStudents: [
-        {
-          id: 'student-3',
-          name: 'করিম উদ্দিন',
-          averageScore: 45,
-          timeSpent: 60,
-          questionsAnswered: 15,
-          streakDays: 1,
-          riskLevel: 'high',
-          lastActive: '2024-12-18T14:20:00',
-          subjectScores: { Physics: 45, Math: 48, Chemistry: 42 },
-          weeklyProgress: [
-            { week: 'Week 1', score: 50, timeSpent: 80 },
-            { week: 'Week 2', score: 48, timeSpent: 70 },
-            { week: 'Week 3', score: 46, timeSpent: 65 },
-            { week: 'Week 4', score: 45, timeSpent: 60 }
-          ]
-        }
-      ],
-      subjectPerformance: [
-        {
-          subject: 'Physics',
-          averageScore: 78.5,
-          completionRate: 82.3,
-          timeSpent: 800,
-          difficulty: 7.2
-        },
-        {
-          subject: 'Mathematics',
-          averageScore: 81.2,
-          completionRate: 88.1,
-          timeSpent: 720,
-          difficulty: 6.8
-        },
-        {
-          subject: 'Chemistry',
-          averageScore: 75.8,
-          completionRate: 79.5,
-          timeSpent: 880,
-          difficulty: 7.8
-        }
-      ],
-      weeklyTrends: [
-        { week: 'Week 1', averageScore: 75.2, activeStudents: 26, timeSpent: 520 },
-        { week: 'Week 2', averageScore: 76.8, activeStudents: 27, timeSpent: 580 },
-        { week: 'Week 3', averageScore: 77.5, activeStudents: 28, timeSpent: 620 },
-        { week: 'Week 4', averageScore: 78.5, activeStudents: 28, timeSpent: 680 }
-      ]
+        
+        const data = await response.json();
+        setAnalytics(data);
+        setStudents([...(data.topPerformers || []), ...(data.strugglingStudents || [])]);
+      } catch (err) {
+        console.error('Error fetching advanced analytics:', err);
+        // Set empty state on error
+        setAnalytics(null);
+        setStudents([]);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
-    setAnalytics(mockAnalytics);
-    setStudents([...mockAnalytics.topPerformers, ...mockAnalytics.strugglingStudents]);
-    setIsLoading(false);
+    if (selectedClass) {
+      fetchAdvancedAnalytics();
+    }
   }, [selectedClass, timeRange]);
-
   const formatTime = (minutes: number) => {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
