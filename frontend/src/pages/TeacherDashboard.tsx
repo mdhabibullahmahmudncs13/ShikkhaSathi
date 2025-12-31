@@ -30,19 +30,29 @@ export const TeacherDashboard: React.FC = () => {
     const fetchTeacherData = async () => {
       try {
         setLoading(true);
-        // TODO: Replace with actual API call
-        const response = await fetch('/api/v1/teacher/dashboard', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        // Use existing teacher endpoints or mock data for now
+        // TODO: Implement proper teacher dashboard endpoint
+        
+        // Mock teacher data for now
+        const mockData = {
+          teacher: {
+            id: 'teacher-1',
+            name: 'Teacher Test',
+            email: 'teacher@test.com',
+            subjects: ['Mathematics', 'Physics'],
+            classes: []
+          },
+          classes: [],
+          students: [],
+          analytics: {
+            totalStudents: 0,
+            activeStudents: 0,
+            averageScore: 0,
+            completionRate: 0
           }
-        });
+        };
         
-        if (!response.ok) {
-          throw new Error('Failed to fetch teacher data');
-        }
-        
-        const data = await response.json();
-        setTeacherData(data);
+        setTeacherData(mockData);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load teacher data');
         console.error('Error fetching teacher data:', err);
