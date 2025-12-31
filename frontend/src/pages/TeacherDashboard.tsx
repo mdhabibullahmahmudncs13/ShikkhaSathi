@@ -4,11 +4,11 @@ import {
   BarChart3, 
   TrendingUp, 
   Clock,
-  AlertTriangle,
   FileText as DocumentTextIcon,
   Plus,
   Settings
 } from 'lucide-react';
+import { codeConnectionService } from '../services/codeConnectionService';
 
 interface TeacherData {
   teacher: {
@@ -33,8 +33,8 @@ export const TeacherDashboard: React.FC = () => {
   const [teacherData, setTeacherData] = useState<TeacherData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedClass, setSelectedClass] = useState<string>('');
-  const [currentView, setCurrentView] = useState<'overview' | 'roster' | 'notifications' | 'analytics' | 'assessments'>('overview');
+  const [showCreateClassModal, setShowCreateClassModal] = useState(false);
+  const [createClassLoading, setCreateClassLoading] = useState(false);
 
   useEffect(() => {
     const fetchTeacherData = async () => {
@@ -72,6 +72,48 @@ export const TeacherDashboard: React.FC = () => {
 
     fetchTeacherData();
   }, []);
+
+  const handleCreateClass = async (classData: {
+    class_name: string;
+    subject: string;
+    grade_level: number;
+    section?: string;
+    description?: string;
+  }) => {
+    try {
+      setCreateClassLoading(true);
+      const result = await codeConnectionService.createClassWithCode(classData);
+      
+      if (result.success) {
+        // Add the new class to the teacher data
+        const newClass = {
+          id: result.class_id,
+          name: classData.class_name,
+          subject: classData.subject,
+          grade: classData.grade_level,
+          section: classData.section,
+          class_code: result.class_code,
+          students: []
+        };
+        
+        setTeacherData(prev => prev ? {
+          ...prev,
+          classes: [...prev.classes, newClass]
+        } : prev);
+        
+        setShowCreateClassModal(false);
+        alert(`Class created successfully! Share code "${result.class_code}" with students.`);
+      }
+    } catch (error: any) {
+      alert(`Failed to create class: ${error.message}`);
+    } finally {
+      setCreateClassLoading(false);
+    }
+  };
+
+  const handleSettings = () => {
+    alert('Settings functionality coming soon!');
+  };
 
   if (loading) {
     return (
@@ -122,11 +164,17 @@ export const TeacherDashboard: React.FC = () => {
               <p className="text-gray-600">Welcome back, {teacherData.teacher.name}</p>
             </div>
             <div className="flex items-center gap-4">
-              <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+              <button 
+                onClick={() => setShowCreateClassModal(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
                 <Plus className="w-4 h-4" />
                 Create Class
               </button>
-              <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+              <button 
+                onClick={handleSettings}
+                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+              >
                 <Settings className="w-5 h-5" />
               </button>
             </div>
@@ -191,7 +239,10 @@ export const TeacherDashboard: React.FC = () => {
         <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-bold text-gray-900">My Classes</h2>
-            <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+            <button 
+              onClick={() => setShowCreateClassModal(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
               <Plus className="w-4 h-4" />
               Add Class
             </button>
@@ -202,7 +253,10 @@ export const TeacherDashboard: React.FC = () => {
               <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No classes yet</h3>
               <p className="text-gray-500 mb-6">Create your first class to start managing students and assignments.</p>
-              <button className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+              <button 
+                onClick={() => setShowCreateClassModal(true)}
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
                 Create Your First Class
               </button>
             </div>
@@ -233,6 +287,132 @@ export const TeacherDashboard: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Create Class Modal */}
+      {showCreateClassModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h2 className="text-xl font-bold text-gray-900">Create New Class</h2>
+              <button
+                onClick={() => setShowCreateClassModal(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <form 
+              onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.currentTarget);
+                handleCreateClass({
+                  class_name: formData.get('class_name') as string,
+                  subject: formData.get('subject') as string,
+                  grade_level: parseInt(formData.get('grade_level') as string),
+                  section: formData.get('section') as string || undefined,
+                  description: formData.get('description') as string || undefined,
+                });
+              }}
+              className="p-6 space-y-4"
+            >
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Class Name *
+                </label>
+                <input
+                  type="text"
+                  name="class_name"
+                  required
+                  placeholder="e.g., Physics Advanced"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Subject *
+                </label>
+                <select
+                  name="subject"
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="">Select Subject</option>
+                  <option value="Mathematics">Mathematics</option>
+                  <option value="Physics">Physics</option>
+                  <option value="Chemistry">Chemistry</option>
+                  <option value="Biology">Biology</option>
+                  <option value="English">English</option>
+                  <option value="Bangla">Bangla</option>
+                  <option value="History">History</option>
+                  <option value="Geography">Geography</option>
+                </select>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Grade *
+                  </label>
+                  <select
+                    name="grade_level"
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">Grade</option>
+                    {[6, 7, 8, 9, 10, 11, 12].map(grade => (
+                      <option key={grade} value={grade}>Grade {grade}</option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Section
+                  </label>
+                  <input
+                    type="text"
+                    name="section"
+                    placeholder="A, B, C..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Description
+                </label>
+                <textarea
+                  name="description"
+                  rows={3}
+                  placeholder="Brief description of the class..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateClassModal(false)}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                  disabled={createClassLoading}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={createClassLoading}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {createClassLoading ? 'Creating...' : 'Create Class'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
