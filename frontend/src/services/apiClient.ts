@@ -3,7 +3,8 @@ import { apiCache, dashboardCache, quizCache, cacheKeys, withCache } from './cac
 import { logger } from './logger';
 
 // API Configuration
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+// In development, use the Vite proxy. In production, use the full URL.
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? '' : 'http://localhost:8000');
 const API_VERSION = '/api/v1';
 
 // Create axios instance with default configuration
