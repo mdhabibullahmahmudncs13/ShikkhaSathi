@@ -432,13 +432,32 @@ export const learningAPI = {
 };
 
 export const parentAPI = {
+  getDashboard: () => api.get('/parent/dashboard'),
+  getChildren: () => api.get('/parent/children'),
   getChildProgress: (childId: string) =>
     api.get(`/parent/child/${childId}/progress`),
+  getChildAnalytics: (childId: string, timeRangeDays?: number) =>
+    api.get(`/parent/child/${childId}/analytics`, { params: { time_range_days: timeRangeDays } }),
   getWeeklyReport: (childId: string, weekStart: string) =>
     api.get(`/parent/child/${childId}/report`, { params: { week_start: weekStart } }),
-  getNotifications: () => api.get('/parent/notifications'),
+  getWeeklyReports: (childId?: string, limit?: number, offset?: number) =>
+    api.get('/parent/weekly-reports', { params: { child_id: childId, limit, offset } }),
+  generateWeeklyReport: (childId: string, weekStart?: string) =>
+    api.post(`/parent/child/${childId}/weekly-report`, { week_start: weekStart }),
+  getNotifications: (limit?: number, offset?: number, unreadOnly?: boolean) =>
+    api.get('/parent/notifications', { params: { limit, offset, unread_only: unreadOnly } }),
+  markNotificationRead: (notificationId: string) =>
+    api.post(`/parent/notifications/${notificationId}/mark-read`),
+  getNotificationPreferences: () => api.get('/parent/notification-preferences'),
   updateNotificationPreferences: (preferences: any) =>
     api.put('/parent/notification-preferences', preferences),
+  createAchievementNotification: (notificationData: any) =>
+    api.post('/parent/notifications/achievement', notificationData),
+  createPerformanceAlert: (alertData: any) =>
+    api.post('/parent/notifications/performance-alert', alertData),
+  createStreakMilestoneNotification: (milestoneData: any) =>
+    api.post('/parent/notifications/streak-milestone', milestoneData),
+  sendWeeklyReports: () => api.post('/parent/send-weekly-reports'),
 };
 
 // Error handling utilities

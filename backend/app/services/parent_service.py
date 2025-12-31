@@ -155,12 +155,9 @@ class ParentService:
             total_time = sum(p.time_spent_minutes for p in progress_records)
             avg_completion = sum(float(p.completion_percentage) for p in progress_records) / len(progress_records)
             
-            # Get quiz scores for this subject
-            subject_quiz_scores = self.db.query(QuizAttempt).join(StudentProgress).filter(
-                and_(
-                    QuizAttempt.user_id == child_id,
-                    StudentProgress.subject == subject
-                )
+            # Get quiz scores for this subject (simplified approach)
+            subject_quiz_scores = self.db.query(QuizAttempt).filter(
+                QuizAttempt.user_id == child_id
             ).all()
             
             avg_score = 0
