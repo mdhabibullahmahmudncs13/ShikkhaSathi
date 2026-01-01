@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
-from app.core.deps import get_db, get_current_user
+from app.core.deps import get_db, get_current_user, get_current_teacher
 from app.models.user import User, UserRole
 from app.services.code_connection_service import CodeConnectionService
 
@@ -51,30 +51,16 @@ class ParentCodeRequest(BaseModel):
 @router.post("/teacher/create-class")
 def create_class_with_code(
     request: CreateClassRequest,
-    current_user: User = Depends(get_current_user),
+    current_teacher = Depends(get_current_teacher),
     db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """Teacher creates a new class with auto-generated join code"""
     
-    if current_user.role != UserRole.TEACHER:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only teachers can create classes"
-        )
-    
     try:
         service = CodeConnectionService(db)
         
-        # Get teacher profile
-        teacher_profile = getattr(current_user, 'teacher_profile', None)
-        if not teacher_profile:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Teacher profile not found"
-            )
-        
         result = service.create_class_with_code(
-            teacher_id=str(teacher_profile.id),
+            teacher_id=str(current_teacher.id),
             class_data=request.dict()
         )
         
@@ -90,29 +76,16 @@ def create_class_with_code(
 @router.post("/teacher/disable-class-code/{class_id}")
 def disable_class_code(
     class_id: str,
-    current_user: User = Depends(get_current_user),
+    current_teacher = Depends(get_current_teacher),
     db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """Teacher disables class code to prevent new students from joining"""
     
-    if current_user.role != UserRole.TEACHER:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only teachers can manage class codes"
-        )
-    
     try:
         service = CodeConnectionService(db)
-        teacher_profile = getattr(current_user, 'teacher_profile', None)
-        
-        if not teacher_profile:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Teacher profile not found"
-            )
         
         result = service.disable_class_code(
-            teacher_id=str(teacher_profile.id),
+            teacher_id=str(current_teacher.id),
             class_id=class_id
         )
         
@@ -128,29 +101,16 @@ def disable_class_code(
 @router.post("/teacher/regenerate-class-code/{class_id}")
 def regenerate_class_code(
     class_id: str,
-    current_user: User = Depends(get_current_user),
+    current_teacher = Depends(get_current_teacher),
     db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """Teacher generates a new class code"""
     
-    if current_user.role != UserRole.TEACHER:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only teachers can regenerate class codes"
-        )
-    
     try:
         service = CodeConnectionService(db)
-        teacher_profile = getattr(current_user, 'teacher_profile', None)
-        
-        if not teacher_profile:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Teacher profile not found"
-            )
         
         result = service.regenerate_class_code(
-            teacher_id=str(teacher_profile.id),
+            teacher_id=str(current_teacher.id),
             class_id=class_id
         )
         
