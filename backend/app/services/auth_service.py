@@ -47,7 +47,29 @@ class AuthService:
         self.db.add(db_user)
         self.db.commit()
         self.db.refresh(db_user)
+        
+        # Create role-specific profiles
+        from app.models.user import UserRole
+        if user_create.role == UserRole.TEACHER:
+            self._create_teacher_profile(db_user)
+        
         return db_user
+
+    def _create_teacher_profile(self, user: User) -> None:
+        """Create teacher profile for a teacher user"""
+        from app.models.teacher import Teacher
+        
+        teacher_profile = Teacher(
+            user_id=user.id,
+            subjects=[],  # Will be updated by teacher later
+            grade_levels=[],  # Will be updated by teacher later
+            phone=user.phone,
+            is_active=True
+        )
+        
+        self.db.add(teacher_profile)
+        self.db.commit()
+        self.db.refresh(teacher_profile)
 
     def authenticate_user(self, email: str, password: str) -> Optional[User]:
         """Authenticate user with email and password"""
