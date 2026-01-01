@@ -4,8 +4,14 @@ import { logger } from './logger';
 
 // API Configuration
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 const API_VERSION = '/api/v1';
+=======
+// In development, use the Vite proxy. In production, use the full URL.
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? '/api' : 'http://localhost:8000/api');
+const API_VERSION = '/v1';
+>>>>>>> Stashed changes
 =======
 // In development, use the Vite proxy. In production, use the full URL.
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? '/api' : 'http://localhost:8000/api');
