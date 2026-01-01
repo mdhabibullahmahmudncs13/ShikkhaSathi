@@ -21,6 +21,8 @@ import { GlobalLoadingBar } from './components/common/LoadingIndicator'
 import { ErrorNotificationManager } from './components/common/ErrorNotification'
 import { SystemStatusIndicator } from './components/common/SystemMonitor'
 import { useAuth } from './hooks/useAPI'
+import UnauthorizedPage from './pages/UnauthorizedPage'
+import ProtectedRoute from './components/common/ProtectedRoute'
 import { UserProvider } from './contexts/UserContext'
 import React from 'react'
 
@@ -38,9 +40,8 @@ function App() {
   const conflicts: any[] = [];
   const errors: any[] = [];
   
-  // Mock auth for now
-  const isAuthenticated = false;
-  const user = null;
+  // Use proper authentication hook
+  const { user, isAuthenticated } = useAuth();
   
   // Type guard for user object
   const typedUser = user as { full_name?: string; role?: string } | null;
@@ -233,7 +234,12 @@ function App() {
                 <Route path="/dashboard" element={<StudentDashboard />} />
                 <Route path="/student" element={<StudentDashboard />} />
                 <Route path="/parent" element={<ParentDashboard />} />
-                <Route path="/teacher" element={<TeacherDashboard />} />
+                <Route path="/teacher" element={
+                  <ProtectedRoute requiredRole="teacher">
+                    <TeacherDashboard />
+                  </ProtectedRoute>
+                } />
+                <Route path="/unauthorized" element={<UnauthorizedPage />} />
                 <Route path="/admin/login" element={<AdminLoginPage />} />
                 <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/chat" element={<AITutorChat />} />

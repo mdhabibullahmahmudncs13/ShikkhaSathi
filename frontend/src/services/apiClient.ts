@@ -4,8 +4,8 @@ import { logger } from './logger';
 
 // API Configuration
 // In development, use the Vite proxy. In production, use the full URL.
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? '/api' : 'http://localhost:8000/api');
-const API_VERSION = '/v1';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? '/api/v1' : 'http://localhost:8000/api/v1');
+const API_VERSION = '';
 
 // Create axios instance with default configuration
 const apiClient: AxiosInstance = axios.create({

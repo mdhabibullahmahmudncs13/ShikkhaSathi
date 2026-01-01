@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { globalLoadingState } from '../services/apiClient';
+import { globalLoadingState, dashboardAPI, quizAPI, chatAPI, authAPI } from '../services/apiClient';
 
 // Generic API hook for handling loading, error, and data states
 export function useAPI<T>(
@@ -121,8 +121,6 @@ export function useGlobalLoading() {
 
 // Specific hooks for common operations
 export function useDashboardData() {
-  const { dashboardAPI } = require('../services/apiClient');
-  
   return useAPI(
     () => dashboardAPI.getDashboardData(),
     [],
@@ -134,27 +132,23 @@ export function useDashboardData() {
   );
 }
 
-export function useQuizData(quizId: string) {
-  const { quizAPI } = require('../services/apiClient');
-  
+export function useQuizData(subject?: string, grade?: number) {
   return useAPI(
-    () => quizAPI.getQuiz(quizId),
-    [quizId],
+    () => quizAPI.getSubjects(grade),
+    [subject, grade],
     {
-      immediate: !!quizId,
+      immediate: true,
       onError: (error) => {
-        console.error('Failed to load quiz:', error);
+        console.error('Failed to load quiz data:', error);
       }
     }
   );
 }
 
 export function useQuizSubmission() {
-  const { quizAPI } = require('../services/apiClient');
-  
   return useMutation(
-    ({ quizId, answers }: { quizId: string; answers: any[] }) =>
-      quizAPI.submitQuiz(quizId, answers),
+    (submission: { quiz_id: string; answers: Record<string, string>; time_taken_seconds: number }) =>
+      quizAPI.submitQuiz(submission),
     {
       onSuccess: (result) => {
         console.log('Quiz submitted successfully:', result);
@@ -167,8 +161,6 @@ export function useQuizSubmission() {
 }
 
 export function useChatMessage() {
-  const { chatAPI } = require('../services/apiClient');
-  
   return useMutation(
     ({ message, sessionId }: { message: string; sessionId?: string }) =>
       chatAPI.sendMessage(message, sessionId),
@@ -181,7 +173,6 @@ export function useChatMessage() {
 }
 
 export function useAuth() {
-  const { authAPI } = require('../services/apiClient');
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
@@ -189,11 +180,22 @@ export function useAuth() {
     ({ email, password }: { email: string; password: string }) =>
       authAPI.login(email, password),
     {
-      onSuccess: (data) => {
+      onSuccess: async (data) => {
         localStorage.setItem('access_token', (data as any).access_token);
-        localStorage.setItem('refresh_token', (data as any).refresh_token);
-        setUser((data as any).user);
-        setIsAuthenticated(true);
+        if ((data as any).refresh_token) {
+          localStorage.setItem('refresh_token', (data as any).refresh_token);
+        }
+        
+        // Get user info after successful login
+        try {
+          const userData = await authAPI.getCurrentUser();
+          setUser(userData);
+          setIsAuthenticated(true);
+        } catch (error) {
+          console.error('Failed to get user data after login:', error);
+          // Still set as authenticated since login was successful
+          setIsAuthenticated(true);
+        }
       }
     }
   );

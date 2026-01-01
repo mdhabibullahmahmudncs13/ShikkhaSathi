@@ -1,17 +1,20 @@
 # ShikkhaSathi - AI-Powered Learning Platform for Bangladesh
 
-**100% Local AI - Zero External API Dependencies**
+**Adaptive Learning Platform with Multi-Stakeholder Support**
 
-ShikkhaSathi is an AI-powered adaptive learning platform specifically designed for Bangladesh students (Grades 6-12). The platform provides personalized education experiences with complete privacy, zero API costs, and full offline functionality.
+ShikkhaSathi is an AI-powered adaptive learning platform specifically designed for Bangladesh students (Grades 6-12). The platform provides personalized education experiences with comprehensive dashboards for students, teachers, and parents, featuring offline-first design and gamified learning.
 
 ## ✨ Key Features
 
-- **Local AI Implementation**: Fully local AI stack with Ollama (llama3.2:1b) - no external API dependencies
-- **Voice Integration**: Complete speech-to-text (Whisper) and text-to-speech (Coqui TTS) in Bengali and English
+- **AI Tutor Chat**: Interactive AI-powered tutoring system with voice support
 - **Multi-Stakeholder System**: Comprehensive dashboards for students, teachers, and parents
+- **Teacher Class Management**: Create and manage classes with student enrollment
+- **Adaptive Assessments**: Dynamic quizzes that adjust difficulty based on performance
 - **Gamified Learning**: XP system, achievements, streaks, and leaderboards
-- **Adaptive Assessments**: Dynamic quizzes with RAG-powered contextual content
+- **RAG System**: Retrieval-Augmented Generation for contextual learning content
 - **Offline-First Design**: Progressive Web App (PWA) with complete offline capabilities
+- **Parent Portal**: Progress tracking and notification system for parents
+- **Voice Integration**: Speech-to-text and text-to-speech capabilities
 - **Cultural Relevance**: Designed specifically for Bangladesh NCTB curriculum
 
 ## 🚀 Quick Start
@@ -22,24 +25,46 @@ ShikkhaSathi is an AI-powered adaptive learning platform specifically designed f
 - **Docker & Docker Compose** (for databases)
 - **8GB RAM minimum** (16GB recommended)
 
-### One-Command Setup
+### Setup Instructions
 
+1. **Clone the repository**
 ```bash
-# Clone and start the application
 git clone https://github.com/mdhabibullahmahmudncs13/ShikkhaSathi.git
 cd ShikkhaSathi
-./start-dev.sh
 ```
 
-This will automatically:
-- Start PostgreSQL, MongoDB, and Redis via Docker
-- Set up Python virtual environment and dependencies
-- Download and configure local AI models
-- Start backend (port 8000) and frontend (port 5173)
+2. **Start databases**
+```bash
+# Start PostgreSQL, MongoDB, and Redis
+./start-databases.sh
+# or manually: docker-compose up -d
+```
+
+3. **Setup Backend**
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+
+# Run database migrations
+alembic upgrade head
+
+# Start backend server
+python run.py
+```
+
+4. **Setup Frontend**
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
 ### Access Points
 - **Application**: http://localhost:5173
 - **API Documentation**: http://localhost:8000/docs
+- **Backend API**: http://localhost:8000
 
 ### Default Test Accounts
 - **Student**: `student1@example.com` / `password123`
@@ -62,15 +87,15 @@ This will automatically:
 - **pytest** with property-based testing
 
 ### Database Architecture
-- **PostgreSQL**: User data, assessments, progress tracking
+- **PostgreSQL**: User data, assessments, progress tracking, teacher profiles
 - **MongoDB**: Chat history, documents, content storage
 - **Redis**: Sessions, caching, real-time features
 
-### Local AI Stack
-- **Ollama** with llama3.2:1b model for conversational AI
-- **Whisper** for speech-to-text processing
-- **Coqui TTS** for text-to-speech synthesis
-- **ChromaDB** for vector storage and RAG
+### AI Integration
+- **OpenAI API**: Conversational AI and content generation
+- **Pinecone**: Vector database for RAG system
+- **LangChain**: AI workflow orchestration
+- **ElevenLabs**: Voice synthesis capabilities
 
 ## 🎯 User Roles & Features
 
@@ -82,53 +107,110 @@ This will automatically:
 - **Offline Learning**: Complete PWA functionality
 
 ### For Teachers
-- **Class Management**: Student enrollment and monitoring
+- **Class Management**: Create and manage classes with student enrollment
+- **Student Monitoring**: Track individual and class performance
 - **Assessment Creation**: Custom quizzes and rubrics
-- **Analytics Dashboard**: Student performance insights
+- **Analytics Dashboard**: Comprehensive student performance insights
 - **Content Management**: Curriculum material organization
+- **Teacher Profile**: Automatic profile creation for teacher accounts
 
 ### For Parents
-- **Child Monitoring**: MultiPWA capabilitie trad sync mechanisms
-- **Multi-stakeholdehts**: lows**: Teace and achievements
-- **Communication**: Secure teacher messaging
-- **Progress Reports**: Detailed performance analytics
+- **Child Monitoring**: Track multiple children's progress
+- **Performance Analytics**: Detailed learning insights and achievements
+- **Communication**: Secure teacher messaging system
+- **Progress Reports**: Comprehensive performance analytics
+- **Notification System**: Real-time updates on child's activities
 
-## � Devealopment & Testing
+## 🛠️ Development & Testing
 
 ### Development Commands
 ```bash
-# Start all services
-./start-dev.sh
+# Start databases only
+./start-databases.sh
 
 # Backend development
-cd backend && python run.py
+cd backend
+source venv/bin/activate
+python run.py
 
 # Frontend development  
-cd frontend && npm run dev
+cd frontend
+npm run dev
 
 # Database migrations
-cd backend && alembic upgrade head
+cd backend
+alembic upgrade head
+
+# Create admin user
+cd backend
+python create_admin_user.py
+
+# Fix teacher profiles (if needed)
+cd backend
+python fix_teacher_profiles.py
 ```
 
 ### Testing
 ```bash
 # Backend tests
-cd backend && pytest
+cd backend
+pytest
 
 # Frontend tests
-cd frontend && npm test
+cd frontend
+npm test
 
-# Integration tests
-./test_voice_integration.sh
+# API testing
+curl -X POST http://localhost:8000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"teacher1@example.com","password":"password123"}'
 ```
 
-## � Privacy &t Security
+## 🔧 Troubleshooting
 
-- **100% Local Processing**: All AI operations on your server
-- **Zero External APIs**: No third-party data transmission
-- **JWT Authentication**: Secure token-based sessions
-- **Role-based Access**: Granular user permissions
-- **Data Encryption**: HTTPS and database encryption
+### Common Issues
+
+**1. Teacher Class Creation 404 Error**
+- **Problem**: Teachers can't create classes due to missing Teacher profile
+- **Solution**: Run the teacher profile fix script:
+```bash
+cd backend
+python fix_teacher_profiles.py
+```
+
+**2. Authentication Issues**
+- **Problem**: Login not redirecting or authentication state not persisting
+- **Solution**: Check that:
+  - Backend is running on port 8000
+  - Frontend API client is configured correctly
+  - JWT tokens are being stored properly
+
+**3. Database Connection Issues**
+- **Problem**: Backend can't connect to databases
+- **Solution**: Ensure Docker containers are running:
+```bash
+docker-compose ps
+./start-databases.sh
+```
+
+**4. Frontend Build Errors**
+- **Problem**: ES6 import/export errors or React hooks issues
+- **Solution**: Check that all imports use ES6 syntax and React hooks are properly imported
+
+### API Endpoints
+- **Authentication**: `POST /api/v1/auth/login`
+- **User Profile**: `GET /api/v1/auth/me`
+- **Teacher Classes**: `POST /api/v1/connect/teacher/create-class`
+- **Student Dashboard**: `GET /api/v1/connect/student/dashboard`
+
+## 🔒 Security & Privacy
+
+- **JWT Authentication**: Secure token-based authentication system
+- **Role-based Access Control**: Granular permissions for students, teachers, and parents
+- **Data Validation**: Input sanitization and validation on all endpoints
+- **HTTPS Support**: Secure communication protocols
+- **Database Security**: Encrypted connections and secure credential management
+- **Session Management**: Secure session handling with Redis
 
 ## 📱 Platform Support
 
@@ -146,48 +228,89 @@ cd frontend && npm test
 
 ## 📊 Project Status
 
-**Production Ready** - All core features implemented and tested:
-- ✅ Multi-stakeholder dashboards (Student, Teacher, Parent)
-- ✅ Local AI integration (Ollama + Whisper + Coqui TTS)
-- ✅ Voice-enabled chat in Bengali and English
-- ✅ Adaptive quiz system with RAG
-- ✅ Gamification and progress tracking
-- ✅ Offline PWA functionality
-- ✅ Parent-child relationship management
-- ✅ Teacher student enrollment system
+**Current Status: Active Development** - Core features implemented and functional:
+
+### ✅ Completed Features
+- **Authentication System**: JWT-based login with role-based access control
+- **Multi-stakeholder Dashboards**: Separate interfaces for students, teachers, and parents
+- **Teacher Class Management**: Create and manage classes with automatic teacher profile creation
+- **Student Enrollment**: Students can join classes and track progress
+- **API Architecture**: RESTful API with comprehensive endpoint coverage
+- **Database Integration**: PostgreSQL, MongoDB, and Redis working seamlessly
+- **Frontend-Backend Integration**: React frontend communicating with FastAPI backend
+- **Route Protection**: Secure route handling with authentication guards
+- **Error Handling**: Comprehensive error handling and user feedback
+
+### 🚧 In Progress
+- **AI Tutor Chat**: Voice-enabled conversational learning system
+- **Adaptive Quiz System**: Dynamic difficulty adjustment based on performance
+- **Gamification Features**: XP system, achievements, and leaderboards
+- **RAG System**: Retrieval-Augmented Generation for contextual content
+- **Parent Portal**: Complete parent dashboard with child monitoring
+- **Offline PWA**: Service worker implementation for offline functionality
+
+### 🔧 Recent Fixes (January 2025)
+- **Fixed Teacher Profile Creation**: Automatic Teacher profile creation for teacher users
+- **Resolved Authentication Issues**: Fixed login redirect and authentication state management
+- **Fixed API Client Configuration**: Resolved double prefix issues in API calls
+- **Updated Import Syntax**: Migrated from CommonJS to ES6 imports throughout frontend
+- **Enhanced Route Protection**: Improved protected route handling with loading states
+- **Database Migration**: Fixed existing teacher users missing Teacher profiles
 
 ## 🤝 Contributing
 
+We welcome contributions to ShikkhaSathi! Here's how to get started:
+
+### Development Setup
 1. Fork the repository
-2. Create feature branch: `git checkout -b feature-name`
-3. Run setup: `./start-dev.sh`
-4. Make changes and test: `pytest` (backend), `npm test` (frontend)
-5. Submit pull request
+2. Clone your fork: `git clone https://github.com/your-username/ShikkhaSathi.git`
+3. Create a feature branch: `git checkout -b feature-name`
+4. Set up development environment:
+   ```bash
+   ./start-databases.sh
+   cd backend && pip install -r requirements.txt
+   cd frontend && npm install
+   ```
+5. Make your changes and test thoroughly
+6. Run tests: `pytest` (backend), `npm test` (frontend)
+7. Submit a pull request with detailed description
 
-## 👥 Collaborators
+### Code Standards
+- **Backend**: Follow PEP 8 conventions, use type hints, write tests
+- **Frontend**: Use TypeScript, follow React best practices, maintain component structure
+- **Database**: Use Alembic migrations for schema changes
+- **API**: Follow RESTful conventions, document endpoints
 
-### Core Team
-- **[Your Name]** - Project Lead & Full-Stack Developer
-  - GitHub: [@mdhabibullahmahmudncs13]
-  - Role: Architecture, AI Integration, Backend Development
+### Areas for Contribution
+- AI/ML features (RAG system, adaptive learning)
+- Frontend components and user experience
+- Mobile responsiveness and PWA features
+- Testing and quality assurance
+- Documentation and tutorials
+- Bengali/English localization
 
-### Contributors
-- **[Contributor Name]** - Frontend Developer
-  - GitHub: [@contributor1](https://github.com/contributor1)
-  - Contributions: React components, PWA implementation
+## 👥 Team & Contributors
 
-- **[Contributor Name]** - AI/ML Engineer
-  - GitHub: [@contributor2](https://github.com/contributor2)
-  - Contributions: RAG system, Voice integration
+### Project Lead
+- **Md. Habibullah Mahmud** - Full-Stack Developer & Project Architect
+  - GitHub: [@mdhabibullahmahmudncs13](https://github.com/mdhabibullahmahmudncs13)
+  - Role: System architecture, backend development, AI integration
+  - Contributions: Core platform development, authentication system, database design
 
-- **[Contributor Name]** - UI/UX Designer
-  - GitHub: [@contributor3](https://github.com/contributor3)
-  - Contributions: Design system, User experience
+### Core Contributors
+*We're building an amazing team! Be the first to contribute and get listed here.*
 
-### Special Thanks
-- **Open Source Community** - For the amazing tools and libraries
+### How to Join the Team
+1. Check out our [Contributing Guidelines](#-contributing)
+2. Pick an issue from our GitHub Issues
+3. Submit your first pull request
+4. Join our development discussions
 
-*Want to be listed here? Check out our [Contributing Guidelines](#-contributing) and submit your first PR!*
+### Special Recognition
+- **Bangladesh Education Community** - For feedback and requirements
+- **Open Source Community** - For the incredible tools and libraries that make this possible
+
+*Want to see your name here? We'd love to have you on the team! Check out our open issues and submit a PR.*
 
 ## 📄 License
 
@@ -195,6 +318,17 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ---
 
-**ShikkhaSathi** - Revolutionizing education in Bangladesh with AI-powered, culturally relevant, and privacy-focused learning. 🇧🇩
+**ShikkhaSathi** - Empowering Bangladesh education through AI-powered adaptive learning 🇧🇩
 
-*Last Updated: December 2025 | Version: 1.0.0 | Status: Production Ready*
+*Last Updated: January 2025 | Version: 1.0.0-beta | Status: Active Development*
+
+### Quick Links
+- 📖 [User Manual](USER_MANUAL.md) - Complete user guide
+- 🔧 [Admin Panel Guide](ADMIN_PANEL_GUIDE.md) - Administrative features
+- 🚀 [Deployment Guide](DEPLOYMENT_GUIDE.md) - Production deployment
+- 🔗 [Code Connection Summary](CODE_CONNECTION_SUMMARY.md) - Technical architecture
+
+### Support
+- 🐛 [Report Issues](https://github.com/mdhabibullahmahmudncs13/ShikkhaSathi/issues)
+- 💬 [Discussions](https://github.com/mdhabibullahmahmudncs13/ShikkhaSathi/discussions)
+- 📧 Contact: [your-email@example.com]

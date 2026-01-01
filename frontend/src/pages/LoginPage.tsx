@@ -38,34 +38,46 @@ const LoginPage = () => {
     setError('');
 
     try {
+      console.log('🔄 Starting login process...');
+      
       // Import the API client
       const { authAPI } = await import('../services/apiClient');
       
       // Call the login API
+      console.log('🔄 Calling login API...');
       const response = await authAPI.login(formData.email, formData.password);
+      console.log('✅ Login API response:', response);
       
       // Store the access token
       localStorage.setItem('access_token', response.access_token);
+      console.log('✅ Access token stored');
       
       // Get user info to determine redirect
+      console.log('🔄 Getting user info...');
       const userInfo = await authAPI.getCurrentUser();
+      console.log('✅ User info:', userInfo);
       
       // Redirect based on user role
+      console.log(`🎯 Redirecting based on role: ${userInfo.role}`);
       switch (userInfo.role) {
         case 'student':
+          console.log('➡️ Redirecting to /student');
           navigate('/student');
           break;
         case 'teacher':
+          console.log('➡️ Redirecting to /teacher');
           navigate('/teacher');
           break;
         case 'parent':
+          console.log('➡️ Redirecting to /parent');
           navigate('/parent');
           break;
         default:
+          console.log('➡️ Redirecting to /student (default)');
           navigate('/student');
       }
     } catch (err: any) {
-      console.error('Login error:', err);
+      console.error('❌ Login error:', err);
       setError(err.message || 'ইমেইল বা পাসওয়ার্ড ভুল। আবার চেষ্টা করুন।');
     } finally {
       setLoading(false);
