@@ -71,6 +71,11 @@ class TeacherClass(Base):
     grade_level = Column(Integer, nullable=False)  # 6-12
     section = Column(String(10), nullable=True)  # A, B, C, etc.
     
+    # Google Classroom-style join code
+    class_code = Column(String(10), unique=True, nullable=False)  # e.g., "ABC123XYZ"
+    code_enabled = Column(Boolean, default=True)  # Teacher can disable code joining
+    code_expires_at = Column(DateTime, nullable=True)  # Optional expiration
+    
     # Class details
     description = Column(Text, nullable=True)
     room_number = Column(String(20), nullable=True)

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ParentDashboardLayout } from '../components/parent/ParentDashboardLayout';
 import { ChildProgressOverview } from '../components/parent/ChildProgressOverview';
 import { NotificationPreferencesComponent } from '../components/parent/NotificationPreferences';
+import { parentAPI } from '../services/apiClient';
 import { 
   ParentDashboardData, 
   ChildSummary, 
@@ -29,20 +30,14 @@ export const ParentDashboard: React.FC = () => {
     const fetchParentData = async () => {
       try {
         setLoading(true);
-        // TODO: Replace with actual API call
-        const response = await fetch('/api/v1/parent/dashboard', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-          }
-        });
+        const response = await parentAPI.getDashboard();
         
-        if (!response.ok) {
+        if (response.success) {
+          setParentData(response.data);
+          setSelectedChild(response.data.children[0] || null);
+        } else {
           throw new Error('Failed to fetch parent data');
         }
-        
-        const data = await response.json();
-        setParentData(data);
-        setSelectedChild(data.children[0] || null);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load parent data');
         console.error('Error fetching parent data:', err);

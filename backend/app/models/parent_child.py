@@ -75,13 +75,16 @@ class ParentChildInvitation(Base):
     
     # Invitation details
     parent_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    child_email = Column(String(255), nullable=False)  # Child's email to invite
+    child_email = Column(String(255), nullable=True)  # Optional - for email invites
     child_name = Column(String(255), nullable=True)  # Optional child name
     relationship_type = Column(String(20), nullable=False, default=RelationshipType.GUARDIAN.value)
     
+    # Google Classroom-style invitation code
+    invitation_code = Column(String(8), unique=True, nullable=False)  # e.g., "ABC12345"
+    code_type = Column(String(20), default="parent_child")  # parent_child, class_join
+    
     # Invitation status
     status = Column(String(20), default="pending")  # pending, accepted, rejected, expired
-    invitation_code = Column(String(100), unique=True, nullable=False)
     
     # Expiration
     expires_at = Column(DateTime, nullable=False)
