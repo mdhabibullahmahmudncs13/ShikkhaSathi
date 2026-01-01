@@ -1,22 +1,58 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Target, Award, Clock, Zap, Brain, RefreshCw, AlertCircle, BookOpen, Trophy } from 'lucide-react';
+import { Target, Award, Clock, Zap, Brain, RefreshCw, AlertCircle, BookOpen, Trophy, Users, UserPlus, Plus } from 'lucide-react';
 import DashboardLayout from '../components/dashboard/DashboardLayout';
 import StatCard from '../components/dashboard/StatCard';
 import SubjectCard from '../components/dashboard/SubjectCard';
 import ContinueLearningHero from '../components/dashboard/ContinueLearningHero';
+import CodeInputModal from '../components/dashboard/CodeInputModal';
 import { useDashboardData } from '../hooks/useDashboardData';
 import { useUser } from '../contexts/UserContext';
 import { useNotifications } from '../hooks/useNotifications';
+import { codeConnectionService } from '../services/codeConnectionService';
 
 const StudentDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useUser();
   const { studentProgress, loading, error, refetch } = useDashboardData();
   const { notifications, markAsRead } = useNotifications(10); // Get 10 most recent notifications
+  
+  // Code input modal states
+  const [showClassModal, setShowClassModal] = React.useState(false);
+  const [showParentModal, setShowParentModal] = React.useState(false);
+  const [codeLoading, setCodeLoading] = React.useState(false);
 
   const handleNotificationRead = (id: string) => {
     markAsRead(id);
+  };
+
+  const handleJoinClass = async (classCode: string) => {
+    setCodeLoading(true);
+    try {
+      const result = await codeConnectionService.joinClassByCode(classCode);
+      if (result.success) {
+        // Refresh dashboard data to show new class
+        refetch();
+      }
+    } catch (error: any) {
+      throw error;
+    } finally {
+      setCodeLoading(false);
+    }
+  };
+
+  const handleConnectParent = async (parentCode: string) => {
+    setCodeLoading(true);
+    try {
+      const result = await codeConnectionService.connectToParentByCode(parentCode);
+      if (result.success) {
+        // Could refresh connections data here if needed
+      }
+    } catch (error: any) {
+      throw error;
+    } finally {
+      setCodeLoading(false);
+    }
   };
 
   const emptyProgress = {
@@ -108,6 +144,47 @@ const StudentDashboard: React.FC = () => {
               <Target className="w-4 h-4" />
               Take Quiz
             </button>
+          </div>
+        </div>
+
+        {/* Code Connection Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Join Class Card */}
+          <div 
+            className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white cursor-pointer hover:scale-105 transition-all duration-200 shadow-lg"
+            onClick={() => setShowClassModal(true)}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                  <Users className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold">Join Class</h3>
+                  <p className="text-blue-100">Enter your teacher's class code</p>
+                </div>
+              </div>
+              <Plus className="w-8 h-8 text-blue-200" />
+            </div>
+          </div>
+
+          {/* Connect to Parent Card */}
+          <div 
+            className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-6 text-white cursor-pointer hover:scale-105 transition-all duration-200 shadow-lg"
+            onClick={() => setShowParentModal(true)}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                  <UserPlus className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold">Connect Parent</h3>
+                  <p className="text-green-100">Enter your parent's connection code</p>
+                </div>
+              </div>
+              <Plus className="w-8 h-8 text-green-200" />
+            </div>
           </div>
         </div>
 
@@ -319,6 +396,23 @@ const StudentDashboard: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Code Input Modals */}
+      <CodeInputModal
+        isOpen={showClassModal}
+        onClose={() => setShowClassModal(false)}
+        type="class"
+        onSubmit={handleJoinClass}
+        loading={codeLoading}
+      />
+
+      <CodeInputModal
+        isOpen={showParentModal}
+        onClose={() => setShowParentModal(false)}
+        type="parent"
+        onSubmit={handleConnectParent}
+        loading={codeLoading}
+      />
     </DashboardLayout>
   );
 };
