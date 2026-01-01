@@ -331,4 +331,4 @@ MIT License - see [LICENSE](LICENSE) file for details.
 ### Support
 - 🐛 [Report Issues](https://github.com/mdhabibullahmahmudncs13/ShikkhaSathi/issues)
 - 💬 [Discussions](https://github.com/mdhabibullahmahmudncs13/ShikkhaSathi/discussions)
-- 📧 Contact: [your-email@example.com]
+- 📧 Contact: [mdhabibullahmahmuudncs13@gmail.com]
