@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from app.db.session import SessionLocal
 from app.models.user import User, UserRole
 from app.models.gamification import Gamification
+from app.core.security import get_password_hash
 import uuid
 from datetime import datetime
 
@@ -25,16 +26,22 @@ def create_admin_user():
         ).first()
         
         if existing_admin:
-            print("Admin user already exists!")
+            # Update password hash for existing admin
+            existing_admin.password_hash = get_password_hash("admin123")
+            db.commit()
+            print("✅ Admin user password updated!")
             print(f"Email: {existing_admin.email}")
             print(f"Name: {existing_admin.full_name}")
+            print("\n🔐 Login Credentials:")
+            print("Email: admin@shikkhaSathi.com")
+            print("Password: admin123")
             return
         
         # Create admin user
         admin_user = User(
             id=uuid.uuid4(),
             email="admin@shikkhaSathi.com",
-            password_hash="admin123_hash",  # In production, use proper password hashing
+            password_hash=get_password_hash("admin123"),
             full_name="System Administrator",
             phone="+8801700000000",
             school="ShikkhaSathi Platform",

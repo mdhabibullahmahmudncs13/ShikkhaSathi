@@ -51,12 +51,12 @@ class ParentChildRelationship(Base):
     is_verified = Column(Boolean, default=False)  # For security
     verification_method = Column(String(50), nullable=True)  # email, phone, document
     verified_at = Column(DateTime, nullable=True)
-    verified_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    verified_by = Column(GUID(), ForeignKey("users.id"), nullable=True)
     
     # Metadata
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    created_by = Column(GUID(), ForeignKey("users.id"), nullable=True)
     
     # Relationships
     parent = relationship("User", foreign_keys=[parent_id], backref="children_relationships")
@@ -74,10 +74,10 @@ class ParentChildInvitation(Base):
     """Invitations for parent-child relationships"""
     __tablename__ = "parent_child_invitations"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     
     # Invitation details
-    parent_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    parent_id = Column(GUID(), ForeignKey("users.id"), nullable=False)
     child_email = Column(String(255), nullable=True)  # Optional - for email invites
     child_name = Column(String(255), nullable=True)  # Optional child name
     relationship_type = Column(String(20), nullable=False, default=RelationshipType.GUARDIAN.value)
@@ -94,7 +94,7 @@ class ParentChildInvitation(Base):
     
     # Response tracking
     accepted_at = Column(DateTime, nullable=True)
-    accepted_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    accepted_by = Column(GUID(), ForeignKey("users.id"), nullable=True)
     rejection_reason = Column(String(500), nullable=True)
     
     # Metadata

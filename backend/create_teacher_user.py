@@ -26,9 +26,15 @@ def create_teacher_user():
         ).first()
         
         if existing_teacher:
-            print("Teacher user already exists!")
+            # Update password hash for existing teacher
+            existing_teacher.password_hash = get_password_hash("teacher123")
+            db.commit()
+            print("✅ Teacher user password updated!")
             print(f"Email: {existing_teacher.email}")
             print(f"Name: {existing_teacher.full_name}")
+            print("\n🔐 Login Credentials:")
+            print("Email: teacher@test.com")
+            print("Password: teacher123")
             return existing_teacher
         
         # Create teacher user

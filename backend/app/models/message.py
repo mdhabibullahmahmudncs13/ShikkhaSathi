@@ -5,9 +5,9 @@ Database models for teacher messaging system including messages,
 recipients, delivery status, and read receipts.
 """
 
-from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey, Enum
+from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey, Enum, JSON
 from sqlalchemy.orm import relationship
-from app.models.types import GUID, JSON
+from app.models.types import GUID
 from datetime import datetime
 import uuid
 import enum

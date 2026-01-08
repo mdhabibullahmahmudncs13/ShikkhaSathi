@@ -20,8 +20,8 @@ from app.db.session import Base
 student_class_association = Table(
     'student_class_assignments',
     Base.metadata,
-    Column('student_id', UUID(as_uuid=True), ForeignKey('users.id'), primary_key=True),
-    Column('teacher_class_id', UUID(as_uuid=True), ForeignKey('teacher_classes.id'), primary_key=True),
+    Column('student_id', GUID(), ForeignKey('users.id'), primary_key=True),
+    Column('teacher_class_id', GUID(), ForeignKey('teacher_classes.id'), primary_key=True),
     Column('assigned_at', DateTime, default=datetime.utcnow),
     Column('is_active', Boolean, default=True)
 )
@@ -65,8 +65,8 @@ class TeacherClass(Base):
     """Teacher's class/section model"""
     __tablename__ = "teacher_classes"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    teacher_id = Column(UUID(as_uuid=True), ForeignKey("teachers.id"), nullable=False)
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    teacher_id = Column(GUID(), ForeignKey("teachers.id"), nullable=False)
     
     # Class information
     class_name = Column(String(100), nullable=False)  # e.g., "Class 9A", "Physics Advanced"
@@ -109,8 +109,8 @@ class TeacherPermission(Base):
     """Teacher permissions and access control"""
     __tablename__ = "teacher_permissions"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    teacher_id = Column(UUID(as_uuid=True), ForeignKey("teachers.id"), nullable=False)
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    teacher_id = Column(GUID(), ForeignKey("teachers.id"), nullable=False)
     
     # Permission categories
     permission_type = Column(String(50), nullable=False)  # 'assessment', 'analytics', 'communication', etc.
@@ -134,9 +134,9 @@ class ClassAnnouncement(Base):
     """Announcements for teacher classes"""
     __tablename__ = "class_announcements"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    teacher_class_id = Column(UUID(as_uuid=True), ForeignKey("teacher_classes.id"), nullable=False)
-    teacher_id = Column(UUID(as_uuid=True), ForeignKey("teachers.id"), nullable=False)
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    teacher_class_id = Column(GUID(), ForeignKey("teacher_classes.id"), nullable=False)
+    teacher_id = Column(GUID(), ForeignKey("teachers.id"), nullable=False)
     
     # Announcement content
     title = Column(String(200), nullable=False)
@@ -165,9 +165,9 @@ class StudentClass(Base):
     """Student enrollment in a teacher's class with detailed information"""
     __tablename__ = "student_classes"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    student_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    teacher_class_id = Column(UUID(as_uuid=True), ForeignKey("teacher_classes.id"), nullable=False)
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    student_id = Column(GUID(), ForeignKey("users.id"), nullable=False)
+    teacher_class_id = Column(GUID(), ForeignKey("teacher_classes.id"), nullable=False)
     
     # Enrollment details
     grade = Column(Integer, nullable=True)  # Student's grade level
@@ -191,9 +191,9 @@ class StudentClassProgress(Base):
     """Track student progress within a specific teacher's class"""
     __tablename__ = "student_class_progress"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    student_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    teacher_class_id = Column(UUID(as_uuid=True), ForeignKey("teacher_classes.id"), nullable=False)
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    student_id = Column(GUID(), ForeignKey("users.id"), nullable=False)
+    teacher_class_id = Column(GUID(), ForeignKey("teacher_classes.id"), nullable=False)
     
     # Progress metrics
     overall_progress = Column(Integer, default=0)  # 0-100 percentage
