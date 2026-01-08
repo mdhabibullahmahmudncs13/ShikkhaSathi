@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, Date, ForeignKey, JSON
-from sqlalchemy.dialects.postgresql import UUID
+from app.models.types import GUID
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from app.db.session import Base
@@ -8,7 +8,7 @@ from app.db.session import Base
 class Gamification(Base):
     __tablename__ = "gamification"
 
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), primary_key=True)
+    user_id = Column(GUID(), ForeignKey("users.id"), primary_key=True)
     total_xp = Column(Integer, default=0)
     current_level = Column(Integer, default=1)
     current_streak = Column(Integer, default=0)

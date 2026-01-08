@@ -7,7 +7,7 @@ recipients, delivery status, and read receipts.
 
 from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey, Enum
 from sqlalchemy.orm import relationship
-from sqlalchemy.dialects.postgresql import UUID, JSON
+from app.models.types import GUID, JSON
 from datetime import datetime
 import uuid
 import enum
@@ -47,7 +47,7 @@ class Message(Base):
     """
     __tablename__ = "messages"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     sender_id = Column(String, ForeignKey("users.id"), nullable=False)
     subject = Column(String(255), nullable=False)
     content = Column(Text, nullable=False)
@@ -78,8 +78,8 @@ class MessageRecipient(Base):
     """
     __tablename__ = "message_recipients"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    message_id = Column(UUID(as_uuid=True), ForeignKey("messages.id"), nullable=False)
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    message_id = Column(GUID(), ForeignKey("messages.id"), nullable=False)
     recipient_id = Column(String, ForeignKey("users.id"), nullable=False)
     recipient_type = Column(String, nullable=False)  # 'student', 'parent', 'teacher'
     
@@ -106,7 +106,7 @@ class MessageThread(Base):
     """
     __tablename__ = "message_threads"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     subject = Column(String(255), nullable=False)
     created_by = Column(String, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
@@ -129,7 +129,7 @@ class MessageTemplate(Base):
     """
     __tablename__ = "message_templates"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     name = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
     subject_template = Column(String(255), nullable=False)
@@ -158,7 +158,7 @@ class MessageNotificationSettings(Base):
     """
     __tablename__ = "message_notification_settings"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     user_id = Column(String, ForeignKey("users.id"), nullable=False, unique=True)
     
     # Notification preferences

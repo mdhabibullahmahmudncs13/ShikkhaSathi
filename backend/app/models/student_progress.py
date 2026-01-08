@@ -1,5 +1,5 @@
 from sqlalchemy import Column, String, Integer, Numeric, DateTime, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID
+from app.models.types import GUID
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 import uuid
@@ -17,8 +17,8 @@ class MasteryLevel(str, enum.Enum):
 class StudentProgress(Base):
     __tablename__ = "student_progress"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    user_id = Column(GUID(), ForeignKey("users.id"), nullable=False)
     subject = Column(String(50), nullable=False)
     topic = Column(String(100), nullable=False)
     bloom_level = Column(Integer, nullable=False)  # 1-6

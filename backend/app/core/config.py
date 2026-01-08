@@ -33,9 +33,12 @@ class Settings(BaseSettings):
     POSTGRES_PASSWORD: str = "password"
     POSTGRES_DB: str = "shikkhasathi"
     POSTGRES_PORT: str = "5432"
+    USE_SQLITE: bool = True  # Use SQLite for development when PostgreSQL is unavailable
     
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> str:
+        if self.USE_SQLITE:
+            return "sqlite:///./shikkhasathi.db"
         return f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
     
     # MongoDB

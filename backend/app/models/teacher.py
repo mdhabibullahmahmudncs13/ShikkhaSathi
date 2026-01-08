@@ -4,10 +4,13 @@ Database models for teachers, classes, and student assignments
 """
 
 from sqlalchemy import Column, String, Integer, DateTime, Text, Boolean, JSON, ForeignKey, Table
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from datetime import datetime
+import uuid
+import enum
+from app.db.session import Base
+from app.models.types import GUID
 import uuid
 
 from app.db.session import Base
@@ -28,8 +31,8 @@ class Teacher(Base):
     """Teacher profile model extending the User model"""
     __tablename__ = "teachers"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, unique=True)
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    user_id = Column(GUID(), ForeignKey("users.id"), nullable=False, unique=True)
     employee_id = Column(String(50), unique=True, nullable=True)
     
     # Teaching subjects and grades
@@ -119,7 +122,7 @@ class TeacherPermission(Base):
     # Status
     is_active = Column(Boolean, default=True)
     granted_at = Column(DateTime, default=datetime.utcnow)
-    granted_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    granted_by = Column(GUID(), ForeignKey("users.id"), nullable=True)
     expires_at = Column(DateTime, nullable=True)
     
     # Relationships

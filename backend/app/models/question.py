@@ -2,7 +2,7 @@
 Question model for quiz question bank.
 """
 from sqlalchemy import Column, String, Integer, Text, Boolean, JSON, DateTime, Index
-from sqlalchemy.dialects.postgresql import UUID
+from app.models.types import GUID
 from sqlalchemy.sql import func
 import uuid
 from app.db.session import Base
@@ -12,7 +12,7 @@ class Question(Base):
     """Question model for storing quiz questions"""
     __tablename__ = "questions"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     
     # Content
     question_text = Column(Text, nullable=False)
@@ -109,8 +109,8 @@ class Quiz(Base):
     """Quiz model for storing generated quizzes"""
     __tablename__ = "quizzes"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), nullable=False, index=True)
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    user_id = Column(GUID(), nullable=False, index=True)
     
     # Configuration
     subject = Column(String(50), nullable=False)

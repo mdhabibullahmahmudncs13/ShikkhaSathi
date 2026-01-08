@@ -4,10 +4,13 @@ Database models for linking parents to their children
 """
 
 from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, UniqueConstraint
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from datetime import datetime
+import uuid
+import enum
+from app.db.session import Base
+from app.models.types import GUID
 import uuid
 import enum
 
@@ -29,9 +32,9 @@ class ParentChildRelationship(Base):
     """Parent-Child relationship model"""
     __tablename__ = "parent_child_relationships"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    parent_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    child_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    parent_id = Column(GUID(), ForeignKey("users.id"), nullable=False)
+    child_id = Column(GUID(), ForeignKey("users.id"), nullable=False)
     
     # Relationship details
     relationship_type = Column(String(20), nullable=False, default=RelationshipType.GUARDIAN.value)

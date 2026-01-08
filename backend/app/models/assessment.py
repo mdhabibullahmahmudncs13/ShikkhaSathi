@@ -4,7 +4,7 @@ Database models for teacher-created assessments, rubrics, and grading
 """
 
 from sqlalchemy import Column, String, Integer, DateTime, Text, Boolean, JSON, ForeignKey, Float
-from sqlalchemy.dialects.postgresql import UUID
+from app.models.types import GUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
@@ -16,14 +16,14 @@ class Assessment(Base):
     """Teacher-created assessment model"""
     __tablename__ = "assessments"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     title = Column(String(255), nullable=False)
     description = Column(Text)
     subject = Column(String(100), nullable=False)
     grade = Column(Integer, nullable=False)
     
     # Teacher who created the assessment
-    teacher_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    teacher_id = Column(GUID(), ForeignKey("users.id"), nullable=False)
     
     # Assessment configuration
     bloom_levels = Column(JSON, nullable=False)  # List of bloom levels [1,2,3,4,5,6]
@@ -53,8 +53,8 @@ class AssessmentQuestion(Base):
     """Individual questions within an assessment"""
     __tablename__ = "assessment_questions"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    assessment_id = Column(UUID(as_uuid=True), ForeignKey("assessments.id"), nullable=False)
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    assessment_id = Column(GUID(), ForeignKey("assessments.id"), nullable=False)
     
     # Question content
     question_type = Column(String(50), nullable=False)  # multiple_choice, true_false, short_answer, essay
@@ -84,8 +84,8 @@ class AssessmentRubric(Base):
     """Rubric for assessment grading"""
     __tablename__ = "assessment_rubrics"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    assessment_id = Column(UUID(as_uuid=True), ForeignKey("assessments.id"), nullable=False)
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    assessment_id = Column(GUID(), ForeignKey("assessments.id"), nullable=False)
     
     title = Column(String(255), nullable=False)
     description = Column(Text)
@@ -102,8 +102,8 @@ class RubricCriterion(Base):
     """Individual criteria within a rubric"""
     __tablename__ = "rubric_criteria"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    rubric_id = Column(UUID(as_uuid=True), ForeignKey("assessment_rubrics.id"), nullable=False)
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    rubric_id = Column(GUID(), ForeignKey("assessment_rubrics.id"), nullable=False)
     
     name = Column(String(255), nullable=False)
     description = Column(Text)
@@ -118,8 +118,8 @@ class RubricLevel(Base):
     """Performance levels within a rubric criterion"""
     __tablename__ = "rubric_levels"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    criterion_id = Column(UUID(as_uuid=True), ForeignKey("rubric_criteria.id"), nullable=False)
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    criterion_id = Column(GUID(), ForeignKey("rubric_criteria.id"), nullable=False)
     
     name = Column(String(100), nullable=False)  # e.g., "Excellent", "Good", "Needs Improvement"
     description = Column(Text, nullable=False)
@@ -133,9 +133,9 @@ class AssessmentAttempt(Base):
     """Student attempts at teacher-created assessments"""
     __tablename__ = "assessment_attempts"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    assessment_id = Column(UUID(as_uuid=True), ForeignKey("assessments.id"), nullable=False)
-    student_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    assessment_id = Column(GUID(), ForeignKey("assessments.id"), nullable=False)
+    student_id = Column(GUID(), ForeignKey("users.id"), nullable=False)
     
     # Attempt details
     started_at = Column(DateTime, nullable=False, default=datetime.utcnow)
@@ -150,7 +150,7 @@ class AssessmentAttempt(Base):
     # Status
     is_submitted = Column(Boolean, default=False)
     is_graded = Column(Boolean, default=False)
-    graded_by = Column(UUID(as_uuid=True), ForeignKey("users.id"))  # Teacher who graded
+    graded_by = Column(GUID(), ForeignKey("users.id"))  # Teacher who graded
     graded_at = Column(DateTime)
     
     # Feedback
@@ -167,9 +167,9 @@ class AssessmentResponse(Base):
     """Individual question responses within an assessment attempt"""
     __tablename__ = "assessment_responses"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    attempt_id = Column(UUID(as_uuid=True), ForeignKey("assessment_attempts.id"), nullable=False)
-    question_id = Column(UUID(as_uuid=True), ForeignKey("assessment_questions.id"), nullable=False)
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    attempt_id = Column(GUID(), ForeignKey("assessment_attempts.id"), nullable=False)
+    question_id = Column(GUID(), ForeignKey("assessment_questions.id"), nullable=False)
     
     # Response content
     student_answer = Column(Text, nullable=False)
@@ -191,8 +191,8 @@ class AssessmentAnalytics(Base):
     """Analytics data for assessments"""
     __tablename__ = "assessment_analytics"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    assessment_id = Column(UUID(as_uuid=True), ForeignKey("assessments.id"), nullable=False)
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    assessment_id = Column(GUID(), ForeignKey("assessments.id"), nullable=False)
     
     # Overall metrics
     total_attempts = Column(Integer, default=0)
